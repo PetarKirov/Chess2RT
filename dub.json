@@ -1,0 +1,10 @@
+{
+	"name": "Chess2RT",
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2014, ZombineDev",
+	"authors": ["ZombineDev"],
+	"dependencies": {
+		"derelict-sdl2":"~master",
+
+	}
+}
