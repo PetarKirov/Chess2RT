@@ -2,5 +2,7 @@
 *.obj 
 *.exe
 
+SDL2.dll
+
 .dub/
 bin/
