@@ -1,6 +1,19 @@
-import std.stdio;
+import std.stdio, std.exception, std.typecons;
+
+import chess.piece, chess.board;
+
+import gui.chessrt, gui.mainwindow;
 
 void main()
-{
-	writeln("Edit source/app.d to start your project.");
+{	
+	//auto rt = scoped!ChessRT(640, 480, "Chess 2 Again!");
+
+	try
+	{
+		run();
+	}
+	catch (Throwable ex)
+	{
+		writefln("Exception: %s", ex.toString());
+	}
 }
