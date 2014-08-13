@@ -1,4 +1,4 @@
 Chess2RT
 ========
 
-Chess2RT is a chess variation. A raytracer is used for rendering.
+A variation of chess written in D, using raytracer for rendering.

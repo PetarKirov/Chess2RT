@@ -1,10 +1,12 @@
 {
-	"name": "Chess2RT",
-	"description": "A minimal D application.",
+	"name": "chess2rt",
+	"description": "A variation of chess written in D, using raytracer for rendering.",
 	"copyright": "Copyright © 2014, ZombineDev",
-	"authors": ["ZombineDev"],
+	"authors": [ "ZombineDev" ],
 	"dependencies": {
-		"derelict-sdl2":"~master",
-
+		"gfm:core": ">=1.1.7",
+		"gfm:math": ">=1.1.7",
+		"gfm:image": ">=1.1.7",
+		"gfm:sdl2": ">=1.1.7"
 	}
 }

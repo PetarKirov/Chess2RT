@@ -2,6 +2,8 @@
 *.obj 
 *.exe
 
+dub.selections.json
+
 SDL2.dll
 
 .dub/
