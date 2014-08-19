@@ -7,7 +7,7 @@ struct Color
 {
 	union Rep {
 		float components[3];
-		float R, G, B;
+		float r, g, b;
 	}
 
 	Rep rep;
@@ -20,65 +20,67 @@ struct Color
 
 	this(uint rgbColor) //!< Construct a color from R8G8B8 value like "0xffce08"
 	{
-		B = (rgbColor & 0xff) / 255.0f;
-		G = ((rgbColor >> 8) & 0xff) / 255.0f;
-		R = ((rgbColor >> 16) & 0xff) / 255.0f;
+		r = (rgbColor & 0xff) / 255.0f;
+		g = ((rgbColor >> 8) & 0xff) / 255.0f;
+		b = ((rgbColor >> 16) & 0xff) / 255.0f;
 	}
 
 	/// convert to RGB32, with channel shift specifications. The default values are for
 	/// the blue channel occupying the least-significant byte
 	uint toRGB32(int redShift = 16, int greenShift = 8, int blueShift = 0) const
 	{
-		uint ir = convertTo8bit(R);
-		uint ig = convertTo8bit(G);
-		uint ib = convertTo8bit(B);
+		uint ir = convertTo8bit(r);
+		uint ig = convertTo8bit(g);
+		uint ib = convertTo8bit(b);
 		return (ib << blueShift) | (ig << greenShift) | (ir << redShift);
 	}
 
 	/// make black
 	void makeZero()
 	{
-		R = G = B = 0;
+		r = g = b = 0;
 	}
 	/// set the color explicitly
 	void setColor(float r, float g, float b)
 	{
-		R = r;
-		G = g;
-		B = b;
+		this.r = r;
+		this.g = g;
+		this.b = b;
 	}
 
 	/// get the intensity of the color (direct)
 	float intensity() const
 	{
-		return (R + G + B) / 3;
+		return (r + g + b) / 3;
 	}
 
 	/// get the perceptual intensity of the color
 	float intensityPerceptual() const
 	{
-		return cast(float)(R * 0.299 + G * 0.587 + B * 0.114);
+		return cast(float)(r * 0.299 + g * 0.587 + b * 0.114);
 	}
 	/// Accumulates some color to the current
 	void opOpAssign(string op) (const Color rhs) if (op == "+")
 	{
-		R += rhs.R;
-		G += rhs.G;
-		B += rhs.B;
+		r += rhs.r;
+		g += rhs.g;
+		b += rhs.b;
 	}
 	/// multiplies the color
-	void opOpAssign(string op) (float multiplier) if (op == "*")
+	void opOpAssign(string op)(float multiplier)
+		if (op == "*")
 	{
-		R *= multiplier;
-		G *= multiplier;
-		B *= multiplier;
+		r *= multiplier;
+		g *= multiplier;
+		b *= multiplier;
 	}
 	/// divides the color
-	void opOpAssign(string op) (float divider) if (op == "/")
+	void opOpAssign(string op)(float divider)
+		if (op == "/")
 	{
-		R /= divider;
-		G /= divider;
-		B /= divider;
+		r /= divider;
+		g /= divider;
+		b /= divider;
 	}
 	
 	ref inout(float) opIndex(int index) inout
@@ -86,19 +88,41 @@ struct Color
 		return components[index];
 	}
 
-	Color opBinary(string op)(const Color rhs) if (op == "+" || op == "-" || op == "*")
+	Color opBinary(string op)(const Color rhs) const
+		if (op == "+" || op == "-" || op == "*")
 	{
-		return Color(R + rhs.R, G + rhs.G, B + rhs.B);
+		return Color(r + rhs.r, g + rhs.g, b + rhs.b);
 	}
 
-	Color opBinary(string op)(float f) if (op == "*" || op == "/")
+	Color opBinary(string op)(float f) const
+		if (op == "*" || op == "/")
 	{
-		return Color(R * f, G * f, B * f);
+		return Color(r * f, g * f, b * f);
 	}
 
-	T opCast(T)() const if (is(T == uint))
+	T opCast(T)() const
+		if (is(T == uint))
 	{
 		return this.toRGB32();
+	}
+
+	/// 0 = desaturate; 1 = don't change
+	void adjustSaturation(float amount) 
+	{
+		float mid = intensity();
+		r = r * amount + mid * (1 - amount);
+		g = g * amount + mid * (1 - amount);
+		b = b * amount + mid * (1 - amount);
+	}
+
+	/// Combines the results from the "left" and "right" camera for a single pixel.
+	/// the implementation here creates an anaglyph image: it desaturates the input
+	/// colors, masks them (left=red, right=cyan) and then merges them.
+	static Color combineStereo(Color left, Color right)
+	{
+		left.adjustSaturation(0.25f);
+		right.adjustSaturation(0.25f);
+		return left * Color(1, 0, 0) + right * Color(0, 1, 1);
 	}
 }
 
@@ -118,8 +142,8 @@ ubyte convertTo8bit(float x)
 bool tooDifferent(const Color lhs, const Color rhs)
 {
 	const float THRESHOLD = 0.1f;
-	return (fabs(lhs.R - rhs.R) > THRESHOLD ||
-	        fabs(lhs.G - rhs.G) > THRESHOLD ||
-	        fabs(lhs.B - rhs.B) > THRESHOLD);
+	return (fabs(lhs.r - rhs.r) > THRESHOLD ||
+	        fabs(lhs.g - rhs.g) > THRESHOLD ||
+	        fabs(lhs.b - rhs.b) > THRESHOLD);
 }
 

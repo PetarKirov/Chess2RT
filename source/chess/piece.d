@@ -111,7 +111,7 @@ void test()
 // R ARMTY C PIECE
 // R - Reserved, ARMTY - ArmyType from Chess2 (0 for standard chess)
 // C - Color (0 for white, 1 for black), 
-// PIECE - piece type (empty, pawn, knight, bishop, rook, queen, king)
+// PIECE - piece type (empty, pawn, knight, bishop, rook, Queen, king)
 enum PieceEnum : byte
 {
 	Empty = 0,

@@ -3,6 +3,7 @@
 *.exe
 
 dub.selections.json
+dub.userprefs
 
 SDL2.dll
 

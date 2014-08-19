@@ -1,43 +1,60 @@
 ﻿module rt.geometry;
 
-import rt.importedtypes;
+import rt.importedtypes, rt.intersectable, rt.sceneloader;
+import std.json;
 
-interface Geometry
+abstract class Geometry : Intersectable, JsonDeserializer
 {
-	/**
-	*  @brief Intersect a geometry with a ray.
-	*  Returns true if an intersection is found, and it was closer than the current value of data.dist.
-	*
-	*  @param ray - the ray to be traced
-	*  @param data - in the event an intersection is found, this is filled with info about the intersection point.
-	*  NOTE: the intersect() function MUST NOT touch any member of data, before it can prove the intersection
-	*        point will be closer to the current value of data.dist!
-	*  Note that this also means that if you want to find any intersection, you must initialize data.dist before
-	*  calling intersect. E.g., if you don't care about distance to intersection, initialize data.dist with 1e99
-	*
-	* @retval true if an intersection is found. The `data' struct should be filled in.
-	* @retval false if no intersection exists, or it is further than the current data.dist. In this case,
-	*         the `data' struct should remain unchanged.
-	*/
-	bool intersect(Ray ray, IntersectionData data);
+	string name;
+}
 
-	string name();
-};
-
-struct IntersectionData
+class Plane: Geometry
 {
-	//!< intersection point in the world-space
-	Vector p; 
+	/// Y-intercept. The plane is parallel to XZ, the y-intercept is at this value
+	double y; 
+	double limit;
 
-	//!< the normal of the geometry at the intersection point
-	Vector normal; 
+	this() { }
 
-	//!< before intersect(): the max dist to look for intersection; after intersect() - the distance found
-	double dist; 
+	this(double _y = 0, double _limit = 1e99) { y = _y; limit = _limit; }
 
-	//!< 2D UV coordinates for texturing, etc.
-	double u, v; 
+	bool isInside(const Vector p) const { return false; }
 
-	//!< The geometry which was hit
-	Geometry g; 
-};
+	bool intersect(const Ray ray, ref IntersectionData data)
+	{
+		// intersect a ray with a XZ plane:
+		// if the ray is pointing to the horizon, or "up", but the plane is below us,
+		// of if the ray is pointing down, and the plane is above us, we have no intersection
+		if ((ray.orig.y > y && ray.dir.y > -1e-9) || (ray.orig.y < y && ray.dir.y < 1e-9))
+			return false;
+		else
+		{
+			double yDiff = ray.dir.y;
+			double wantYDiff = ray.orig.y - this.y;
+			double mult = wantYDiff / -yDiff;
+
+			// if the distance to the intersection (mult) doesn't optimize our current distance, bail out:
+			if (mult > data.dist) return false;
+			
+			Vector p = ray.orig + ray.dir * mult;
+			if (fabs(p.x) > limit || fabs(p.z) > limit) return false;
+			
+			// calculate intersection:
+			data.p = p;
+			data.dist = mult;
+			data.normal = Vector(0, 1, 0);
+			data.dNdx = Vector(1, 0, 0);
+			data.dNdy = Vector(0, 0, 1);
+			data.u = data.p.x;
+			data.v = data.p.z;
+			data.g = this;
+
+			return true;
+		}
+	}
+
+	void loadFromJson(JSONValue json, SceneLoadContext context)
+	{
+		context.set(this.y, json, "y");
+	}
+}
