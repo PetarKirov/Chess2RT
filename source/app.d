@@ -1,19 +1,24 @@
-import std.stdio, std.exception, std.typecons;
+module app;
 
-import chess.piece, chess.board;
+import std.stdio, std.typecons;
+import gui.guidemo, gui.rtdemo;
 
-import gui.chessrt, gui.mainwindow;
+void runInScope()
+{
+	auto app = scoped!RTDemo(640, 480, "Ray tracer demo!");
+	bool normalQuit = app.run();
+
+	if (normalQuit)
+		writeln("User requested shutdown and the application is closing normally.");
+	else
+		writeln("Something bad happened during shutdown!");
+
+	writeln("Close to the end...");
+}
 
 void main()
 {	
-	//auto rt = scoped!ChessRT(640, 480, "Chess 2 Again!");
+	runInScope();
 
-	try
-	{
-		run();
-	}
-	catch (Throwable ex)
-	{
-		writefln("Exception: %s", ex.toString());
-	}
+	writeln("At the end.");
 }
