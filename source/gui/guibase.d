@@ -11,14 +11,24 @@ abstract class GuiBase(C) : AppSceleton
 	protected
 	{
 		SDL2Gui gui;
-		Image!C image;
-		StdIOLogger log;
+		Image!C screen;
+		Logger log;
+	}
+
+	this(Logger log)
+	{
+		this.log = log;
 	}
 	
 	this(size_t width, size_t height, string windowTitle)
 	{
 		log = new StdIOLogger(LogLevel.trace);
-		gui = SDL2Gui(width, height, windowTitle, log);
+		initGui(width, height, windowTitle);
+	}
+
+	protected void initGui(size_t width, size_t height, string windowTitle)
+	{
+		gui.init(width, height, windowTitle, log);
 	}
 	
 	~this()
@@ -29,12 +39,12 @@ abstract class GuiBase(C) : AppSceleton
 	/// All overriding classes should call super.init() first!
 	override void init()
 	{
-		image.size(gui.width, gui.height);
+		screen.size(toInt(gui.width), toInt(gui.height));
 	}
 	
 	override void update()
 	{
-		gui.sdl2().processEvents();
+		gui.sdl2.processEvents();
 	}
 	
 	override void render()
@@ -43,13 +53,13 @@ abstract class GuiBase(C) : AppSceleton
 	
 	final override void display()
 	{
-		gui.draw(image);
+		gui.draw(screen);
 	}
 	
 	override bool handleInput()
 	{
 		import gfm.sdl2;
 		
-		return !gui.sdl2().keyboard().isPressed(SDLK_ESCAPE);
+		return !gui.sdl2.keyboard().isPressed(SDLK_ESCAPE);
 	}
 }
