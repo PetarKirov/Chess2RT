@@ -1,10 +1,11 @@
 ﻿module rt.sceneloader;
 
-import std.file, std.json, std.traits, std.container.util;
+import std.file, std.traits;
+public import std.json;
 import std.stdio;
 
 import rt.exception;
-import rt.scene, rt.globalSettings, rt.camera, rt.environment, rt.shader, rt.texture, rt.geometry, rt.node, rt.importedtypes, rt.light, rt.color;
+import rt.scene, rt.globalsettings, rt.camera, rt.environment, rt.shader, rt.texture, rt.geometry, rt.node, rt.importedtypes, rt.light, rt.color;
 
 interface JsonDeserializer
 {
@@ -13,17 +14,26 @@ interface JsonDeserializer
 
 Scene parseSceneFromFile(string fileName)
 {
-	auto text = fileName.readText;
-	writeln("readText");
-	
-	auto json = text.parseJSON;
-	writeln("parseJSON");
-	
-	return loadFromJson(json, new SceneLoadContext());
+	try
+	{
+		return fileName
+			.readText
+		 	.parseJSON
+		 	.loadFromJson(new SceneLoadContext());
+	}
+	catch (FileException fEx)
+	{
+		throw new SceneNotFoundException();
+	}
+	catch (JSONException jsonEx)
+	{
+		throw new InvalidSceneException("Invalid json in scene file!", jsonEx);
+	}
 }
 
 class SceneLoadContext
 {
+	Scene scene;
 	Light[string] lights;
 	Texture[string] textures;
 	Shader[string] shaders;
@@ -47,7 +57,7 @@ class SceneLoadContext
 	{
 		import std.traits, std.conv;
 		
-		if (propertyName !in json)
+		if (propertyName !in json.object)
 		{
 			// Make default if nothing specified.
 			// Built-in types and struct are automatically initialized,
@@ -62,7 +72,7 @@ class SceneLoadContext
 		
 		static if (isIntegral!T || isBoolean!T)
 		{
-			property = to!T(subJson.integer);
+			property = to!T(subJson.number);
 		}
 		else static if (isFloatingPoint!T)
 		{
@@ -97,7 +107,11 @@ class SceneLoadContext
 		else static if (is(T == Color))
 		{
 			auto arr = subJson.array;
-			property = Color(arr[0].number, arr[1].number, arr[2].number);
+			double r = arr[0].number;
+			double g = arr[1].number;
+			double b = arr[2].number;
+
+			property = Color(r, g, b);
 		}
 		
 		else
@@ -133,8 +147,10 @@ T parseObj(T)(JSONValue json, SceneLoadContext context)
 
 double number(JSONValue json)
 {
-	if (json.type == JSON_TYPE.FLOAT)
-		return json.floating;
-	else
-		return json.integer;
+  auto type = json.type;
+
+  if (type == JSON_TYPE.FLOAT)
+	  return json.floating;
+  else
+	  return json.integer;
 }

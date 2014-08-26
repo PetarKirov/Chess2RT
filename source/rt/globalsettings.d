@@ -1,63 +1,90 @@
-﻿module rt.globalSettings;
+﻿module rt.globalsettings;
 
-import std.json;
 import rt.color, rt.sceneloader;
 
 class GlobalSettings : JsonDeserializer
 {
-	int frameWidth, frameHeight; //!< render window size
+	// General:
+	uint frameWidth, frameHeight;
+	bool fullscreen;             // [Not implemented] Fullscreen
+	bool interactive;            // [Not implemented] Interactive mode
+
+	// Multithreading:
+	uint bucketSize;			// Image sub-rectange (square) width
+	size_t threadCount;			// [Not implemented] Number of rendering threads; default (or 0) - autodetect
+	
+	// Rendering:
+	bool prepassEnabled;		// Quick low-resolution preview rendering
+	bool GIEnabled;				// Global Illumination
+	bool AAEnabled;				// Anti-aliasing
+	double AAThreshold;			// Color difference threshold, before AA is triggered
+
+	// Shading:
+	uint pathsPerPixel;			// Paths per pixel
+	uint maxTraceDepth;			// Maximum recursion depth
 
 	// Lighting:
-	Color ambientLight;          //!< ambient color
+	Color ambientLightColor;	// Color of the ambient light
 	
-	// AA-related:
-	bool wantAA, wantPrepass;    //!< Antialiasing flag and prepass (a JSONValueuick low-resolution rendering) flag
-	bool gi;                     //!< Is GI on?
-	double aaThresh;             //!< The antialiasing color difference threshold (see renderScene)
-	int numPaths;                //!< paths per pixel
-	
-	int maxTraceDepth;           //!< Maximum recursion depth
-	
-	bool dbg;                    //!< A debugging flag (if on, various raytracing-related procedures will dump debug info to stdout).
-	
-	int numThreads;              //!< # rendering threads (0 to autodetect)
-	bool interactive;            //!< interactive mode
-	bool fullscreen;             //!< fullscreen in interactive mode (default: true)
+	// Debug:
+	bool debugEnabled;			// [Not implemented] If on, various raytracing-related procedures will dump debug info.
 
-	//void fillProperties(ParsedBlock& pb);
-	//ElementType getElementType() const { return ELEM_SETTINGS; }
+	/// Adjust the frame size to be a multiple of the bucketsize
+	void adjustFrameSize()
+	{
+		if (frameWidth % bucketSize != 0) 
+			frameWidth = (frameWidth / bucketSize + 1) * bucketSize;
+
+		if (frameHeight % bucketSize != 0) 
+			frameHeight = (frameHeight / bucketSize + 1) * bucketSize;
+	}
 
 	this()
 	{
-		frameWidth = 640;
+		frameWidth = 640;	//Will be adjusted to bucket size
 		frameHeight = 480;
-		wantAA = wantPrepass = true;
-		aaThresh = 0.1;
-		dbg = false;
-		maxTraceDepth = 4;
-		ambientLight.makeZero();
-		gi = false;
-		numPaths = 40;
-		numThreads = 0;
+		fullscreen = false;
 		interactive = false;
-		fullscreen = true;
+
+		bucketSize = 48;
+		threadCount = 1;
+
+		prepassEnabled = true;
+		GIEnabled = false;
+		AAEnabled = true;
+		AAThreshold = 0.1;
+
+		pathsPerPixel = 40;
+		maxTraceDepth = 4;
+
+		ambientLightColor = Color.black();
+
+		debugEnabled = false;		
 	}
 
 	void loadFromJson(JSONValue json, SceneLoadContext context)
 	{
-		context.set(this.dbg, json, "dbg");
-		context.set(this.interactive, json, "interactive");
-		context.set(this.fullscreen, json, "fullscreen");
 		context.set(this.frameWidth, json, "frameWidth");
 		context.set(this.frameHeight, json, "frameHeight");
-		context.set(this.wantAA, json, "wantAA");
-		context.set(this.wantPrepass, json, "wantPrepass");
-		context.set(this.gi, json, "gi");
-		context.set(this.aaThresh, json, "aaThresh");
+		context.set(this.fullscreen, json, "fullscreen");
+		context.set(this.interactive, json, "interactive");
+
+		context.set(this.bucketSize, json, "bucketSize");
+		context.set(this.threadCount, json, "threadCount");
+
+		context.set(this.prepassEnabled, json, "prepassEnabled");
+		context.set(this.GIEnabled, json, "GIEnabled");
+		context.set(this.AAEnabled, json, "AAEnabled");
+		context.set(this.AAThreshold, json, "AAThreshold");
+
 		context.set(this.maxTraceDepth, json, "maxTraceDepth");
-		context.set(this.ambientLight, json, "ambientLight");
-		context.set(this.numPaths, json, "numPaths");
-		context.set(this.numThreads, json, "numThreads");
+		context.set(this.pathsPerPixel, json, "pathsPerPixel");
+
+		context.set(this.ambientLightColor, json, "ambientLightColor");
+
+		context.set(this.debugEnabled, json, "debugEnabled");
+
+		adjustFrameSize();
 	}
 }
 
