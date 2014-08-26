@@ -1,5 +1,6 @@
 ﻿module gui.guidemo;
 
+import gui.sdl2gui;
 import gui.guibase; import std.math;
 
 class GuiDemo : GuiBase!uint
@@ -31,17 +32,17 @@ private:
 		double cx = w / 2;
 		double cy = h / 2;
 		
-		foreach (y; 0 .. h)
-			foreach (x; 0 .. w)
+		foreach (int y; 0 .. toInt(h))
+			foreach (int x; 0 .. toInt(w))
 		{
 			double dx = x - cx;
 			double dy = y - cy;
 			auto dist = sqrt(dx^^2 + dy^^2);
 			
 			if (dist < radius)
-				image[x, y] = cast(uint)(dist / radius * 255) + 0x00FF00;
+				screen[x, y] = cast(uint)(dist / radius * 255) + 0x00FF00;
 			else
-				image[x, y] = 0xFF0000;
+				screen[x, y] = 0xFF0000;
 		}
 	}
 }

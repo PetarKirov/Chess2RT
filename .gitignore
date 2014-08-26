@@ -1,11 +1,17 @@
+bin/
 *.o 
 *.obj 
 *.exe
+*.dll
 
+# VisualD and Visual Studio
+*.sln
+*.suo
+*.visualdproj
+*.pdb
+*.exe_cv
+
+# DUB
 dub.selections.json
 dub.userprefs
-
-SDL2.dll
-
 .dub/
-bin/
