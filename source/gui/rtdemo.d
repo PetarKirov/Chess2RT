@@ -41,7 +41,7 @@ class RTDemo : GuiBase!Color
 
 		import std.datetime;
 		auto time = benchmark!(() => r.renderRT())(1);
-		log.logf("Time to render: %sms", time[0].msecs / 1000.0);
+		log.logf("Time to render: %ss", time[0].msecs / 1000.0);
 
 		rendered = true;
 	}
