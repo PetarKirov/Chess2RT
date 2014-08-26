@@ -1,8 +1,6 @@
 ﻿module rt.camera;
 
-import std.json;
-import rt.importedtypes, rt.sceneloader;
-
+import rt.importedtypes, rt.sceneloader, rt.globalsettings;
 
 enum Stereo3DOffset : byte
 {
@@ -26,21 +24,23 @@ class Camera : JsonDeserializer
 		this.aspect = aspect;
 	}
 
-	Vector pos; //!< position of the camera in 3D.
-	double yaw; //!< Yaw angle in degrees (rot. around the Y axis, meaningful values: [0..360])
-	double pitch; //!< Pitch angle in degrees (rot. around the X axis, meaningful values: [-90..90])
-	double roll; //!< Roll angle in degrees (rot. around the Z axis, meaningful values: [-180..180])
-	double fov; //!< The Field of view in degrees (meaningful values: [3..160])
-	double aspect; //!< The aspect ratio of the camera frame. Should usually be frameWidth/frameHeight,
-	double focalPlaneDist;
-	double fNumber;
-	bool dof; // on or off
-	int numSamples;
-	double discMultiplier;
-	double stereoSeparation;
-	
 	size_t frameWidth;
 	size_t frameHeight;
+	double aspect = 1.0; //!< The aspect ratio of the camera frame. Should usually be frameWidth/frameHeight,
+
+	Vector pos; //!< position of the camera in 3D.
+
+	double yaw = 0; //!< Yaw angle in degrees (rot. around the Y axis, meaningful values: [0..360])
+	double pitch = 0.0; //!< Pitch angle in degrees (rot. around the X axis, meaningful values: [-90..90])
+	double roll = 0.0; //!< Roll angle in degrees (rot. around the Z axis, meaningful values: [-180..180])
+
+	double fov = 0.0; //!< The Field of view in degrees (meaningful values: [3..160])
+	double focalPlaneDist = 1.0;
+	double fNumber = 1.0;
+	double discMultiplier;
+	bool dof = false; // on or off
+	size_t numSamples = 25;
+	double stereoSeparation = 0.0;
 
 	/// Must be called before each frame. Computes the corner variables, needed for getScreenRay()
 	void beginFrame()
@@ -59,7 +59,6 @@ class Camera : JsonDeserializer
 		x *= scaling;
 		y *= scaling;
 		
-		
 		this.upLeft = Vector(x, y, 1);
 		this.upRight = Vector(-x, y, 1);
 		this.downLeft = Vector(x, -y, 1);
@@ -68,13 +67,13 @@ class Camera : JsonDeserializer
 						* Matrix.rotateX(radians(pitch))
 						* Matrix.rotateY(radians(yaw));
 
-		upLeft = rotation * upLeft;
-		upRight = rotation * upRight;
-		downLeft = rotation * downLeft;
+		upLeft = mul(upLeft, rotation);
+		upRight = mul(upRight, rotation);
+		downLeft = mul(downLeft, rotation);
 
-		rightDir = rotation * Vector(1, 0, 0);
-		upDir    = rotation * Vector(0, 1, 0);
-		frontDir = rotation * Vector(0, 0, 1);
+		rightDir = mul(Vector(1, 0, 0), rotation);
+		upDir    = mul(Vector(0, 1, 0), rotation);
+		frontDir = mul(Vector(0, 0, 1), rotation);
 		
 		upLeft += pos;
 		upRight += pos;
@@ -84,17 +83,17 @@ class Camera : JsonDeserializer
 	/// generates a screen ray through a pixel (x, y - screen coordinates, not necessarily integer).
 	/// if the camera parameter is present - offset the rays' start to the left or to the right,
 	/// for use in stereoscopic rendering
-	Ray getScreenRay(double x, double y, Stereo3DOffset offset = Stereo3DOffset.None)
+	Ray getScreenRay(double x, double y, Stereo3DOffset offset = Stereo3DOffset.None) const
 	{
 		Ray result; // A, B -     C = A + (B - A) * x
 		result.orig = this.pos;
 		Vector target = upLeft +
-			(upRight - upLeft) * (x / double(frameWidth)) +
-			(downLeft - upLeft) * (y / double(frameHeight));
+			(upRight - upLeft) * (x / cast(double)frameWidth) +
+			(downLeft - upLeft) * (y / cast(double)frameHeight);
 		
 		// A - camera; B = target
 		result.dir = target - this.pos;
-		
+
 		result.dir.normalize();
 		
 		if (offset != Stereo3DOffset.None) {
@@ -140,12 +139,23 @@ class Camera : JsonDeserializer
 
 	void loadFromJson(JSONValue json, SceneLoadContext context)
 	{
+		this.frameWidth = context.scene.settings.frameWidth;
+		this.frameHeight = context.scene.settings.frameHeight;
+		this.aspect = cast(double)this.frameWidth / this.frameHeight;
+
 		context.set(this.pos, json, "pos");
-		this.aspect = cast(double)this.frameWidth / this.frameHeight;	
+
 		context.set(this.yaw, json, "yaw");
 		context.set(this.pitch, json, "pitch");
 		context.set(this.roll, json, "roll");
+
 		context.set(this.fov, json, "fov");
+		context.set(this.focalPlaneDist, json, "focalPlaneDist");
+		context.set(this.fNumber, json, "fNumber");
+		context.set(this.dof, json, "dof");
+		context.set(this.numSamples, json, "numSamples");
+		context.set(this.stereoSeparation, json, "stereoSeparation");
+		discMultiplier = 10.0 / fNumber;
 	}
 
 private:

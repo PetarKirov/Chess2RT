@@ -1,7 +1,6 @@
 ﻿module rt.node;
 
 import rt.intersectable, rt.geometry, rt.shader, rt.texture, rt.transform, rt.importedtypes, rt.sceneloader;
-import std.json;
 
 class Node : Intersectable, JsonDeserializer
 {
@@ -17,26 +16,20 @@ class Node : Intersectable, JsonDeserializer
 
 	string name;
 
-	bool isInside(const Vector p)
+	bool isInside(const Vector p) const
 	{
 		return geom.isInside(transform.undoPoint(p));
 	}
 
 	// intersect a ray with a node, considering the Model transform attached to the node.
-	bool intersect(const Ray ray, ref IntersectionData data)
-	{
-		import std.stdio;
-		writeln("Node intersection - level 0!");
-
-
+	bool intersect(const Ray ray, ref IntersectionData data) const
+	{		
 		// world space -> object's canonic space
 		Ray rayCanonic;
 		rayCanonic.orig = transform.undoPoint(ray.orig);
 		rayCanonic.dir = transform.undoDirection(ray.dir);
 		rayCanonic.flags = ray.flags;
 		rayCanonic.depth = ray.depth;
-
-		writeln("Node intersection - level 1!");
 		
 		// save the old "best dist", in case we need to restore it later
 		double oldDist = data.dist; // *(1)
@@ -47,9 +40,6 @@ class Node : Intersectable, JsonDeserializer
 			data.dist = oldDist;    // (4)
 			return false;
 		}
-
-		writeln("Node intersection - level 2!");
-
 
 		// The intersection found is in object space, convert to world space:
 		data.normal = transform.normal(data.normal).normalized();

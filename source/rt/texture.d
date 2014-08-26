@@ -1,14 +1,16 @@
 ﻿module rt.texture;
 
 import rt.importedtypes, rt.intersectable, rt.color, rt.sceneloader;
-import std.json;
 
 abstract class Texture : JsonDeserializer
 {
 	string name;
 
-	Color getTexColor(const Ray ray, double u, double v, Vector normal);
-	void modifyNormal(IntersectionData data) { }
+	Color getTexColor(const Ray ray, double u, double v, Vector normal) const;
+
+	void modifyNormal(IntersectionData data) const
+	{
+	}
 }
 
 /// A checker texture
@@ -28,7 +30,7 @@ class Checker: Texture
 		this.size = size;
 	}
 
-	override Color getTexColor(const Ray ray, double u, double v, Vector normal)
+	override Color getTexColor(const Ray ray, double u, double v, Vector normal) const
 	{
 		/*
 		 * The checker texture works like that. Partition the whole 2D space
@@ -54,5 +56,12 @@ class Checker: Texture
 		context.set(this.color1, json, "color1");
 		context.set(this.color2, json, "color2");
 		context.set(this.size, json, "size");
+	}
+
+	override string toString() const
+	{
+		import std.string;
+		
+		return format("%s %s %s", color1, color2, size);
 	}
 }

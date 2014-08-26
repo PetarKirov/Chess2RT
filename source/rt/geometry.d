@@ -1,7 +1,6 @@
 ﻿module rt.geometry;
 
 import rt.importedtypes, rt.intersectable, rt.sceneloader;
-import std.json;
 
 abstract class Geometry : Intersectable, JsonDeserializer
 {
@@ -20,7 +19,7 @@ class Plane: Geometry
 
 	bool isInside(const Vector p) const { return false; }
 
-	bool intersect(const Ray ray, ref IntersectionData data)
+	bool intersect(const Ray ray, ref IntersectionData data) const
 	{
 		// intersect a ray with a XZ plane:
 		// if the ray is pointing to the horizon, or "up", but the plane is below us,
@@ -47,7 +46,7 @@ class Plane: Geometry
 			data.dNdy = Vector(0, 0, 1);
 			data.u = data.p.x;
 			data.v = data.p.z;
-			data.g = this;
+			data.g = cast(Geometry)this;
 
 			return true;
 		}

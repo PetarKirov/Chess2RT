@@ -1,21 +1,22 @@
 ﻿module rt.shader;
 
-import std.random, std.json;
+import std.random;
 import rt.importedtypes;
 import rt.scene, rt.texture, rt.color, rt.intersectable, rt.ray;
 import rt.sceneloader;
+import util.counter;
 
 interface BRDF
 {
-	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out);
+	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const;
 	
 	void spawnRay(const IntersectionData x, const Ray w_in,
-	              ref Ray w_out, ref Color colorEval, ref float pdf);
+	              ref Ray w_out, ref Color colorEval, ref float pdf) const;
 };
 
 interface IShader
 {	
-	Color shade(const Ray ray, const IntersectionData data);
+	Color shade(const Ray ray, const IntersectionData data) const;
 };
 
 abstract class Shader : IShader, BRDF, JsonDeserializer
@@ -34,6 +35,11 @@ abstract class Shader : IShader, BRDF, JsonDeserializer
 	{
 		this.color = color;
 	}
+
+	void loadFromJson(JSONValue json, SceneLoadContext context)
+	{
+		this.scene = context.scene;
+	}
 }
 
 /// A Lambert (flat) shader
@@ -50,10 +56,10 @@ class Lambert : Shader
 		this.texture = texture;
 	}
 
-	Color shade(const Ray ray, const IntersectionData data)
+	mixin callCounter!shade shadeFunc;
+	Color shade(const Ray ray, const IntersectionData data) const
 	{
-		import std.stdio;
-		writeln(data.u, data.v);
+		shadeFunc.callsCount++;
 
 		// turn the normal vector towards us (if needed):
 		Vector N = faceforward(ray.dir, data.normal);
@@ -64,17 +70,19 @@ class Lambert : Shader
 		if (texture)
 			diffuseColor = texture.getTexColor(ray, data.u, data.v, N);
 		
-		Color lightContrib = scene.settings.ambientLight;
+		Color lightContrib = scene.settings.ambientLightColor;
 
 		foreach(light; scene.lights) {
 		//for (int i = 0; i < (int) scene.lights.size(); i++) {
-			int numSamples = light.getNumSamples();
+			size_t numSamples = light.getNumSamples();
 			auto avgColor = Color(0, 0, 0);
-			for (int j = 0; j < numSamples; j++) {
+			for (int j = 0; j < numSamples; j++)
+			{
 				Vector lightPos;
 				Color lightColor;
 				light.getNthSample(j, data.p, lightPos, lightColor);
-				if (lightColor.intensity() != 0 && scene.testVisibility(data.p + N * 1e-6, lightPos)) {
+				if (lightColor.intensity() != 0 && scene.testVisibility(data.p + N * 1e-6, lightPos))
+				{
 					Vector lightDir = lightPos - data.p;
 					lightDir.normalize();
 					
@@ -82,7 +90,9 @@ class Lambert : Shader
 					// the direction to the light. This will scale the lighting:
 					double cosTheta = dot(lightDir, N);
 					if (cosTheta > 0)
+					{
 						avgColor += lightColor / (data.p - lightPos).squaredLength() * cosTheta;
+					}
 				}
 			}
 			lightContrib += avgColor / numSamples;
@@ -90,8 +100,11 @@ class Lambert : Shader
 		return diffuseColor * lightContrib;
 	}
 
-	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out)
+	mixin callCounter!eval evalFunc;
+	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const
 	{
+		evalFunc.callsCount++;
+
 		Vector N = faceforward(w_in.dir, x.normal);
 		Color diffuseColor = this.color;
 
@@ -101,9 +114,12 @@ class Lambert : Shader
 		return diffuseColor * (1 / PI) * max(0.0, dot(w_out.dir, N));
 	}
 	
+	mixin callCounter!spawnRay spawnRayFunc;
 	void spawnRay(const IntersectionData x, const Ray w_in, 
-	              ref Ray w_out, ref Color colorEval, ref float pdf)
+	              ref Ray w_out, ref Color colorEval, ref float pdf) const
 	{
+		spawnRayFunc.callsCount++;
+
 		Vector N = faceforward(w_in.dir, x.normal);
 		Color diffuseColor = this.color;
 
@@ -120,14 +136,11 @@ class Lambert : Shader
 		pdf = 1 / (2 * PI);
 	}
 
-	void loadFromJson(JSONValue json, SceneLoadContext context)
+	override void loadFromJson(JSONValue json, SceneLoadContext context)
 	{
+		super.loadFromJson(json, context);
 		string t;
 		context.set(t, json, "texture");
-
-		import std.stdio;
-		writeln(context.textures);
-
 		this.texture = context.textures[t];
 	}
 };

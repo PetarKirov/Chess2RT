@@ -7,17 +7,21 @@ struct Color
 {
 	union Rep {
 		float components[3];
-		float r, g, b;
+		struct { float r, g, b;	}
 	}
 
 	Rep rep;
 	alias rep this;
 
-	this(float r, float g, float b) //!< Construct a color from floatingpoint values
+	this(float r_, float g_, float b_) //!< Construct a color from floatingpoint values
 	{
-		setColor(r, g, b);
+		this.r = r_;
+		this.g = g_;
+		this.b = b_;
 	}
 
+	@disable
+	//"Don't know if this works correctly..."
 	this(uint rgbColor) //!< Construct a color from R8G8B8 value like "0xffce08"
 	{
 		r = (rgbColor & 0xff) / 255.0f;
@@ -36,16 +40,15 @@ struct Color
 	}
 
 	/// make black
+	@disable
 	void makeZero()
 	{
 		r = g = b = 0;
 	}
-	/// set the color explicitly
-	void setColor(float r, float g, float b)
+
+	static Color black()
 	{
-		this.r = r;
-		this.g = g;
-		this.b = b;
+		return Color(0f, 0.0f, 0f);
 	}
 
 	/// get the intensity of the color (direct)
@@ -59,28 +62,21 @@ struct Color
 	{
 		return cast(float)(r * 0.299 + g * 0.587 + b * 0.114);
 	}
+
 	/// Accumulates some color to the current
-	void opOpAssign(string op) (const Color rhs) if (op == "+")
+	void opOpAssign(string op)(const Color rhs) if (op == "+")
 	{
 		r += rhs.r;
 		g += rhs.g;
 		b += rhs.b;
 	}
-	/// multiplies the color
-	void opOpAssign(string op)(float multiplier)
-		if (op == "*")
+
+	void opOpAssign(string op)(float f)
+		if (op == "*" || op == "/")
 	{
-		r *= multiplier;
-		g *= multiplier;
-		b *= multiplier;
-	}
-	/// divides the color
-	void opOpAssign(string op)(float divider)
-		if (op == "/")
-	{
-		r /= divider;
-		g /= divider;
-		b /= divider;
+		mixin("r " ~ op ~ "= f;");
+		mixin("g " ~ op ~ "= f;");
+		mixin("b " ~ op ~ "= f;");
 	}
 	
 	ref inout(float) opIndex(int index) inout
@@ -91,13 +87,13 @@ struct Color
 	Color opBinary(string op)(const Color rhs) const
 		if (op == "+" || op == "-" || op == "*")
 	{
-		return Color(r + rhs.r, g + rhs.g, b + rhs.b);
+		return mixin("Color(r" ~ op ~ "rhs.r, g" ~ op ~ "rhs.g, b" ~ op ~ "rhs.b)");
 	}
 
 	Color opBinary(string op)(float f) const
 		if (op == "*" || op == "/")
 	{
-		return Color(r * f, g * f, b * f);
+		return mixin("Color(r" ~ op ~ "f, g" ~ op ~ "f, b" ~ op ~ "f)");
 	}
 
 	T opCast(T)() const
@@ -123,6 +119,18 @@ struct Color
 		left.adjustSaturation(0.25f);
 		right.adjustSaturation(0.25f);
 		return left * Color(1, 0, 0) + right * Color(0, 1, 1);
+	}
+
+	void toString(scope void delegate(const(char)[]) sink) const
+	{
+		import std.conv;
+		sink("(");
+		sink(to!string(r));
+		sink(", ");
+		sink(to!string(g));
+		sink(", ");
+		sink(to!string(b));
+		sink(")");
 	}
 }
 

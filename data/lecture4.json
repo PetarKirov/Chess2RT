@@ -1,10 +1,10 @@
 {
 	"GlobalSettings" :
 	{
-		"type"			: "GlobalSettings",
-		"frameWidth"	: 640,
-		"frameHeight"	: 480,
-		"ambientLight"	: [ 0.0, 0.0, 0.0 ]
+		"type"				: "GlobalSettings",
+		"frameWidth"		: 640,
+		"frameHeight"		: 480,
+		"ambientLightColor"	: [ 0.0, 0.0, 0.0 ]
 	},
 	
 	"Camera" :

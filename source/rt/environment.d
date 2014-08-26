@@ -1,12 +1,16 @@
 ﻿module rt.environment;
 
-import rt.importedtypes, rt.color;
+import rt.importedtypes, rt.color, rt.sceneloader;
 
-abstract class Environment
+class Environment : JsonDeserializer
 {
-	Color getEnvironment(const Vector dir)
+	Color getEnvironment(const Vector dir) const
 	{
 		return Color(0, 0, 0);
+	}
+
+	void loadFromJson(JSONValue json, SceneLoadContext context)
+	{
 	}
 }
 

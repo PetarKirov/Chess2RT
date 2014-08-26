@@ -22,7 +22,7 @@ struct IntersectionData
 	Vector dNdx, dNdy;
 }
 
-interface Intersectable
+const interface Intersectable
 {
 	/**
 	 *  @brief Intersect a geometry with a ray.
