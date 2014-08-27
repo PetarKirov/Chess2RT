@@ -7,9 +7,9 @@
 - [v0.1.0][1]
 
 ## Results
-Time is in seconds
-Arch - e.g. compiled for x86 or x86_64
-TC - max Thread Count allowed
+- Time is in seconds
+- Arch - e.g. compiled for x86 or x86_64
+- TC - max Thread Count allowed
 
 ### Results for lecture4.json
 
