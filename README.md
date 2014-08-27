@@ -1,7 +1,10 @@
 Chess2RT
 ========
-
 A variation of chess written in D, using raytracer for rendering.
+
+Performance statistics
+----------------------
+Available [here](https://github.com/ZombineDev/Chess2RT/blob/master/perf-results.md).
 
 Build Instructions
 ------------------
@@ -21,7 +24,7 @@ You need:
     * Windows: Download _SDL2-devel-2.0.3-VC.zip_ from [here][3]
 2. Git clone: ```git clone https://github.com/ZombineDev/Chess2RT.git```
 3. (Windows only) put *SDL2*.dll in the main folder (were the .exe will be produced).
-4. Run DUB: ``` cd Chess2RT & dub ```
+4. Run DUB: ```cd Chess2RT``` & ```dub```
 
 [1]: http://dlang.org/download.html
 [2]: http://code.dlang.org/download
