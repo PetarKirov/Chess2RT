@@ -2,7 +2,7 @@
 
 import rt.intersectable, rt.geometry, rt.shader, rt.texture, rt.transform, rt.importedtypes, rt.sceneloader;
 
-class Node : Intersectable, JsonDeserializer
+class Node : Intersectable, Deserializable
 {
 	Geometry geom;
 	Shader shader;
@@ -66,11 +66,11 @@ class Node : Intersectable, JsonDeserializer
 	 */
 	}
 
-	void loadFromJson(JSONValue json, SceneLoadContext context)
+	void deserialize(Value val, SceneLoadContext context)
 	{
 		string g, s;
-		context.set(g, json, "geometry");
-		context.set(s, json, "shader");
+		context.set(g, val, "geometry");
+		context.set(s, val, "shader");
 
 		this.geom = context.geometries[g];
 		this.shader = context.shaders[s];

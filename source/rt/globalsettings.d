@@ -2,7 +2,7 @@
 
 import rt.color, rt.sceneloader;
 
-class GlobalSettings : JsonDeserializer
+class GlobalSettings : Deserializable
 {
 	// General:
 	uint frameWidth, frameHeight;
@@ -62,27 +62,27 @@ class GlobalSettings : JsonDeserializer
 		debugEnabled = false;		
 	}
 
-	void loadFromJson(JSONValue json, SceneLoadContext context)
+	void deserialize(Value val, SceneLoadContext context)
 	{
-		context.set(this.frameWidth, json, "frameWidth");
-		context.set(this.frameHeight, json, "frameHeight");
-		context.set(this.fullscreen, json, "fullscreen");
-		context.set(this.interactive, json, "interactive");
+		context.set(this.frameWidth, val, "frameWidth");
+		context.set(this.frameHeight, val, "frameHeight");
+		context.set(this.fullscreen, val, "fullscreen");
+		context.set(this.interactive, val, "interactive");
 
-		context.set(this.bucketSize, json, "bucketSize");
-		context.set(this.threadCount, json, "threadCount");
+		context.set(this.bucketSize, val, "bucketSize");
+		context.set(this.threadCount, val, "threadCount");
 
-		context.set(this.prepassEnabled, json, "prepassEnabled");
-		context.set(this.GIEnabled, json, "GIEnabled");
-		context.set(this.AAEnabled, json, "AAEnabled");
-		context.set(this.AAThreshold, json, "AAThreshold");
+		context.set(this.prepassEnabled, val, "prepassEnabled");
+		context.set(this.GIEnabled, val, "GIEnabled");
+		context.set(this.AAEnabled, val, "AAEnabled");
+		context.set(this.AAThreshold, val, "AAThreshold");
 
-		context.set(this.maxTraceDepth, json, "maxTraceDepth");
-		context.set(this.pathsPerPixel, json, "pathsPerPixel");
+		context.set(this.maxTraceDepth, val, "maxTraceDepth");
+		context.set(this.pathsPerPixel, val, "pathsPerPixel");
 
-		context.set(this.ambientLightColor, json, "ambientLightColor");
+		context.set(this.ambientLightColor, val, "ambientLightColor");
 
-		context.set(this.debugEnabled, json, "debugEnabled");
+		context.set(this.debugEnabled, val, "debugEnabled");
 
 		adjustFrameSize();
 	}
