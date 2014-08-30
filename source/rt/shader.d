@@ -24,8 +24,6 @@ abstract class Shader : IShader, BRDF, JsonDeserializer
 	Color color;
 	Scene scene;
 
-	string name;
-
 	this()
 	{
 

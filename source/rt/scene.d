@@ -6,17 +6,48 @@ import rt.globalsettings, rt.environment, rt.camera,
 	rt.intersectable, rt.color, rt.sceneloader,
 	rt.ray;
 
+struct NamedEntities
+{
+	Light[string] lights;
+	Geometry[string] geometries;
+	Texture[string] textures;
+	Shader[string] shaders;
+	Node[string] nodes;
+
+	ref T[string] getArray(T)()
+	{
+		static if (is(T == Light)) return lights;
+		else static if (is(T == Geometry)) return geometries;
+		else static if (is(T == Texture)) return textures;
+		else static if (is(T == Shader)) return shaders;
+		else static if (is(T == Node)) return nodes;
+		else static if (is(T == Object)) return other;
+		else static assert(0);
+	}
+
+	template canBeStored(T)
+	{
+	    import std.traits, std.typetuple;
+
+	    enum isDerivedFromT(Other) = isImplicitlyConvertible!(Other, T);
+	    enum canBeStored = anySatisfy!(isDerivedFromT,
+									   Light, Geometry, Texture, Shader, Node);
+	}
+}
+
 class Scene
 {
 	GlobalSettings settings;
 	Environment environment;
 	Camera camera;
 
-	Node[] nodes;
 	Light[] lights;
+	Geometry[] geometries;
 	Texture[] textures;
 	Shader[] shaders;
-	Geometry[] geometries;
+	Node[] nodes;
+
+	NamedEntities namedEntities;
 
 	/// Notifies the scene so that a new frame is about to begin.
 	/// It calls the beginFrame() method of all scene elements
@@ -45,26 +76,6 @@ class Scene
 		return true;
 	}
 }
-
-Scene loadFromJson(JSONValue json, SceneLoadContext context)
-{
-	Scene scene = new Scene();
-
-	context.scene = scene;
-	context.set(scene.settings, json, "GlobalSettings");
-	context.set(scene.environment, json, "Environment");
-	context.set(scene.camera, json, "Camera");
-	context.set(scene.lights, json, "Lights");
-	context.set(scene.geometries, json, "Geometries");
-	context.set(scene.textures, json, "Textures");
-	context.set(scene.shaders, json, "Shaders");
-	context.set(scene.nodes, json, "Nodes");
-
-	return scene;
-}
-
-
-
 
 @disable
 Color Raytrace(Ray ray)

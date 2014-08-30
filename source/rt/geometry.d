@@ -4,7 +4,7 @@ import rt.importedtypes, rt.intersectable, rt.sceneloader;
 
 abstract class Geometry : Intersectable, JsonDeserializer
 {
-	string name;
+
 }
 
 class Plane: Geometry

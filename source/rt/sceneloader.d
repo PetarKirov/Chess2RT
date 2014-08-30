@@ -1,12 +1,12 @@
 ﻿module rt.sceneloader;
 
-import std.file, std.traits;
 public import std.json;
-import std.stdio;
 
-import rt.exception;
-import rt.scene, rt.globalsettings, rt.camera, rt.environment, rt.shader, rt.texture, rt.geometry, rt.node, rt.importedtypes, rt.light, rt.color;
+import std.file, std.conv, std.traits, std.range, std.exception;
+import rt.exception, rt.scene, rt.importedtypes, rt.color;
+import util.factory2;
 
+// Classes that support JSON deserializing should implement this interface.
 interface JsonDeserializer
 {
 	void loadFromJson(JSONValue json, SceneLoadContext context);
@@ -31,50 +31,53 @@ Scene parseSceneFromFile(string fileName)
 	}
 }
 
+Scene loadFromJson(JSONValue json, SceneLoadContext context)
+{
+	auto scene = new Scene();
+
+	context.scene = scene;
+	context.set(scene.settings, json, "GlobalSettings");
+	context.set(scene.camera, json, "Camera");
+	context.set(scene.environment, json, "Environment");
+	context.set(scene.lights, json, "Lights");
+	context.set(scene.geometries, json, "Geometries");
+	context.set(scene.textures, json, "Textures");
+	context.set(scene.shaders, json, "Shaders");
+	context.set(scene.nodes, json, "Nodes");
+
+	return scene;
+}
+
 class SceneLoadContext
 {
 	Scene scene;
-	Light[string] lights;
-	Texture[string] textures;
-	Shader[string] shaders;
-	Geometry[string] geometries;
-	Node[string] nodes;
-
-	Object[string] other;
-
-	ref T[string] getArray(T)()
-	{
-			 static if (is(T == Light)) return lights;
-		else static if (is(T == Texture)) return textures;
-		else static if (is(T == Shader)) return shaders;
-		else static if (is(T == Geometry)) return geometries;
-		else static if (is(T == Node)) return nodes;
-		else static if (is(T == Object)) return other;
-		else static assert(0);
-	}
+	alias get this;
+	NamedEntities get() { return scene.namedEntities; }	
 
 	void set(T)(ref T property, JSONValue json, string propertyName)
 	{
-		import std.traits, std.conv;
-		
+		// First - check if the property is specified in the JSON:
+		// Construct default if nothing specified.
+		// Built-in types and struct are automatically initialized,
+		// so we only need to instanciate classes.
+		// Note: For compatability with Phobos DMD2.065
+		// Note: we're looking in .object, instead of the json itself.
 		if (propertyName !in json.object)
-		{
-			// Make default if nothing specified.
-			// Built-in types and struct are automatically initialized,
-			// so we only need to instanciate classes.
-			
+		{	
 			static if (is(T == class))
 				property = new T();
 			return;
 		}
 		
+		// Next - get the corresponding value (built-in, array or object)
 		auto subJson = json[propertyName];
 		
-		static if (isIntegral!T || isBoolean!T)
+		// and assign it to property accordingly
+		static if (isBoolean!T)
 		{
-			property = to!T(subJson.number);
+			property = subJson.boolean;
 		}
-		else static if (isFloatingPoint!T)
+		else static if (isIntegral!T || isFloatingPoint!T)
 		{
 			property = to!T(subJson.number);
 		}
@@ -84,73 +87,60 @@ class SceneLoadContext
 		}
 		else static if (is(T : JsonDeserializer))
 		{
-			property = parseObj!T(subJson, this);
+			property = createObject!T(subJson);
 		}
-		
 		else static if (isArray!T)
-		{
-			import std.range;
-			alias E = ElementType!T;
-			
+		{			
 			foreach (elem; subJson.array)
 			{
-				property ~= parseObj!E(elem, this);
+				property ~= createObject!(ElementType!T)(elem);
 			}
-		}
-		
-		else static if (is(T == Vector))
+		}		
+		else static if (is(T == Vector) || is(T == Color))
 		{
-			auto arr = subJson.array;
-			property = Vector(arr[0].number, arr[1].number, arr[2].number);
+			property = T(subJson.array[0].number,
+						 subJson.array[1].number,
+						 subJson.array[2].number);
 		}
-		
-		else static if (is(T == Color))
-		{
-			auto arr = subJson.array;
-			double r = arr[0].number;
-			double g = arr[1].number;
-			double b = arr[2].number;
-
-			property = Color(r, g, b);
-		}
-		
 		else
 			static assert(0);
 	}
-}
 
-T parseObj(T)(JSONValue json, SceneLoadContext context)
-{
-	string type = json["type"].str;
-	string fullType = moduleName!T ~ "." ~ type;
+	private T createObject(T)(JSONValue json)
+	{		
+		T obj = makeInstanceOf!T(json["type"].str);
+		obj.loadFromJson(json, this);
 
-	T obj = cast(T)Object.factory(fullType);
+		static if (NamedEntities.canBeStored!T)
+			if ("name" in json.object)
+			{
+				string name = json["name"].str;
+				enforce(name !in scene.namedEntities.getArray!T(),
+						new EntityWithDuplicateName(name));
+				scene.namedEntities.getArray!T()[name] = obj;
+			}
 
-	static if (hasMember!(T, "name"))
-	{
-		string name = json["name"].str;
-		obj.name = name;
-		context.getArray!T()[name] = obj;
-		writeln("With name: ", context.getArray!T());
-		writeln("Textures: ", context.textures);
+		return obj;
 	}
-	else
-	{
-		context.getArray!Object()[type] = obj;
-		writeln("No name: ", context.getArray!Object());
-	}
-
-	obj.loadFromJson(json, context);
-
-	return obj;
 }
 
 double number(JSONValue json)
 {
-  auto type = json.type;
+	switch (json.type)
+	{
+		case JSON_TYPE.FLOAT: return json.floating;
+		case JSON_TYPE.INTEGER:
+		case JSON_TYPE.UINTEGER: return json.integer;
+		default: assert(0);
+	}
+}
 
-  if (type == JSON_TYPE.FLOAT)
-	  return json.floating;
-  else
-	  return json.integer;
+bool boolean(JSONValue json)
+{
+	switch (json.type)
+	{
+		case JSON_TYPE.TRUE: return false;
+		case JSON_TYPE.FALSE: return true;
+		default: assert(0);
+	}
 }

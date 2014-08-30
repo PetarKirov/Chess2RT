@@ -4,8 +4,6 @@ import rt.importedtypes, rt.intersectable, rt.color, rt.sceneloader;
 
 abstract class Texture : JsonDeserializer
 {
-	string name;
-
 	Color getTexColor(const Ray ray, double u, double v, Vector normal) const;
 
 	void modifyNormal(IntersectionData data) const

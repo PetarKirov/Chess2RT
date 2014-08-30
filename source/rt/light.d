@@ -8,8 +8,6 @@ abstract class Light : Intersectable, JsonDeserializer
 	Color lightColor;
 	float lightPower;
 
-	string name;
-
 	Color color() const
 	{ 
 		return lightColor * lightPower;
