@@ -14,8 +14,6 @@ class Node : Intersectable, JsonDeserializer
 		transform.reset();
 	}
 
-	string name;
-
 	bool isInside(const Vector p) const
 	{
 		return geom.isInside(transform.undoPoint(p));

@@ -1,17 +1,21 @@
+# Binaries
 bin/
-*.o 
-*.obj 
+*.a
+*.lib
 *.exe
+*.o 
+*.obj
 *.dll
 
 # VisualD and Visual Studio
 *.sln
 *.suo
 *.visualdproj
-*.pdb
 *.exe_cv
+*.pdb
 
 # DUB
+.dub/
 dub.selections.json
 dub.userprefs
-.dub/
+ 

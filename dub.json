@@ -3,10 +3,36 @@
 	"description": "A variation of chess written in D, using raytracer for rendering.",
 	"copyright": "Copyright © 2014, ZombineDev",
 	"authors": [ "ZombineDev" ],
+	"targetType": "executable",
+	"targetPath": "bin/",
+	
 	"dependencies": {
 		"gfm:sdl2": ">=1.1.7",
 		"gfm:math": ">=1.1.7",
 		"ae-graphics": ">=0.0.3",
 		"gfm:image": ">=1.1.7"		
-	}
+	},
+	
+	"configurations": [
+		{
+			"name": "win32",
+			"platforms": ["windows"],
+			"targetPath": "bin/Win32"
+		},
+		{
+			"name": "win64",
+			"platforms": ["windows"],
+			"targetPath": "bin/Win64"
+		},
+		{
+			"name": "linux32",
+			"platforms": ["linux"],
+			"targetPath": "bin/Linux32"
+		},
+		{
+			"name": "linux64",
+			"platforms": ["linux"],
+			"targetPath": "bin/Linux64"
+		}		
+	]
 }

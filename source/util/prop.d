@@ -1,5 +1,9 @@
 module util.prop;
 
+import std.array;
+import util.enumutils;
+import std.typecons, std.traits, std.typetuple;
+
 enum Access
 {
 	None = 0b00,
@@ -9,11 +13,17 @@ enum Access
 }
 
 /// Creates a field and get / set methods
-mixin template property(T, string propertyName, 
+mixin template property(T, string propertyName,
 						Access access = Access.ReadWrite)
 {
-	import std.array;
-	import util.enumutils;
+	mixin (property_impl!(T, propertyName, access));
+}
+
+template property_impl(T, string propertyName, Access access)
+{
+	enum property_impl = field ~ 
+		(access.hasFlags(Access.ReadOnly)? readFunc : "") ~
+		(access.hasFlags(Access.WriteOnly)? writeFunc : "");
 
 	enum typeStr = T.stringof;
 
@@ -39,16 +49,93 @@ mixin template property(T, string propertyName,
 		}
 	}.replaceFirst("T", typeStr)
 	 .replace("propertyName", propertyName);
+}
 
-	mixin(field);
+private:
+alias Element(T) = T;
+alias Array(T) = T[];
+alias AA(T) = T[string];
 
-	static if (access.hasFlags(Access.ReadOnly))
+mixin template generateMembers(alias fun, bool genGetArray, Specs...)
+{
+	alias rep = generateMembers_impl!(fun, false, Specs);	
+
+	mixin(rep.generate());
+
+	static if (genGetArray)
 	{
-		mixin(readFunc);	
-	}	
+		fun!T getArray(T)()
+		{
+			import std.traits;
 
-	static if (access.hasFlags(Access.WriteOnly))
-	{
-		mixin(writeFunc);
+			foreach (spec; rep.specsTuple)
+				static if (isImplicitlyConvertible!(T, spec.Type))
+					return mixin(spec.name);
+
+			static assert(0, "Unknown type!");
+		}
+
+		static bool canBeStored(T)()
+		{
+			return rep.canBeStored!T;
+		}
 	}
+}
+
+template generateMembers_impl(alias fun, bool makeGetArray, Specs...)
+{	
+	template canBeStored(T)
+	{
+	    import std.traits, std.typetuple;
+	    enum isDerivedFromT(Other) = isImplicitlyConvertible!(Other, T);
+	
+	    enum canBeStored = anySatisfy!(isDerivedFromT, Tuple!Specs.Types);
+	}
+
+	alias specsTuple = parseSpecs!Specs;
+	alias Types = Tuple!(Specs).Types;	
+
+	string generate()
+	{
+		string result;	
+		foreach(spec; specsTuple)
+			result ~= fun!(spec.Type).stringof ~ " " ~ spec.name ~ ";\n";
+
+		return result;
+	}
+}
+
+template FieldSpec(T, string s = "")
+{
+    alias Type = T;
+    alias name = s;
+}
+
+//Taken from std.typecons
+template parseSpecs(Specs...)
+{
+    static if (Specs.length == 0)
+    {
+        alias parseSpecs = TypeTuple!();
+    }
+    else static if (is(Specs[0]))
+    {
+        static if (is(typeof(Specs[1]) : string))
+        {
+            alias parseSpecs =
+                TypeTuple!(FieldSpec!(Specs[0 .. 2]),
+						   parseSpecs!(Specs[2 .. $]));
+        }
+        else
+        {
+            alias parseSpecs =
+                TypeTuple!(FieldSpec!(Specs[0]),
+						   parseSpecs!(Specs[1 .. $]));
+        }
+    }
+    else
+    {
+        static assert(0, "Attempted to instantiate Tuple with an "
+					  ~"invalid argument: "~ Specs[0].stringof);
+    }
 }
