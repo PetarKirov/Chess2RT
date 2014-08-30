@@ -9,7 +9,7 @@ enum Stereo3DOffset : byte
 	Right,
 };
 
-class Camera : JsonDeserializer
+class Camera : Deserializable
 {
 	this() { }
 
@@ -137,24 +137,24 @@ class Camera : JsonDeserializer
 		yaw += dx;
 	}
 
-	void loadFromJson(JSONValue json, SceneLoadContext context)
+	void deserialize(Value val, SceneLoadContext context)
 	{
 		this.frameWidth = context.scene.settings.frameWidth;
 		this.frameHeight = context.scene.settings.frameHeight;
 		this.aspect = cast(double)this.frameWidth / this.frameHeight;
 
-		context.set(this.pos, json, "pos");
+		context.set(this.pos, val, "pos");
 
-		context.set(this.yaw, json, "yaw");
-		context.set(this.pitch, json, "pitch");
-		context.set(this.roll, json, "roll");
+		context.set(this.yaw, val, "yaw");
+		context.set(this.pitch, val, "pitch");
+		context.set(this.roll, val, "roll");
 
-		context.set(this.fov, json, "fov");
-		context.set(this.focalPlaneDist, json, "focalPlaneDist");
-		context.set(this.fNumber, json, "fNumber");
-		context.set(this.dof, json, "dof");
-		context.set(this.numSamples, json, "numSamples");
-		context.set(this.stereoSeparation, json, "stereoSeparation");
+		context.set(this.fov, val, "fov");
+		context.set(this.focalPlaneDist, val, "focalPlaneDist");
+		context.set(this.fNumber, val, "fNumber");
+		context.set(this.dof, val, "dof");
+		context.set(this.numSamples, val, "numSamples");
+		context.set(this.stereoSeparation, val, "stereoSeparation");
 		discMultiplier = 10.0 / fNumber;
 	}
 

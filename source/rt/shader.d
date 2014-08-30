@@ -19,7 +19,7 @@ interface IShader
 	Color shade(const Ray ray, const IntersectionData data) const;
 };
 
-abstract class Shader : IShader, BRDF, JsonDeserializer
+abstract class Shader : IShader, BRDF, Deserializable
 {
 	Color color;
 	Scene scene;
@@ -34,7 +34,7 @@ abstract class Shader : IShader, BRDF, JsonDeserializer
 		this.color = color;
 	}
 
-	void loadFromJson(JSONValue json, SceneLoadContext context)
+	void deserialize(Value val, SceneLoadContext context)
 	{
 		this.scene = context.scene;
 	}
@@ -134,11 +134,11 @@ class Lambert : Shader
 		pdf = 1 / (2 * PI);
 	}
 
-	override void loadFromJson(JSONValue json, SceneLoadContext context)
+	override void deserialize(Value val, SceneLoadContext context)
 	{
-		super.loadFromJson(json, context);
+		super.deserialize(val, context);
 		string t;
-		context.set(t, json, "texture");
+		context.set(t, val, "texture");
 		this.texture = context.textures[t];
 	}
 };

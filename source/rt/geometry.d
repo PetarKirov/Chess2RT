@@ -2,7 +2,7 @@
 
 import rt.importedtypes, rt.intersectable, rt.sceneloader;
 
-abstract class Geometry : Intersectable, JsonDeserializer
+abstract class Geometry : Intersectable, Deserializable
 {
 
 }
@@ -52,8 +52,8 @@ class Plane: Geometry
 		}
 	}
 
-	void loadFromJson(JSONValue json, SceneLoadContext context)
+	void deserialize(Value val, SceneLoadContext context)
 	{
-		context.set(this.y, json, "y");
+		context.set(this.y, val, "y");
 	}
 }

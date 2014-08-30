@@ -2,7 +2,7 @@
 
 import rt.importedtypes, rt.intersectable, rt.color, rt.sceneloader;
 
-abstract class Texture : JsonDeserializer
+abstract class Texture : Deserializable
 {
 	Color getTexColor(const Ray ray, double u, double v, Vector normal) const;
 
@@ -49,11 +49,11 @@ class Checker: Texture
 		return white ? color2 : color1;
 	}
 
-	void loadFromJson(JSONValue json, SceneLoadContext context)
+	void deserialize(Value val, SceneLoadContext context)
 	{
-		context.set(this.color1, json, "color1");
-		context.set(this.color2, json, "color2");
-		context.set(this.size, json, "size");
+		context.set(this.color1, val, "color1");
+		context.set(this.color2, val, "color2");
+		context.set(this.size, val, "size");
 	}
 
 	override string toString() const

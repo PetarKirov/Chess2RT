@@ -3,7 +3,7 @@
 import rt.importedtypes;
 import rt.color, rt.intersectable, rt.sceneloader;
 
-abstract class Light : Intersectable, JsonDeserializer
+abstract class Light : Intersectable, Deserializable
 {
 	Color lightColor;
 	float lightPower;
@@ -32,10 +32,10 @@ abstract class Light : Intersectable, JsonDeserializer
 	 */
 	void getNthSample(size_t sampleIdx, const Vector shadePos, ref Vector samplePos, ref Color color) const;
 
-	void loadFromJson(JSONValue json, SceneLoadContext context)
+	void deserialize(Value val, SceneLoadContext context)
 	{
-		context.set(this.lightColor, json, "color");
-		context.set(this.lightPower, json, "power");
+		context.set(this.lightColor, val, "color");
+		context.set(this.lightPower, val, "power");
 	}
 }
 
@@ -64,10 +64,10 @@ class PointLight : Light
 		return 0;
 	}
 
-	override void loadFromJson(JSONValue json, SceneLoadContext context)
+	override void deserialize(Value val, SceneLoadContext context)
 	{
-		super.loadFromJson(json, context);
+		super.deserialize(val, context);
 
-		context.set(this.pos, json, "pos");
+		context.set(this.pos, val, "pos");
 	}
 }
