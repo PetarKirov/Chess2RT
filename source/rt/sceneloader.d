@@ -1,11 +1,29 @@
 ﻿module rt.sceneloader;
 
+import sdlang;
 import std.json, std.file, std.conv, std.traits, std.range, std.exception;
 
 import rt.exception, rt.scene, rt.importedtypes, rt.color;
 import util.factory2;
 
-alias Value = JSONValue;
+alias Value = Tag;
+
+//class Value { }
+//
+//class JSONValue : Value
+//{
+//    JSONValue val;
+//    this(JSONValue v) { val = v; }
+//}
+//
+//class SDLValue : Value
+//{
+//    Tag val;
+//    this(Tag v) { val = v; }
+//}
+//
+//Value make(JSONValue v) { return new JSONValue(v); }
+//Value make(SDLValue v) { return new SDLValue(v); }
 
 // Classes that support JSON deserializing should implement this interface.
 interface Deserializable
@@ -17,10 +35,12 @@ Scene parseSceneFromFile(string fileName)
 {
 	try
 	{
-		return fileName
+		return "data/lecture4.sdl"
 			.readText
-		 	.parseJSON
-		 	.deserialize(new SceneLoadContext());
+		 	//.parseJSON
+			.parseSource.tags[0]
+			//.make()
+		 	.load(new SceneLoadContext());
 	}
 	catch (FileException fEx)
 	{
@@ -28,15 +48,20 @@ Scene parseSceneFromFile(string fileName)
 	}
 	catch (JSONException jsonEx)
 	{
-		throw new InvalidSceneException("Invalid json in scene file!", jsonEx);
+		throw new InvalidSceneException("Invalid JSON in scene file!", jsonEx);
+	}
+	catch (SDLangParseException sdlEx)
+	{
+		throw new InvalidSceneException("Invalid SDL in scene file!", sdlEx);
 	}
 }
 
-Scene deserialize(Value val, SceneLoadContext context)
+Scene load(Value val, SceneLoadContext context)
 {
 	auto scene = new Scene();
 
 	context.scene = scene;
+	context.set(scene.name, val, "Name");
 	context.set(scene.settings, val, "GlobalSettings");
 	context.set(scene.camera, val, "Camera");
 	context.set(scene.environment, val, "Environment");
@@ -49,13 +74,44 @@ Scene deserialize(Value val, SceneLoadContext context)
 	return scene;
 }
 
+import std.stdio;
+
 class SceneLoadContext
 {
 	Scene scene;
 	alias get this;
 	NamedEntities get() { return scene.namedEntities; }	
 
-	void set(T)(ref T property, Value val, string propertyName)
+	void print(Tag tag)
+	{
+		writeln(tag.name);
+
+		foreach(t; tag.tags)
+			print(t);
+	}
+
+
+	void set(T)(ref T property, Tag tag, string propertyName)
+	{
+		print(tag);
+		
+
+		if (propertyName !in tag.tags)
+		{	
+			static if (is(T == class))
+				property = new T();
+			return;
+		}
+
+		auto subTag = tag.tags[propertyName];
+	}
+
+	private T createObject(T)(Tag tag)
+	{
+		return new T();
+	}
+
+	void set(T)(ref T property, JSONValue json, string propertyName)
 	{
 		// First - check if the property is specified in the JSON:
 		// Construct default if nothing specified.
@@ -63,7 +119,7 @@ class SceneLoadContext
 		// so we only need to instanciate classes.
 		// Note: For compatability with Phobos DMD2.065
 		// Note: we're looking in .object, instead of the json itself.
-		if (propertyName !in val.object)
+		if (propertyName !in json.object)
 		{	
 			static if (is(T == class))
 				property = new T();
@@ -71,7 +127,7 @@ class SceneLoadContext
 		}
 		
 		// Next - get the corresponding value (built-in, array or object)
-		auto subJson = val[propertyName];
+		auto subJson = json[propertyName];
 		
 		// and assign it to property accordingly
 		static if (isBoolean!T)
@@ -107,15 +163,15 @@ class SceneLoadContext
 			static assert(0);
 	}
 
-	private T createObject(T)(Value val)
+	private T createObject(T)(JSONValue json)
 	{
-		T obj = makeInstanceOf!T(val["type"].str);
-		obj.deserialize(val, this);
+		T obj = makeInstanceOf!T(json["type"].str);
+		obj.deserialize(json, this);
 
 		static if (NamedEntities.canBeStored!T)
-			if ("name" in val.object)
+			if ("name" in json.object)
 			{
-				string name = val["name"].str;
+				string name = json["name"].str;
 				enforce(name !in scene.namedEntities.getArray!T(),
 						new EntityWithDuplicateName(name));
 				scene.namedEntities.getArray!T()[name] = obj;

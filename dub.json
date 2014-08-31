@@ -10,7 +10,8 @@
 		"gfm:sdl2": ">=1.1.7",
 		"gfm:math": ">=1.1.7",
 		"ae-graphics": ">=0.0.3",
-		"gfm:image": ">=1.1.7"		
+		"gfm:image": ">=1.1.7",
+		"sdlang-d": ">=0.8.4"		
 	},
 	
 	"configurations": [
@@ -34,5 +35,9 @@
 			"platforms": ["linux"],
 			"targetPath": "bin/Linux64"
 		}		
-	]
+	],
+	
+	"subConfigurations": {
+		"sdlang-d": "library"
+	}
 }

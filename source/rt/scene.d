@@ -37,6 +37,7 @@ struct NamedEntities
 
 class Scene
 {
+	string name;
 	GlobalSettings settings;
 	Environment environment;
 	Camera camera;
