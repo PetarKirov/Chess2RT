@@ -1,0 +1,59 @@
+Scene {
+	Name "lecture4"
+	
+	GlobalSettings {
+		frameWidth			640
+		frameHeight			480
+		ambientLightColor	0.0 0.0 0.0
+	}
+
+	Camera {
+		pos			0.0 165.0 0.0
+		aspect		1.33333
+		yaw			0.0
+		pitch		-30.0
+		roll		0.0
+		fov			90.0
+	}
+
+	Lights {
+		PointLight {
+			name	"l1"
+			pos		-30.0 100.0 250.0
+			color	1.0 1.0 1.0
+			power	50000
+		}
+	}
+
+	Geometries {
+		Plane {
+			name	"floor"
+			y		2
+		}
+	}
+
+	Textures {
+		Checker {
+			name		"checker"
+			color1		0.0 0.0 0.0
+			color2		0.0 0.5 1.0
+			size		5
+		}
+	}
+
+	Shaders {
+		Lambert {
+			name		"floor_shader"
+			texture		"checker"
+		}
+	}
+
+	Nodes {
+		Node {
+			name		"floor"
+			type		"Node"
+			geometry	"floor"
+			shader		"floor_shader"
+		}
+	}
+}
