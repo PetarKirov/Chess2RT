@@ -58,20 +58,23 @@ Scene parseSceneFromFile(string fileName)
 
 Scene load(Value val, SceneLoadContext context)
 {
-	auto scene = new Scene();
+	context.scene = new Scene();
 
-	context.scene = scene;
-	context.set(scene.name, val, "Name");
-	context.set(scene.settings, val, "GlobalSettings");
-	context.set(scene.camera, val, "Camera");
-	context.set(scene.environment, val, "Environment");
-	context.set(scene.lights, val, "Lights");
-	context.set(scene.geometries, val, "Geometries");
-	context.set(scene.textures, val, "Textures");
-	context.set(scene.shaders, val, "Shaders");
-	context.set(scene.nodes, val, "Nodes");
+	with (context)
+	with (scene)
+	{
+		setTo(val, name, "Name");
+		setTo(val, settings, "GlobalSettings");
+		setTo(val, camera, "Camera");
+		setTo(val, environment, "Environment");
+		setTo(val, lights, "Lights");
+		setTo(val, geometries, "Geometries");
+		setTo(val, textures, "Textures");
+		setTo(val, shaders, "Shaders");
+		setTo(val, nodes, "Nodes");
+	}
 
-	return scene;
+	return context.scene;
 }
 
 import std.stdio;
@@ -79,10 +82,11 @@ import std.stdio;
 class SceneLoadContext
 {
 	Scene scene;
-	alias get this;
-	NamedEntities get() { return scene.namedEntities; }	
 
-	void print(Tag tag)
+	NamedEntities named() { return scene.namedEntities; }	
+
+	/// For debugging...
+	private void print(Tag tag)
 	{
 		writeln(tag.name);
 
@@ -90,25 +94,85 @@ class SceneLoadContext
 			print(t);
 	}
 
+	T get(T)(Tag tag, string propertyName)
+	{
+		T result;
+		setTo(tag, result, propertyName);
+		return result;
+	}
 
 	void set(T)(ref T property, Tag tag, string propertyName)
 	{
+		setTo(tag, property, propertyName);
+	}
+
+	void setTo(T)(Tag tag, ref T property, string propertyName)
+	{
 		print(tag);
-		
+
 
 		if (propertyName !in tag.tags)
 		{	
 			static if (is(T == class))
 				property = new T();
-			return;
+			return; 
 		}
 
-		auto subTag = tag.tags[propertyName];
+		Tag subTag = tag.tags[propertyName][0];
+
+		static if (isBoolean!T || isNumeric!T || isSomeString!T)
+		{
+			static if (!isIntegral!T)
+				property = subTag.values[0].get!T;
+			else
+				property = to!T(subTag.values[0].get!long);
+		}
+		else static if (is(T : Deserializable))
+		{
+			property = createObject!T(subTag);
+		}
+		else static if (isArray!T)
+		{			
+			foreach (elem; subTag.tags)
+			{
+				property ~= createObject!(ElementType!T)(elem);
+			}
+		}
+		else static if (is(T == Vector) || is(T == Color))
+		{
+			property = T(subTag.values[0].get!double,
+			subTag.values[1].get!double,
+			subTag.values[2].get!double);
+		}
+		else
+		{
+			pragma(msg, T);
+			static assert(0);
+		}
 	}
 
 	private T createObject(T)(Tag tag)
 	{
-		return new T();
+		T obj = makeInstanceOf!T(tag.name);
+		obj.deserialize(tag, this);
+
+		static if (NamedEntities.canBeStored!T)
+			if ("name" in tag.tags)
+		{
+			string name = this.get!string(tag, "name");
+			enforce(name !in scene.namedEntities.getArray!T(),
+			        new EntityWithDuplicateName(name));
+			scene.namedEntities.getArray!T()[name] = obj;
+		}
+
+		return obj;
+	}
+
+	ref T setTo(Т)(JSONValue json, ref T property, string propertyName)
+	{
+		set(property, json, propertyName);
+
+		return property;
 	}
 
 	void set(T)(ref T property, JSONValue json, string propertyName)
@@ -152,7 +216,7 @@ class SceneLoadContext
 			{
 				property ~= createObject!(ElementType!T)(elem);
 			}
-		}		
+		}
 		else static if (is(T == Vector) || is(T == Color))
 		{
 			property = T(subJson.array[0].number,
