@@ -139,7 +139,7 @@ class Lambert : Shader
 		super.deserialize(val, context);
 		string t;
 		context.set(t, val, "texture");
-		this.texture = context.textures[t];
+		this.texture = context.named.textures[t];
 	}
 };
 

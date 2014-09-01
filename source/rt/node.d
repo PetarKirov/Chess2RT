@@ -72,7 +72,8 @@ class Node : Intersectable, Deserializable
 		context.set(g, val, "geometry");
 		context.set(s, val, "shader");
 
-		this.geom = context.geometries[g];
-		this.shader = context.shaders[s];
+		this.geom = context.named.geometries[g];
+		this.shader = context.named.shaders[s];
 	}
-};
+}
+
