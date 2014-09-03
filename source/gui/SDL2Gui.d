@@ -47,11 +47,13 @@ struct SDL2Gui
 								  surface.width, surface.height);
 		this.width = width;
 		this.height = height;
+
+		renderer.setColor(0, 0, 0, 255);
+		renderer.clear();
 	}
 
 	void draw(SRC)(auto ref SRC image) if (isView!SRC)
 	{
-
 		uint* pixels = cast(uint*)surface.pixels;
 		
 		int rs = surface.pixelFormat.Rshift;
@@ -63,7 +65,6 @@ struct SDL2Gui
 				pixels[y * surface.width + x] = to!uint(image[x, y]);
 
 		texture.updateTexture(surface.pixels, toInt(surface.pitch));
-		renderer.clear();
 		renderer.copy(texture, 0, 0);
 		renderer.present();
 	}

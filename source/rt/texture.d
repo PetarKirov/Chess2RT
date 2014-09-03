@@ -41,8 +41,8 @@ class Checker: Texture
 		// -> 1, -3
 		import std.conv;
 
-		int x = to!int(u / size);
-		int y = to!int(v / size);
+		int x = to!int(floor(u / size));
+		int y = to!int(floor(v / size));
 
 		int white = (x + y) % 2;
 
