@@ -6,18 +6,17 @@ public import gfm.math.funcs;
 public import gfm.math.vector;
 public import gfm.math.matrix;
 import gfm.math.box;
-import gfm.math.shapes;
 
 alias Vector = gfm.math.vector.vec3d;
 alias Matrix = gfm.math.matrix.mat3d;
 
 struct Ray
 {
-	gfm.math.shapes.Ray!(double, 3) impl;
+	Vector orig;
+	Vector dir;
+
 	int flags;
 	int depth;
-
-	alias impl this;
 }
 
 Vector mul(const Vector v, const Matrix m)

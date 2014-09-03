@@ -43,7 +43,7 @@ class Renderer
 
 		// 1) First pass - use very coarse resolution rendering,
 		// tracing a single ray for a 16x16 block:
-		if (scene.settings.prepassEnabled || scene.settings.GIEnabled)			
+		if (scene.settings.prepassEnabled || scene.settings.GIEnabled)
 			foreach(r; buckets)
 			{
 				for (int dy = 0; dy < r.height; dy += 16)
@@ -61,7 +61,7 @@ class Renderer
 					}
 				}
 			}
-		
+
 
 		// 2) Second pass - shoot _one_ ray per pixel:
 		foreach (b; buckets)
@@ -144,20 +144,11 @@ private:
 
 	bool drawRect(box2i r, const Color c)
 	{
-		//if (render_async && !rendering) return false;
-
 		r.clip(outputImage.w, outputImage.h);
 
-		//int rs = screen->format->Rshift;
-		//int gs = screen->format->Gshift;
-		//int bs = screen->format->Bshift;
-
-		//Uint32 clr = c.toRGB32(rs, gs, bs);
 		foreach (y; r.min.y .. r.max.y)
 			foreach (x; r.min.x .. r.max.x)
 				outputImage[x, y] = c;
-
-		//SDL_UpdateRect(screen, r.x0, r.y0, r.w, r.h);
 
 		return true;
 	}
@@ -219,7 +210,7 @@ private:
 				average += raytrace(scene.camera.getScreenRay(x + uniform(0.0, 1.0) * dx, y +uniform(0.0, 1.0) * dy));
 			else
 			{
-				average += Color.combineStereo(
+				average += combineStereo(
 					raytrace(scene.camera.getScreenRay(x + uniform(0.0, 1.0) * dx, y + uniform(0.0, 1.0) * dy, Stereo3DOffset.Left)),
 					raytrace(scene.camera.getScreenRay(x + uniform(0.0, 1.0) * dx, y + uniform(0.0, 1.0) * dy, Stereo3DOffset.Right))
 					);
@@ -246,7 +237,7 @@ private:
 		if (scene.camera.stereoSeparation == 0)
 			return raytrace(scene.camera.getScreenRay(x, y));
 		else				
-			return Color.combineStereo( // trace one ray through the left camera and one ray through the right, then combine the results
+			return combineStereo( // trace one ray through the left camera and one ray through the right, then combine the results
 								 raytrace(scene.camera.getScreenRay(x, y, Stereo3DOffset.Left)),
 								 raytrace(scene.camera.getScreenRay(x, y, Stereo3DOffset.Right)));
 	}

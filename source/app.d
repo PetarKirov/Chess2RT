@@ -19,7 +19,7 @@ void runInScope()
 }
 
 void main()
-{	
+{
 	runInScope();
 
 	diag();
