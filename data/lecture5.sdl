@@ -1,0 +1,47 @@
+﻿Scene {
+	Name "lecture5"
+
+	GlobalSettings {
+		frameWidth          640
+		frameHeight         480
+		ambientLightColor 	0.2 0.2 0.2
+	}
+
+	Camera {
+		pos			0 165 0
+		yaw			0
+		pitch		-30
+		roll		0
+		fov			90
+	}
+
+	Geometries {
+		Plane {
+			name 		"floor"
+			y			-0.01
+		}
+	}
+
+	Textures {
+		BitmapTexture {
+			name		"bmp"
+			file		"floor.bmp"
+			scaling		0.005
+		}
+	}
+
+	Shaders {
+		Lambert {
+			name		"floor_shader"
+			texture 	"bmp"
+		}
+	}
+
+	Nodes {
+		Node {
+			name 		"floor"
+			geometry	"floor"
+			shader		"floor_shader"
+		}
+	}
+}

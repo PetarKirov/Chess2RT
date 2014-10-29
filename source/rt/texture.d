@@ -1,18 +1,19 @@
 ﻿module rt.texture;
 
 import rt.importedtypes, rt.intersectable, rt.color, rt.sceneloader;
+import rt.bitmap;
 
 abstract class Texture : Deserializable
 {
-	Color getTexColor(const Ray ray, double u, double v, Vector normal) const;
+	Color getTexColor(in Ray ray, double u, double v, in Vector normal) const;
 
-	void modifyNormal(IntersectionData data) const
+	void modifyNormal(in IntersectionData data) const
 	{
 	}
 }
 
 /// A checker texture
-class Checker: Texture
+class Checker : Texture
 {
 	Color color1, color2; /// the colors of the alternating squares
 	double size; /// the size of a square side, in world units
@@ -28,7 +29,7 @@ class Checker: Texture
 		this.size = size;
 	}
 
-	override Color getTexColor(const Ray ray, double u, double v, Vector normal) const
+	override Color getTexColor(in Ray ray, double u, double v, in Vector normal) const
 	{
 		/*
 		 * The checker texture works like that. Partition the whole 2D space
@@ -59,7 +60,61 @@ class Checker: Texture
 	override string toString() const
 	{
 		import std.string;
-		
+
 		return format("%s %s %s", color1, color2, size);
 	}
+}
+
+class BitmapTexture : Texture
+{
+	this()
+	{
+		this(1, 2.2f);
+	}
+
+	this (float scaling, float assumedGamma)
+	{
+		this.scaling = scaling;
+		this.assumedGamma = assumedGamma;
+	}
+
+	override Color getTexColor(in Ray ray, double u, double v, in Vector normal) const
+	{
+		u *= scaling;
+		v *= scaling;
+		// u, v range in [0..1):
+		u = u - floor(u);
+		v = v - floor(v); 
+		float tx = cast(float) u * bmp.width; // u is in [0..textureWidth)
+		float ty = cast(float) v * bmp.height; // v is in [0..textureHeight)
+		return bmp.getFilteredPixel(tx, ty); // fetch from the bitmap with bilinear filtering
+	}
+
+	void deserialize(Value val, SceneLoadContext context)
+	{
+		context.set(this.scaling, val, "scaling");
+		context.set(this.assumedGamma, val, "assumedGamma");
+		bmp = Bitmap();
+		string fileName = context.get!string(val, "file");
+		bmp.loadImage(fileName);
+
+		if (assumedGamma == 2.2f)
+			bmp.decompressGamma_sRGB();
+		else if (assumedGamma != 1 &&
+		         assumedGamma > 0 && assumedGamma < 10)
+			bmp.decompressGamma(assumedGamma);
+	}
+
+private:
+	Bitmap bmp;
+	
+	/// Scaling for the input (u, v) coords.
+	/// Larger values SHRINK the texture on-screen.
+	float scaling = 1;
+	
+	/// assumed gamma compression of the input image.
+	/// - if  == 1, no gamma decompression is done.
+	/// - if  == 2.2 (a special value) - sRGB decompression is done.
+	/// - otherwise, gamma decompression with the given power is performed
+	float assumedGamma = 2.2f;
 }

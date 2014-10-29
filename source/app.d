@@ -1,13 +1,13 @@
 module app;
 
-import std.stdio, std.typecons;
+import std.getopt, std.path, std.stdio, std.typecons;
 import gui.guidemo, gui.rtdemo, gui.sdl2gui;
 import std.experimental.logger;
 
-void runInScope()
+void runInScope(string filePath)
 {
 	//auto app = scoped!GuiDemo(800, 600, "Test GUI");
-	auto app = scoped!RTDemo(stdlog);
+	auto app = scoped!RTDemo(stdlog, filePath);
 	bool normalQuit = app.run();
 
 	if (normalQuit)
@@ -18,9 +18,13 @@ void runInScope()
 	writeln("Close to the end...");
 }
 
-void main()
+void main(string[] args)
 {
-	runInScope();
+	string sceneFilePath = "data/lecture4.sdl";
+
+	getopt(args, "file", &sceneFilePath);
+
+	runInScope(sceneFilePath);
 
 	diag();
 

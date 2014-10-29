@@ -23,40 +23,6 @@ pure nothrow @safe @nogc
 	}
 }
 
-private pure nothrow @safe @nogc
-{
-	ubyte convertTo8bit(float x)
-	{
-		if (x <= 0f) return 0;
-		if (x >= 1f) return 255;
-		return roundToByte(x);
-	}
-
-	//TODO: Check sRGB transform formula
-	ubyte convertTo8bit_sRGB(float x)
-	{
-		if (x <= 0) return 0;
-		if (x >= 1) return 255;
-
-		// sRGB transform:
-		if (x <= 0.0031308f)
-			x = x * 12.02f;
-		else
-			x = 1.055 * x^^(1 / 2.4) - 0.055;
-			//x = (1.0f + a) * powf(x, 1.0f / 2.4f) - a; //const float a = 0.055f;
-
-		return roundToByte(x);
-	}
-
-	ubyte roundToByte(float x)
-	{
-		return cast(ubyte)floor(x * 255.0f);
-	}
-
-	ubyte SRGB_CompressCache[4097];
-	float SRGB_DeCompressCache[4097];
-}
-
 /// Represents a color, using floating point components in [0..1]
 struct Color 
 {
@@ -66,8 +32,20 @@ struct Color
 		struct { float r, g, b;	}
 	}
 
-pure nothrow @safe @nogc
-{
+	void toString(scope void delegate(const(char)[]) sink) const
+	{
+		import std.conv;
+		sink("(");
+		sink(to!string(r));
+		sink(", ");
+		sink(to!string(g));
+		sink(", ");
+		sink(to!string(b));
+		sink(")");
+	}
+
+pure nothrow @safe @nogc:
+
 	this(float r_, float g_, float b_) //!< Construct a color from floatingpoint values
 	{
 		this.r = r_;
@@ -82,21 +60,7 @@ pure nothrow @safe @nogc
 		g = ((rgbColor >> 8) & 0xff) * divider;
 		b = ((rgbColor >> 0) & 0xff) * divider;
 	}
-}
-	void toString(scope void delegate(const(char)[]) sink) const
-	{
-		import std.conv;
-		sink("(");
-		sink(to!string(r));
-		sink(", ");
-		sink(to!string(g));
-		sink(", ");
-		sink(to!string(b));
-		sink(")");
-	}
 
-pure nothrow @safe @nogc
-{
 	/// 0 = desaturate; 1 = don't change
 	void adjustSaturation(float amount) 
 	{
@@ -140,10 +104,9 @@ pure nothrow @safe @nogc
 		g *= rdivider;
 		b *= rdivider;
 	}
-}
 
-const pure nothrow @safe @nogc
-{
+const:
+
 	Color opBinary(string op)(const Color rhs)
 		if (op == "+" || op == "-" || op == "*")
 	{
@@ -153,7 +116,7 @@ const pure nothrow @safe @nogc
 	Color opBinary(string op)(float f)
 		if (op == "*" || op == "/")
 	{
-		return mixin("Color(r" ~ op ~ "f, g" ~ op ~ "f, b" ~ op ~ "f)");
+		return mixin("Color(r " ~ op ~ " f, g " ~ op ~ " f, b " ~ op ~ " f)");
 	}
 
 	/// get the intensity of the color (direct)
@@ -184,21 +147,57 @@ const pure nothrow @safe @nogc
 	{
 		return this.toRGB32();
 	}
+
+	static Color black() { return Color(0f, 0f, 0f); }
+	static Color white() { return Color(1f, 1f, 1f); }
 }
 
-pure nothrow @safe @nogc:
-	//TODO: Add predefined colors as static members
-	//Like WPF's Color class
-
-	/// make black
-	@disable
-	void makeZero()
+private pure nothrow @safe @nogc
+{
+	ubyte convertTo8bit(float x)
 	{
-		r = g = b = 0;
+		if (x <= 0f) return 0;
+		if (x >= 1f) return 255;
+		return roundToByte(x);
 	}
 	
-	static Color black()
+	//TODO: Check sRGB transform formula
+	ubyte convertTo8bit_sRGB(float x)
 	{
-		return Color(0f, 0.0f, 0f);
+		if (x <= 0) return 0;
+		if (x >= 1) return 255;
+		
+		// sRGB transform:
+		if (x <= 0.0031308f)
+			x = x * 12.02f;
+		else
+			x = 1.055 * x^^(1 / 2.4) - 0.055;
+		//x = (1.0f + a) * powf(x, 1.0f / 2.4f) - a; //const float a = 0.055f;
+		
+		return roundToByte(x);
 	}
+	
+	ubyte roundToByte(float x)
+	{
+		return cast(ubyte)floor(x * 255.0f);
+	}
+	
+	ubyte SRGB_CompressCache[4097];
+	float SRGB_DeCompressCache[4097];
+}
+
+// TODO: Add more colors
+/// A set of predefined colors
+immutable(Color[string]) namedColors;
+
+static this()
+{
+	namedColors = 
+	[
+		"black" : Color(0f, 0f, 0f),
+		"white" : Color(1f, 1f, 1f),
+		"red" : Color(1f, 0f, 0f),
+		"green" : Color(0f, 1f, 0f),
+		"blue" : Color(0f, 0f, 1f),
+	];
 }
