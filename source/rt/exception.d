@@ -55,3 +55,33 @@ class EntityWithDuplicateName : InvalidSceneException
 			super(msg, next, file, line);
 		}
 }
+
+class ImageTypeException : RTException
+{
+	@safe pure nothrow 
+	this(string msg = "Image error!", Throwable next = null,
+	     string file = __FILE__, size_t line = __LINE__)
+	{
+		super(msg, next, file, line);
+	}
+}
+
+class UnknownImageTypeException : ImageTypeException
+{
+	@safe pure nothrow 
+	this(string msg = "Unknown image type!", Throwable next = null,
+	     string file = __FILE__, size_t line = __LINE__)
+	{
+		super(msg, next, file, line);
+	}
+}
+
+class ErorLoadingImageException : ImageTypeException
+{
+	@safe pure nothrow 
+	this(string msg = "Error loading image!", Throwable next = null,
+	     string file = __FILE__, size_t line = __LINE__)
+	{
+		super(msg, next, file, line);
+	}
+}

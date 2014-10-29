@@ -11,12 +11,12 @@ struct Board
 		uint movesCounter;
 	}
 
-	Piece opIndex(Col c, Row r)
+	inout(Piece) opIndex(Col c, Row r) inout
 	{
 		return board[(8 - r) * 8 + c];
 	}
 
-	Piece opIndex(const(char)[2] c)
+	inout(Piece) opIndex(const(char)[2] c) inout
 	{
 		return this[
 			cast(Col)(c[0] - 'a'),

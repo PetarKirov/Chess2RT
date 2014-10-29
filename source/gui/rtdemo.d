@@ -5,19 +5,21 @@ import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
 
 class RTDemo : GuiBase!Color
 {
+	string sceneFilePath;
 	Scene scene;
 	bool rendered;
 
-	this(Logger log)
+	this(Logger log, string sceneFilePath_)
 	{
 		super(log);
+		this.sceneFilePath = sceneFilePath_;
 	}
 
 	override void init()
 	{
-		log.log("Loading scene!");
+		log.log("Loading scene: " ~ sceneFilePath);
 
-		scene = parseSceneFromFile(`data/lecture4.json`);
+		scene = parseSceneFromFile(sceneFilePath);
 
 		super.initGui(scene.settings.frameWidth,
 					  scene.settings.frameHeight,
