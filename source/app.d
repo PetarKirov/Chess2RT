@@ -2,12 +2,12 @@ module app;
 
 import std.stdio, std.typecons;
 import gui.guidemo, gui.rtdemo, gui.sdl2gui;
-import std.logger;
+import std.experimental.logger;
 
 void runInScope()
 {
 	//auto app = scoped!GuiDemo(800, 600, "Test GUI");
-	auto app = scoped!RTDemo(new StdIOLogger(LogLevel.trace));
+	auto app = scoped!RTDemo(stdlog);
 	bool normalQuit = app.run();
 
 	if (normalQuit)

@@ -1,6 +1,6 @@
 ﻿module gui.rtdemo;
 
-import std.logger;
+import std.experimental.logger;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
 
 class RTDemo : GuiBase!Color
