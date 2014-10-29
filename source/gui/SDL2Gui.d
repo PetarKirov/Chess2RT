@@ -1,6 +1,6 @@
 ﻿module gui.sdl2gui;
 
-import std.logger;
+import std.experimental.logger;
 import gfm.sdl2, ae.utils.graphics.image;
 import util.prop;
 
@@ -106,7 +106,7 @@ void testGUIMain()
 	
 	size_t w = 640, h = 480;
 
-	auto gui = SDL2Gui(w, h, "Pulsing circle", new StdIOLogger(LogLevel.trace));
+	auto gui = SDL2Gui(w, h, "Pulsing circle", stdlog);
 	
 	double radius = 50.0;
 	

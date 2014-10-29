@@ -1,6 +1,6 @@
 ﻿module gui.guibase;
 
-import std.logger;
+import std.experimental.logger;
 import ae.utils.graphics.image;
 
 import gui.appsceleton, gui.sdl2gui;
@@ -22,7 +22,7 @@ abstract class GuiBase(C) : AppSceleton
 	
 	this(size_t width, size_t height, string windowTitle)
 	{
-		log = new StdIOLogger(LogLevel.trace);
+		log = stdlog;
 		initGui(width, height, windowTitle);
 	}
 
