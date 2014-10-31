@@ -33,20 +33,20 @@ enum RayFlags
 //	}
 //}
 
-Vector reflect(const Vector ray, const Vector norm)
+Vector reflect(const Vector ray, const Vector norm) @nogc
 {
 	Vector result = ray - 2 * dot(ray, norm) * norm;
 	result.normalize();
 	return result;
 }
 
-Vector faceforward(const Vector ray, const Vector norm)
+Vector faceforward(const Vector ray, const Vector norm) @nogc
 {
 	if (dot(ray, norm) < 0) return norm;
 	else return -norm;
 }
 
-Vector project(const Vector v, int a, int b, int c)
+Vector project(const Vector v, int a, int b, int c) @nogc
 {
 	Vector result;
 	result[a] = v[0];
@@ -56,7 +56,7 @@ Vector project(const Vector v, int a, int b, int c)
 }
 
 
-Vector unproject(const Vector v, int a, int b, int c)
+Vector unproject(const Vector v, int a, int b, int c) @nogc
 {
 	Vector result;
 	result[0] = v[a];
@@ -65,7 +65,7 @@ Vector unproject(const Vector v, int a, int b, int c)
 	return result;
 }
 
-Ray project(Ray v, int a, int b, int c)
+Ray project(Ray v, int a, int b, int c) @nogc
 {
 	v.orig = project(v.orig, a, b, c);
 	v.dir = project(v.dir, a, b, c);

@@ -28,6 +28,8 @@ class RTDemo : GuiBase!Color
 		//Set the screen size according to the settings in the scene file
 		screen.size(scene.settings.frameWidth,
 					scene.settings.frameHeight);
+
+		debug printDebugInfo();
 	}
 
 	override void render()
@@ -51,5 +53,13 @@ class RTDemo : GuiBase!Color
 	~this()
 	{
 		log.log("At ~RTDemo");	
+	}
+
+	void printDebugInfo()
+	{
+		import std.stdio, std.typecons, std.algorithm, std.conv;
+		foreach (namedEntity; scene.namedEntities.tupleof)
+			foreach (name, entity; namedEntity)
+				writefln("'%s' -> %s", name, to!string(entity));
 	}
 }

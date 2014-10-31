@@ -14,6 +14,13 @@ struct Transform
 		Vector offset;
 	}
 
+	void toString(scope void delegate(const(char)[]) sink) const
+	{
+		sink(typeid(this).toString());
+	}
+
+@nogc:
+
 	void reset()
 	{
 		transform = Matrix.identity;

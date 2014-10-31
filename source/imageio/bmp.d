@@ -6,7 +6,7 @@ import rt.exception;
 
 void loadBmp(C)(ref Image!C result, string filePath)
 {
-	throw new ErorLoadingImageException("Not implemented yet!");
+	//TODO...
 }
 
 struct Image(C)

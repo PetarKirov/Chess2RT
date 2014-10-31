@@ -5,9 +5,13 @@ import rt.bitmap;
 
 abstract class Texture : Deserializable
 {
-	Color getTexColor(in Ray ray, double u, double v, in Vector normal) const;
+	Color getTexColor(in Ray ray, double u, double v, in Vector normal) const @nogc;
 
-	void modifyNormal(in IntersectionData data) const
+	void modifyNormal(in IntersectionData data) const @nogc
+	{
+	}
+
+	void toString(scope void delegate(const(char)[]) sink) const
 	{
 	}
 }
@@ -29,7 +33,7 @@ class Checker : Texture
 		this.size = size;
 	}
 
-	override Color getTexColor(in Ray ray, double u, double v, in Vector normal) const
+	override Color getTexColor(in Ray ray, double u, double v, in Vector normal) const @nogc
 	{
 		/*
 		 * The checker texture works like that. Partition the whole 2D space
@@ -42,8 +46,8 @@ class Checker : Texture
 		// -> 1, -3
 		import std.conv;
 
-		int x = to!int(floor(u / size));
-		int y = to!int(floor(v / size));
+		int x = cast(int)(floor(u / size));
+		int y = cast(int)(floor(v / size));
 
 		int white = (x + y) % 2;
 
@@ -57,11 +61,10 @@ class Checker : Texture
 		context.set(this.size, val, "size");
 	}
 
-	override string toString() const
+	override void toString(scope void delegate(const(char)[]) sink) const
 	{
-		import std.string;
-
-		return format("%s %s %s", color1, color2, size);
+		import util.prettyPrint;
+		mixin(toStrBody);
 	}
 }
 
@@ -78,7 +81,7 @@ class BitmapTexture : Texture
 		this.assumedGamma = assumedGamma;
 	}
 
-	override Color getTexColor(in Ray ray, double u, double v, in Vector normal) const
+	override Color getTexColor(in Ray ray, double u, double v, in Vector normal) const @nogc
 	{
 		u *= scaling;
 		v *= scaling;
@@ -103,6 +106,12 @@ class BitmapTexture : Texture
 		else if (assumedGamma != 1 &&
 		         assumedGamma > 0 && assumedGamma < 10)
 			bmp.decompressGamma(assumedGamma);
+	}
+
+	override void toString(scope void delegate(const(char)[]) sink) const
+	{
+		import util.prettyPrint;
+		mixin(toStrBody);
 	}
 
 private:

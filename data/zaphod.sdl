@@ -1,0 +1,61 @@
+﻿Scene {
+	Name "zaphod"
+
+	GlobalSettings {
+		frameWidth          645
+		frameHeight         430
+		ambientLightColor 	0.0 0.0 0.0
+	}
+
+	Camera {
+		pos					1.5 17 -19.5
+		yaw					5.2
+		pitch				-41.8
+		roll				2.3
+		fov					38
+		dof					true
+		focalPlaneDist		25.29
+	}
+
+	Lights {
+		PointLight {
+			name			"l1"
+			pos     		200 200 -200
+			color   		0.351 0.332 0.187
+			power   		100000
+			fNumber			11
+			numSamples		400
+		}
+	}
+
+	Textures {
+		BitmapTexture {
+			name			"paper"
+			file			"texture/zaphod.bmp"
+			assumedGamma	2.2
+		}
+	}
+
+	Shaders {
+		Lambert {
+			name		"paper"
+			texture 	"paper"
+		}
+	}
+
+	Geometries {
+		Plane {
+			name	"paper"
+			y		0
+		}
+	}
+
+	Nodes {
+		Node {
+			name 		"book"
+			geometry	"paper"
+			shader		"paper"
+			scale		10 10 10
+		}
+	}
+}
