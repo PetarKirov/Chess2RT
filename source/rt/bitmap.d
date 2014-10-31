@@ -11,18 +11,18 @@ struct Bitmap
 {
 	Image!Color data;
 
-	@property const
+	@property const @nogc
 	{
 		uint width() { return data.width; }
 		uint height() { return data.height; }
 	}
 
 	/// Gets the pixel at coordinates (x, y).
-	/// Returns black if (x, y) is outside of the image.
+	/// Returns red if (x, y) is outside of the image.
 	inout(Color) getPixel(uint x, uint y) inout
 	{
 		if (isInvalidPos(x, y))
-			return namedColors["black"];
+			return NamedColors.red;
 		else
 			return data[x, y];
 	}
@@ -41,7 +41,7 @@ struct Bitmap
 	@disable
 	void freeMem() { data.alloc(0, 0); }
 
-	private bool isInvalidPos(uint x, uint y) const
+	private bool isInvalidPos(uint x, uint y) const @nogc
 	{
 		return data.pixels.length == 0 ||
 			!data.width ||
@@ -52,10 +52,10 @@ struct Bitmap
 
 	/// Gets a bilinear-filtered pixel from float coords (x, y).
 	/// The coordinates wrap when near the edges.
-	inout(Color) getFilteredPixel(float x, float y) inout
+	inout(Color) getFilteredPixel(float x, float y) inout @nogc
 	{
 		if (isInvalidPos(cast(uint)x, cast(uint)y))
-			return Color.black();
+			return NamedColors.red;
 
 		int tx = cast(int)floor(x);
 		int ty = cast(int)floor(y);
@@ -167,6 +167,17 @@ struct Bitmap
 		}
 
 		this = result;
+	}
+
+	void toString(scope void delegate(const(char)[]) sink) const
+	{
+		import std.conv;
+
+		sink("img[");
+		sink(to!string(width()));
+		sink("x");
+		sink(to!string(height()));
+		sink("]");
 	}
 }
 

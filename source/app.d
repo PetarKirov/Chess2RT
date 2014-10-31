@@ -20,7 +20,7 @@ void runInScope(string filePath)
 
 void main(string[] args)
 {
-	string sceneFilePath = "data/lecture4.sdl";
+	string sceneFilePath = "data/lecture5.sdl";
 
 	getopt(args, "file", &sceneFilePath);
 

@@ -78,16 +78,16 @@ Scene loadFromAbstractDataFormat(Value val)
 
 public:
 
-class SceneLoadContext
+final class SceneLoadContext
 {
 	Scene scene;	
 	NamedEntities named() { return scene.namedEntities; }
 	
 	// Note: only one method is really needed.
 	// The others are for convenience.
-	void set(T)(ref T property, Value val, string propertyName)
+	bool set(T)(ref T property, Value val, string propertyName)
 	{
-		setTo(val, property, propertyName);
+		return setTo(val, property, propertyName);
 	}
 	
 	T get(T)(Value val, string propertyName)
@@ -97,7 +97,7 @@ class SceneLoadContext
 		return result;
 	}
 	
-	void setTo(T)(Value val, ref T property, string propertyName)
+	bool setTo(T)(Value val, ref T property, string propertyName)
 	{		
 		// First - check if the property is specified in the sceme file:
 		// Construct default if nothing specified.
@@ -107,7 +107,7 @@ class SceneLoadContext
 		{	
 			static if (is(T == class))
 				property = new T();
-			return;
+			return false;
 		}
 		
 		// Next - get the corresponding value (built-in, array or object)
@@ -136,7 +136,9 @@ class SceneLoadContext
 						subValue.getValues[2].get!double);
 		}
 		else
-			static assert(0, "Unsupported type!");
+			static assert(0, "Unsupported type: " ~ T.stringof);
+
+		return true;
 	}
 	
 protected:

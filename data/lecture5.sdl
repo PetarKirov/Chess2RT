@@ -1,4 +1,13 @@
-﻿Scene {
+﻿/*
+	lecture 5 includes:
+	- 1 plane with a texture [floor.bmp]
+	- 1 sphere with a texture [world.bmp]
+	- 3 speres with a phong shader
+	- 1 CSG object
+
+*/
+
+Scene {
 	Name "lecture5"
 
 	GlobalSettings {
@@ -15,18 +24,80 @@
 		fov			90
 	}
 
+	Lights {
+		PointLight {
+			name		"light1"
+			pos     	-90 700 350
+			color   	1 1 1
+			power   	800000
+		}
+	}
+
 	Geometries {
+
+		// Plane:
+
 		Plane {
 			name 		"floor"
 			y			-0.01
 		}
+
+		// Globe:
+
+		Sphere {
+			name		"globe_ball"
+			R			50
+		}
+
+		// Balls geometry:
+
+		Sphere {
+			name		"S"
+			R			15
+		}
+
+		// CSG object:
+
+		Cube {
+			name		"cube"
+			center		-100 60 200
+			side		100
+		}
+
+		Sphere {
+			name		"sphere"
+			center		-100 60 200
+			R			70
+		}
+
+		CsgDiff {
+			name		"diff"
+			left		"cube"
+			right		"sphere"
+		}
 	}
 
 	Textures {
-		BitmapTexture {
+		Checker {
 			name		"bmp"
+			color1		0.0 0.0 0.0
+			color2		0.0 0.5 1.0
+			size		5
+		}
+
+		// Texture for the floor:
+
+		BitmapTexture {
+			name		"bmp2"
 			file		"floor.bmp"
 			scaling		0.005
+		}
+
+		// Texutre for the globe:
+
+		BitmapTexture {
+			name		"world"
+			file		"world.bmp"
 		}
 	}
 
@@ -35,13 +106,81 @@
 			name		"floor_shader"
 			texture 	"bmp"
 		}
+
+		Lambert {
+			name		"globe_shader"
+			texture		"bmp"
+		}
+
+		Lambert {
+			name		"csg_shader"
+			texture		"bmp"
+		}
+
+		Lambert {
+			name		"ball_shader"
+			texture		"bmp"
+		}
+
+		/*
+
+		Phong {
+			name		"ball_shader"
+			color		0.0 0.0 0.6
+			exponent	80
+		}
+
+		Phong {
+			name		"csg_shader"
+			color		0.5 0.5 0
+			exponent	60
+		}*/
 	}
 
 	Nodes {
+		// Floor:
+
 		Node {
 			name 		"floor"
 			geometry	"floor"
 			shader		"floor_shader"
+		}
+
+		// Globe:
+
+		Node {
+			name		"globe"
+			geometry	"globe_ball"
+			shader		"ball_shader"
+		}
+
+		// three balls:
+
+		Node {
+			name		"S1"
+			geometry	"S"
+			shader		"ball_shader"
+			translate	100 15 256
+		}
+		Node {
+			name		"S2"
+			geometry	"S"
+			shader		"ball_shader"
+			translate	100 15 206
+		}
+		Node {
+			name		"S3"
+			geometry	"S"
+			shader		"ball_shader"
+			translate	100 15 156
+		}
+
+		// CSG object:
+
+		Node {
+			name		"csgNode"
+			geometry	"diff"
+			shader		"csg_shader"
 		}
 	}
 }

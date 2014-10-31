@@ -1,6 +1,6 @@
 ﻿module rt.renderer;
 
-import std.random;
+import util.random, util.array, std.typecons : Rebindable;
 import ae.utils.graphics.image, gfm.math.box;
 import rt.scene, rt.color, rt.importedtypes, rt.intersectable, rt.node, rt.camera, rt.ray, rt.light;
 
@@ -14,7 +14,7 @@ package struct TraceResult
 {
 	Ray ray;
 	IntersectionData data;
-	Node closestNode;
+	Rebindable!(const Node) closestNode;
 	bool hitLight;
 	Color hitLightColor;
 }
@@ -32,12 +32,14 @@ class Renderer
 		this.needsAA.size(outputImage.w, outputImage.h);
 	}
 
-	void renderRT()
-	{	
-		auto buckets = getBucketsList(scene.settings.frameWidth, scene.settings.frameHeight);
+	void renderRT() @nogc
+	{
+		MyArray!box2i buckets;
 
 		uint W = scene.settings.frameWidth;
 		uint H = scene.settings.frameHeight;
+
+		getBucketsList(W, H, buckets);
 
 		// We render the whole screen in three passes.
 
@@ -90,7 +92,7 @@ class Renderer
 				neighs[3] = outputImage[x, y     > 0 ? y - 1 : y];
 				neighs[4] = outputImage[x, y + 1 < H ? y + 1 : y];
 
-				auto average = Color.black();
+				auto average = NamedColors.black;
 
 				foreach (i; 0 .. 5)
 					average += neighs[i];
@@ -117,15 +119,13 @@ class Renderer
 private:
 
 	/// Generates a list of buckets (image sub-rectangles) to be rendered, in a zigzag pattern
-	box2i[] getBucketsList(uint frameWidth, uint frameHeight)
+	void getBucketsList(uint frameWidth, uint frameHeight, ref MyArray!box2i res) @nogc
 	{
 		const int BUCKET_SIZE = scene.settings.bucketSize;
 		int W = frameWidth;
 		int H = frameHeight;
 		int BW = (W - 1) / BUCKET_SIZE+ 1;
 		int BH = (H - 1) / BUCKET_SIZE + 1;
-	
-		box2i[] res;
 	
 		for (int y = 0; y < BH; y++) {
 			if (y % 2 == 0)
@@ -138,8 +138,6 @@ private:
 	
 		foreach (bucket; res)
 			bucket.clip(W, H);
-	
-		return res;
 	}
 
 	bool drawRect(box2i r, const Color c)
@@ -154,7 +152,7 @@ private:
 	}
 
 	/// Gets the color for a single pixel, without antialiasing
-	Color renderPixelNoAA(int x, int y, int dx = 1, int dy = 1)
+	Color renderPixelNoAA(int x, int y, int dx = 1, int dy = 1) @nogc
 	{
 		outputImage[x, y] = renderSample(x, y, dx, dy);
 		return outputImage[x, y];
@@ -163,7 +161,7 @@ private:
 	// gets the color for a single pixel, with antialiasing.
 	// Assumes the pixel already holds some value.
 	// This simply adds four more AA samples and averages the result.
-	Color renderPixelAA(int x, int y)
+	Color renderPixelAA(int x, int y) @nogc
 	{
 		enum double[2][5] kernel =
 		[
@@ -184,7 +182,7 @@ private:
 	}
 
 	// trace a ray through pixel coords (x, y).
-	Color renderSample(double x, double y, int dx = 1, int dy = 1)
+	Color renderSample(double x, double y, int dx = 1, int dy = 1) @nogc
 	{
 		if (scene.camera.dof)
 		{
@@ -200,7 +198,7 @@ private:
 		}
 	}
 
-	Color renderSampleDof(double x, double y, int dx = 1, int dy = 1)
+	Color renderSampleDof(double x, double y, int dx = 1, int dy = 1) @nogc
 	{
 		auto average = Color(0, 0, 0);
 	
@@ -219,7 +217,7 @@ private:
 		return average / scene.camera.numSamples;
 	}
 
-	Color renderSampleGI(double x, double y, int dx = 1, int dy = 1)
+	Color renderSampleGI(double x, double y, int dx = 1, int dy = 1) @nogc
 	{
 		auto average = Color(0, 0, 0);
 	
@@ -232,7 +230,7 @@ private:
 		return average / scene.settings.pathsPerPixel;
 	}
 
-	Color renderSampleDefault(double x, double y, int dx = 1, int dy = 1)
+	Color renderSampleDefault(double x, double y, int dx = 1, int dy = 1) @nogc
 	{
 		if (scene.camera.stereoSeparation == 0)
 			return raytrace(scene.camera.getScreenRay(x, y));
@@ -242,17 +240,17 @@ private:
 								 raytrace(scene.camera.getScreenRay(x, y, Stereo3DOffset.Right)));
 	}
 
-	Color raytrace(const Ray ray)
+	Color raytrace(const Ray ray) @nogc
 	{
 		return trace(ray, TraceType.Ray);
 	}
 
-	Color pathtrace(const Ray ray, const Color pathMultiplier)
+	Color pathtrace(const Ray ray, const Color pathMultiplier) @nogc
 	{
 		return trace(ray, TraceType.Path);
 	}	
 
-	Color trace(const Ray ray, TraceType traceType)
+	Color trace(const Ray ray, TraceType traceType) @nogc
 	{
 		TraceResult result;
 		result.ray = ray;
@@ -268,7 +266,7 @@ private:
 		// find closest intersection point:
 		foreach (node; scene.nodes)
 			if (node.intersect(ray, result.data))
-				result.closestNode = cast(Node)node;
+				result.closestNode = node;
 	
 		// check if the closest intersection point is actually a light:
 		foreach (light; scene.lights)
@@ -288,7 +286,7 @@ private:
 	}
 
 	/// traces a ray in the scene and returns the visible light that comes from that direction
-	Color raytrace(TraceResult result)
+	Color raytrace(TraceResult result) @nogc
 	{
 		if (result.hitLight)
 			return result.hitLightColor;
@@ -312,7 +310,7 @@ private:
 		return result.closestNode.shader.shade(result.ray, result.data);
 	}
 
-	Color pathtrace(TraceResult result, const Color pathMultiplier)
+	Color pathtrace(TraceResult result, const Color pathMultiplier) @nogc
 	{
 		if (result.hitLight)
 		{

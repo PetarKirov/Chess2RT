@@ -188,16 +188,11 @@ private pure nothrow @safe @nogc
 
 // TODO: Add more colors
 /// A set of predefined colors
-immutable(Color[string]) namedColors;
-
-static this()
+struct NamedColors
 {
-	namedColors = 
-	[
-		"black" : Color(0f, 0f, 0f),
-		"white" : Color(1f, 1f, 1f),
-		"red" : Color(1f, 0f, 0f),
-		"green" : Color(0f, 1f, 0f),
-		"blue" : Color(0f, 0f, 1f),
-	];
+	static Color black = Color(0f, 0f, 0f);
+	static Color white = Color(1f, 1f, 1f);
+	static Color red = Color(1f, 0f, 0f);
+	static Color green = Color(0f, 1f, 0f);
+	static Color blue = Color(0f, 0f, 1f);
 }

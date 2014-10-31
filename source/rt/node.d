@@ -20,7 +20,7 @@ class Node : Intersectable, Deserializable
 	}
 
 	// intersect a ray with a node, considering the Model transform attached to the node.
-	bool intersect(const Ray ray, ref IntersectionData data) const
+	bool intersect(const Ray ray, ref IntersectionData data) const @nogc
 	{		
 		// world space -> object's canonic space
 		Ray rayCanonic;
@@ -68,12 +68,34 @@ class Node : Intersectable, Deserializable
 
 	void deserialize(Value val, SceneLoadContext context)
 	{
-		string g, s;
-		context.set(g, val, "geometry");
-		context.set(s, val, "shader");
+		string geom, shad, bump;
+		context.set(geom, val, "geometry");
+		context.set(shad, val, "shader");
+		context.set(bump, val, "bump");
 
-		this.geom = context.named.geometries[g];
-		this.shader = context.named.shaders[s];
+		this.geom = context.named.geometries[geom];
+		this.shader = context.named.shaders[shad];
+		// bumpmap is optional
+		this.bumpmap = bump in context.named.textures ? 
+		context.named.textures[bump] :
+		null;
+
+		Vector v;
+
+		if (context.set(v, val, "scale"))
+			this.transform.scale(v.x, v.y, v.z);
+		
+		if (context.set(v, val, "rotate"))
+			this.transform.scale(v.x, v.y, v.z);
+		
+		if (context.set(v, val, "translate"))
+			this.transform.translate(v);
+	}
+
+	void toString(scope void delegate(const(char)[]) sink) const
+	{
+		import util.prettyPrint;
+		mixin(toStrBody);
 	}
 }
 

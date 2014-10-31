@@ -57,7 +57,7 @@ class GlobalSettings : Deserializable
 		pathsPerPixel = 40;
 		maxTraceDepth = 4;
 
-		ambientLightColor = Color.black();
+		ambientLightColor = NamedColors.black;
 
 		debugEnabled = false;		
 	}

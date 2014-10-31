@@ -1,5 +1,6 @@
 ﻿module rt.intersectable;
 
+import std.typecons : Rebindable;
 import rt.importedtypes, rt.geometry;
 
 struct IntersectionData
@@ -17,9 +18,21 @@ struct IntersectionData
 	double u, v; 
 	
 	/// The geometry which was hit
-	Geometry g;
+	Rebindable!(const Geometry) g;
 
 	Vector dNdx, dNdy;
+
+	void opAssign(ref const IntersectionData rhs) @nogc
+	{
+		this.p = rhs.p;
+		this.normal = rhs.normal;
+		this.dist = rhs.dist;
+		this.u = rhs.u;
+		this.v = rhs.v;
+		this.g = rhs.g;
+		this.dNdx = rhs.dNdx;
+		this.dNdy = rhs.dNdy;
+	}
 }
 
 const interface Intersectable
@@ -39,12 +52,13 @@ const interface Intersectable
 	 * @retval false if no intersection exists, or it is further than the current data.dist. In this case,
 	 *         the `data' struct should remain unchanged.
 	 */
-	bool intersect(const Ray ray, ref IntersectionData info);
-	
-	
-	/// Checks if the given point is "inside" the geometry, for whatever definition of
-	/// inside is appropriate for the object. Returns a boolean value accordingly.
-	bool isInside(const Vector p);
+	bool intersect(in Ray ray, ref IntersectionData info) @nogc;	
+
+	/**
+	* Checks if the given point is "inside" the geometry, for whatever definition of
+	* 'inside' is appropriate for the object.
+	*/ 
+	bool isInside(in Vector p) @nogc;
 };
 
 
