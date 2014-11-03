@@ -2,16 +2,35 @@
 
 struct MyArray(T)
 {
-	T[] data;
-	size_t length;
-	size_t capacity;
-	
-	void opOpAssign(string op)(T value) @nogc if (op == "~")
+	private T[] data;
+	private size_t length_;
+
+	enum defaultInitialCapacity = 16;
+
+	this(size_t initialCapacity) @nogc
 	{
-		if (length >= capacity)
-			reserve(capacity == 0? 16 : capacity * 2);
+		this.reserve(initialCapacity);
+	}
+
+	~this() @nogc
+	{
+		free();
+	}
+
+	@property size_t length() const
+	{
+		return this.length_;
+	}
+	
+	void opOpAssign(string op)(T value) @nogc
+		if (op == "~")
+	{
+		if (length >= data.length)
+			reserve(data.length == 0 ?
+			        defaultInitialCapacity :
+			        data.length * 2);
 		
-		data[length++] = value;
+		data[length_++] = value;
 	}
 
 	int opApply(int delegate(ref T) @nogc dg) @nogc
@@ -24,41 +43,59 @@ struct MyArray(T)
 			if (result)
 				break;
 		}
+
 		return result;
 	}
 	
-	void reserve(size_t newSize) @nogc
+	void reserve(size_t newCapacity) @nogc
 	{
 		import std.c.stdlib : malloc, free;
-		
-		if (data is null)
-		{
-			length = 0;
-			capacity = 0;
-		}
-		
-		T* newArr = cast(T*)malloc(T.sizeof * newSize);
-		
-		foreach (i; 0 .. length)
-			newArr[i] = data[i];
-		
-		capacity = newSize;
+
+		auto newData = malloc(T.sizeof * newCapacity);
+		assert(newData);
+		T[] newArr = (cast(T*)newData)[0 .. newCapacity];
+
+		newArr[0 .. data.length] = data[];
 		free(data.ptr);
-		data = newArr[0 .. capacity];
+		data = newArr;
 	}
-	
-	~this()
+
+	void free() @nogc
 	{
 		import std.c.stdlib : free;
 		free(data.ptr);
 		data = null;
-		length = 0;
-		capacity = 0;
+		length_ = 0;
 	}
-	
-	inout(T)[] opIndex() @nogc inout
+
+	inout(T[]) opIndex() @nogc inout
 	{
-		return data;
+		return data[0 .. length];
 	}
 }
 
+unittest
+{
+	MyArray!int arr;
+	arr.reserve(8);
+
+	assert(arr.data);
+	assert(arr.data.ptr);
+	assert(arr.data.length == 8);
+	assert(arr.length == 0);
+
+	arr ~= 42;
+	assert(arr.length == 1);
+	assert(arr[][0] == 42);
+
+	foreach (i; 1 .. 11)
+		arr ~= i;
+
+	assert(arr.data.length == 16);
+	assert(arr.length == 11);
+
+	auto arrRef = arr[];
+	assert(arrRef.length == 11);
+	assert(arrRef[0] == 42);
+	assert(arrRef[10] == 10);
+}

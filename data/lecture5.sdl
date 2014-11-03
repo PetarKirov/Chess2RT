@@ -14,6 +14,7 @@ Scene {
 		frameWidth          640
 		frameHeight         480
 		ambientLightColor 	0.2 0.2 0.2
+		AAEnabled			false
 	}
 
 	Camera {
@@ -46,6 +47,7 @@ Scene {
 
 		Sphere {
 			name		"globe_ball"
+			center		100 50 320
 			R			50
 		}
 
@@ -78,17 +80,10 @@ Scene {
 	}
 
 	Textures {
-		Checker {
-			name		"bmp"
-			color1		0.0 0.0 0.0
-			color2		0.0 0.5 1.0
-			size		5
-		}
-
 		// Texture for the floor:
 
 		BitmapTexture {
-			name		"bmp2"
+			name		"bmp"
 			file		"floor.bmp"
 			scaling		0.005
 		}
@@ -109,20 +104,8 @@ Scene {
 
 		Lambert {
 			name		"globe_shader"
-			texture		"bmp"
+			texture		"world"
 		}
-
-		Lambert {
-			name		"csg_shader"
-			texture		"bmp"
-		}
-
-		Lambert {
-			name		"ball_shader"
-			texture		"bmp"
-		}
-
-		/*
 
 		Phong {
 			name		"ball_shader"
@@ -134,7 +117,7 @@ Scene {
 			name		"csg_shader"
 			color		0.5 0.5 0
 			exponent	60
-		}*/
+		}
 	}
 
 	Nodes {
@@ -151,7 +134,7 @@ Scene {
 		Node {
 			name		"globe"
 			geometry	"globe_ball"
-			shader		"ball_shader"
+			shader		"globe_shader"
 		}
 
 		// three balls:
