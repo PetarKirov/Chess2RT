@@ -303,9 +303,7 @@ abstract class CsgOp : Geometry
 		foreach(elem; chain(leftData[], rightData[]))
 			allData ~= elem;
 
-		import std.c.stdlib : qsort;
-
-		mySort(allData.data);
+		mySort(allData[]);
 
 		// if we have an even number of intersections -> we're outside the object. If odd, we're inside:
 		bool inL, inR;

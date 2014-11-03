@@ -38,6 +38,7 @@ abstract class Shader : IShader, BRDF, Deserializable
 	void deserialize(Value val, SceneLoadContext context)
 	{
 		this.scene = context.scene;
+		context.set(this.color, val, "color");
 	}
 
 	void toString(scope void delegate(const(char)[]) sink) const
