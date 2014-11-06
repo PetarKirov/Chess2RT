@@ -11,7 +11,7 @@ import util.factory2;
 /// files should implement this interface.
 interface Deserializable
 {
-	void deserialize(Value val, SceneLoadContext context);
+	void deserialize(const Value val, SceneLoadContext context);
 }
 
 /// Main entry point
@@ -39,7 +39,7 @@ Scene parseSceneFromFile(string fileName)
 
 private: 
 
-Value readAndParseData(string fileName)
+const(Value) readAndParseData(string fileName)
 {
 	string ext = fileName.extension.toLower;
 	string data = fileName.readText;
@@ -54,7 +54,7 @@ Value readAndParseData(string fileName)
 	}
 }
 
-Scene loadFromAbstractDataFormat(Value val)
+Scene loadFromAbstractDataFormat(const Value val)
 {
 	SceneLoadContext context = new SceneLoadContext();	
 	context.scene = new Scene();
@@ -85,19 +85,19 @@ final class SceneLoadContext
 	
 	// Note: only one method is really needed.
 	// The others are for convenience.
-	bool set(T)(ref T property, Value val, string propertyName)
+	bool set(T)(ref T property, const Value val, string propertyName)
 	{
 		return setTo(val, property, propertyName);
 	}
 	
-	T get(T)(Value val, string propertyName)
+	T get(T)(const Value val, string propertyName)
 	{
 		T result;
-		set(result, val, propertyName);
+		setTo(val, result, propertyName);
 		return result;
 	}
-	
-	bool setTo(T)(Value val, ref T property, string propertyName)
+
+	bool setTo(T)(const Value val, ref T property, string propertyName)
 	{		
 		// First - check if the property is specified in the sceme file:
 		// Construct default if nothing specified.
@@ -113,37 +113,57 @@ final class SceneLoadContext
 		// Next - get the corresponding value (built-in, array or object)
 		auto subValue = val.getChild(propertyName);
 		
-		// Finally - assign it to the property accordingly
-		static if (isBoolean!T || isIntegral!T || isFloatingPoint!T || isSomeString!T)
-		{
-			property = subValue.get!T;
-		}
-		else static if (is(T : Deserializable))
-		{
-			property = createObject!T(subValue);
-		}
-		else static if (isArray!T)
-		{			
-			foreach (elem; subValue.getArray)
-			{
-				property ~= createObject!(ElementType!T)(elem);
-			}
-		}
-		else static if (is(T == Vector) || is(T == Color))
-		{
-			property = T(subValue.getValues[0].get!double,
-						subValue.getValues[1].get!double,
-						subValue.getValues[2].get!double);
-		}
-		else
-			static assert(0, "Unsupported type: " ~ T.stringof);
+		// Finally extract the value (recursively) and
+		// assign it to the property
+		property = extractValue!T(subValue);
 
 		return true;
 	}
+
+private:
+
+	T extractValue(T)(const Value val)
+	{
+		static if (isBoolean!T || isIntegral!T || isFloatingPoint!T || isSomeString!T)
+		{
+			return val.get!T;
+		}
+		else static if (is(T : Deserializable))
+		{
+			return createObject!T(val);
+		}
+		else static if (is(T == Vector) || is(T == Color))
+		{
+			return T(val.getValues[0].get!double,
+			val.getValues[1].get!double,
+			val.getValues[2].get!double);
+		}
+		else static if (isArray!T)
+		{
+			alias Elem = ElementType!T;
+			
+			Elem[] result;
+			
+			static if (is(Elem : Deserializable))
+				foreach (elem; val.getChildren)
+					result ~= createObject!(Elem)(elem);
+			else
+			{
+				static if (isBoolean!Elem || isIntegral!Elem || isFloatingPoint!Elem || isSomeString!Elem)
+					foreach (elem; val.getValues)
+						result ~= elem.get!Elem;
+				else
+					foreach (elem; val.getChildren)
+						result ~= extractValue!Elem(elem);
+			}
+			
+			return result;
+		}
+		else
+			static assert(0, "Unsupported type: " ~ T.stringof);
+	}
 	
-protected:
-	
-	T createObject(T)(Value v)
+	T createObject(T)(const Value v)
 	{
 		string type = v.getType;
 
@@ -168,58 +188,61 @@ protected:
 	}
 }
 
-private Value makeVal(JSONValue json) { return new JsonValueWrapper(json); }
+private Value makeVal(const JSONValue json) { return new JsonValueWrapper(json); }
 
-private Value makeVal(Tag sdl) { return new SdlValueWrapper(sdl); }
+private Value makeVal(const Tag sdl) { return new SdlValueWrapper(sdl); }
 
 interface Value
 {
-	final T get(T)()
+	final T get(T)() const @safe
 	{
 		static if (isBoolean!T) return getBool();
 		else static if (isIntegral!T) return to!T(getInt());
 		else static if (isFloatingPoint!T) return to!T(getFloat());
 		else static if (isSomeString!T) return to!T(getString());
-		else static assert(0, "Type not supported)");
+		else static assert(0, "Type not supported: " ~ T.stringof);
 	}
 
 	/// Note: Only available for top-level objects/tags
-	string getType();
+	string getType() const @trusted;
 
-	bool isSpecified(string propertyName);
+	bool isSpecified(string propertyName) const @trusted;
 
-	Value getChild(string propertyName);
+	Value getChild(string propertyName) const @trusted;
 
-	Value[] getArray();
-	sdlang.Value[] getValues();
+	Value[] getChildren() const @trusted;
+
+	/// SDL specific, for JSON it will return the same content
+	/// as the one returned from getChildren, but wrapped in sdlang.Value-s
+	sdlang.Value[] getValues() const @trusted;
 
 protected:
-	bool getBool();
-	long getInt();
-	double getFloat();
-	string getString();
+	bool getBool() const @trusted;
+	long getInt() const @trusted;
+	double getFloat() const @trusted;
+	string getString() const @trusted;
 }
 
 class JsonValueWrapper : Value
 {
-	this(JSONValue v) { json = v; }
+	this(const JSONValue v) { json = v; }
 
-	override string getType() 
+	override string getType() const @trusted 
 	{
 		return json["type"].str;
 	}
 
-	override bool isSpecified(string propertyName)
+	override bool isSpecified(string propertyName) const @trusted
 	{
 		return (propertyName in json.object) != null;
 	}
 
-	override Value getChild( string propertyName)
+	override Value getChild( string propertyName) const @trusted
 	{
 		return new JsonValueWrapper(json[propertyName]);
 	}
 
-	override Value[] getArray()
+	override Value[] getChildren() const @trusted
 	{
 		Value[] result;
 
@@ -229,7 +252,7 @@ class JsonValueWrapper : Value
 		return result;
 	}
 
-	override sdlang.Value[] getValues()
+	override sdlang.Value[] getValues() const @trusted
 	{
 		sdlang.Value[] result;
 		
@@ -240,22 +263,22 @@ class JsonValueWrapper : Value
 	}
 
 protected:
-	override bool getBool()
+	override bool getBool() const @trusted
 	{
 		return boolean(json);
 	}
 
-	override long getInt()
+	override long getInt() const @trusted
 	{
 		return to!long(number(json));
 	}
 
-	override double getFloat()
+	override double getFloat() const @trusted
 	{
 		return number(json);
 	}
 
-	override string getString()
+	override string getString() const @trusted
 	{
 		return json.str;
 	}
@@ -263,7 +286,7 @@ protected:
 private:
 	JSONValue json;
 
-	static double number(JSONValue json)
+	static double number(const JSONValue json) @trusted
 	{
 		switch (json.type)
 		{
@@ -274,7 +297,7 @@ private:
 		}
 	}
 
-	static bool boolean(JSONValue json)
+	static bool boolean(const JSONValue json) @trusted
 	{
 		switch (json.type)
 		{
@@ -287,24 +310,24 @@ private:
 
 class SdlValueWrapper : Value
 {
-	this(Tag v) { tag = v; }
+	this(const Tag v) { tag = v; }
 
-	override string getType() 
+	override string getType() const @trusted
 	{
 		return tag.name;
 	}
 	
-	override bool isSpecified(string propertyName)
+	override bool isSpecified(string propertyName) const @trusted
 	{
 		return propertyName in tag.tags;
 	}
 	
-	override Value getChild( string propertyName)
+	override Value getChild( string propertyName) const @trusted
 	{
 		return new SdlValueWrapper(tag.tags[propertyName][0]);
 	}
 	
-	override Value[] getArray()
+	override Value[] getChildren() const @trusted
 	{
 		Value[] result;
 
@@ -314,7 +337,7 @@ class SdlValueWrapper : Value
 		return result;
 	}
 
-	override sdlang.Value[] getValues()
+	override sdlang.Value[] getValues() const @trusted
 	{
 		sdlang.Value[] result;
 		
@@ -325,30 +348,30 @@ class SdlValueWrapper : Value
 	}
 	
 protected:
-	override bool getBool()
+	override bool getBool() const @trusted
 	{
-		return tag.values[0].get!bool;
+		return tag.values[0].get!(const bool);
 	}
 	
-	override long getInt()
+	override long getInt() const @trusted
 	{
-		return tag.values[0].get!long;
+		return tag.values[0].get!(const long);
 	}
 	
-	override double getFloat()
+	override double getFloat() const @trusted
 	{
-		return tag.values[0].get!double;
+		return tag.values[0].get!(const double);
 	}
 	
-	override string getString()
+	override string getString() const @trusted
 	{
-		return tag.values[0].get!string;
+		return tag.values[0].get!(const string);
 	}
 
 private:
-	Tag tag;
+	const Tag tag;
 
-	static void print(Tag tag)
+	static void print(const Tag tag)
 	{
 		import std.stdio;
 		writeln(tag.name);

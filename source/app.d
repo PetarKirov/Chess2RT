@@ -27,13 +27,13 @@ void main(string[] args)
 /// "data/default_scene.path"
 @property string getPathToDefaultScene()
 {
-	import std.file;
+	import std.file, std.string : strip;
 
 	// The path to the file containting the path to the default scene file
 	enum link = "data/default_scene.path";
 	assert(link.exists, "Missing link to default scene file!");
 
-	auto finalPath = link.readText();
+	auto finalPath = link.readText().strip();
 	assert(finalPath.exists, "Missing default scene file!");
 
 	return finalPath;

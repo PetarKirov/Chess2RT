@@ -1,0 +1,71 @@
+Scene {
+	Name "lecture4-proc-texture"
+	
+	GlobalSettings {
+		frameWidth			640
+		frameHeight			480
+		ambientLightColor	0.0 0.0 0.0
+	}
+
+	Camera {
+		pos			0.0 165.0 0.0
+		aspect		1.33333
+		yaw			0.0
+		pitch		-30.0
+		roll		0.0
+		fov			90.0
+	}
+
+	Lights {
+		PointLight {
+			name	"l1"
+			pos		-30.0 100.0 250.0
+			color	1.0 1.0 1.0
+			power	50000
+		}
+	}
+
+	Geometries {
+		Plane {
+			name	"floor"
+			y		2
+		}
+	}
+
+	Textures {
+		Procedure2 {
+			name		"proc2"
+
+			freqU		0.01 0.25 0.01
+			freqV		0.01 0.25 0.01
+
+			colorU {
+				color 0.7 0.1 0.2
+				color 0.3 0.4 0.9
+				color 0.5 0.8 0.1
+			}
+
+			colorV {
+				color 0.5 0.8 0.1
+				color 0.7 0.1 0.2
+				color 0.3 0.4 0.9
+			}
+		}
+	}
+
+	Shaders {
+		Lambert {
+			name		"floor_shader"
+			texture		"proc2"
+		}
+	}
+
+	Nodes {
+		Node {
+			name		"floor"
+			type		"Node"
+			geometry	"floor"
+			shader		"floor_shader"
+		}
+	}
+}

@@ -5,7 +5,7 @@ import rt.bitmap;
 
 abstract class Texture : Deserializable
 {
-	Color getTexColor(in Ray ray, double u, double v, in Vector normal) const @nogc;
+	Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @nogc;
 
 	void modifyNormal(in IntersectionData data) const @nogc
 	{
@@ -33,7 +33,7 @@ class Checker : Texture
 		this.size = size;
 	}
 
-	override Color getTexColor(in Ray ray, double u, double v, in Vector normal) const @nogc
+	override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @nogc
 	{
 		/*
 		 * The checker texture works like that. Partition the whole 2D space
@@ -44,7 +44,6 @@ class Checker : Texture
 
 		// example - u = 150, v = -230, size = 100
 		// -> 1, -3
-		import std.conv;
 
 		int x = cast(int)(floor(u / size));
 		int y = cast(int)(floor(v / size));
@@ -54,13 +53,46 @@ class Checker : Texture
 		return white ? color2 : color1;
 	}
 
-	void deserialize(Value val, SceneLoadContext context)
+	void deserialize(const Value val, SceneLoadContext context)
 	{
 		context.set(this.color1, val, "color1");
 		context.set(this.color2, val, "color2");
 		context.set(this.size, val, "size");
 	}
 
+	override void toString(scope void delegate(const(char)[]) sink) const
+	{
+		import util.prettyPrint;
+		mixin(toStrBody);
+	}
+}
+
+class Procedure2 : Texture
+{
+	Color[] colorU, colorV;
+	double[] freqU, freqV;
+
+	this() { }
+
+	override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @nogc
+	{
+		auto result = Color(0, 0, 0);
+
+		foreach (i; 0 .. 3)
+			result += colorU[i] * sin(u * freqU[i]) +
+				colorV[i] * sin(v * freqV[i]);
+
+		return result;
+	}
+
+	void deserialize(const Value val, SceneLoadContext context)
+	{
+		context.set(this.colorU, val, "colorU");
+		context.set(this.colorV, val, "colorV");
+		context.set(this.freqU, val, "freqU");
+		context.set(this.freqV, val, "freqV");
+	}
+	
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
 		import util.prettyPrint;
@@ -81,7 +113,7 @@ class BitmapTexture : Texture
 		this.assumedGamma = assumedGamma;
 	}
 
-	override Color getTexColor(in Ray ray, double u, double v, in Vector normal) const @nogc
+	override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @nogc
 	{
 		u *= scaling;
 		v *= scaling;
@@ -93,7 +125,7 @@ class BitmapTexture : Texture
 		return bmp.getFilteredPixel(tx, ty); // fetch from the bitmap with bilinear filtering
 	}
 
-	void deserialize(Value val, SceneLoadContext context)
+	void deserialize(const Value val, SceneLoadContext context)
 	{
 		context.set(this.scaling, val, "scaling");
 		context.set(this.assumedGamma, val, "assumedGamma");
