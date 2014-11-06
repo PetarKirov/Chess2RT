@@ -9,7 +9,7 @@ class Environment : Deserializable
 		return Color(0, 0, 0);
 	}
 
-	void deserialize(Value val, SceneLoadContext context)
+	void deserialize(const Value val, SceneLoadContext context)
 	{
 	}
 }

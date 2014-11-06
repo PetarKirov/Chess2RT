@@ -35,7 +35,7 @@ abstract class Light : Intersectable, Deserializable
 	 */
 	void getNthSample(size_t sampleIdx, const Vector shadePos, ref Vector samplePos, ref Color color) const @nogc;
 
-	void deserialize(Value val, SceneLoadContext context)
+	void deserialize(const Value val, SceneLoadContext context)
 	{
 		context.set(this.lightColor, val, "color");
 		context.set(this.lightPower, val, "power");
@@ -73,7 +73,7 @@ class PointLight : Light
 		return 0;
 	}
 
-	override void deserialize(Value val, SceneLoadContext context)
+	override void deserialize(const Value val, SceneLoadContext context)
 	{
 		super.deserialize(val, context);
 

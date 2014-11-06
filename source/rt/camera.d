@@ -137,7 +137,7 @@ class Camera : Deserializable
 		yaw += dx;
 	}
 
-	void deserialize(Value val, SceneLoadContext context)
+	void deserialize(const Value val, SceneLoadContext context)
 	{
 		this.frameWidth = context.scene.settings.frameWidth;
 		this.frameHeight = context.scene.settings.frameHeight;

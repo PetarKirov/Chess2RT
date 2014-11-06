@@ -35,7 +35,7 @@ abstract class Shader : IShader, BRDF, Deserializable
 		this.color = color;
 	}
 
-	void deserialize(Value val, SceneLoadContext context)
+	void deserialize(const Value val, SceneLoadContext context)
 	{
 		this.scene = context.scene;
 		context.set(this.color, val, "color");
@@ -73,17 +73,16 @@ class Lambert : Shader
 		
 		// fetch the material color. This is ether the solid color, or a color
 		// from the texture, if it's set up.
-		Color diffuseColor = this.color;
-		if (texture)
-			diffuseColor = texture.getTexColor(ray, data.u, data.v, N);
+		Color diffuseColor = texture ? 
+			this.texture.getTexColor(ray, data.u, data.v, N) :
+			this.color;
 		
 		Color lightContrib = scene.settings.ambientLightColor;
 
-		foreach(light; scene.lights) {
-		//for (int i = 0; i < (int) scene.lights.size(); i++) {
-			size_t numSamples = light.getNumSamples();
+		foreach(light; scene.lights)
+		{
 			auto avgColor = Color(0, 0, 0);
-			for (int j = 0; j < numSamples; j++)
+			foreach (j; 0 .. light.getNumSamples())
 			{
 				Vector lightPos;
 				Color lightColor;
@@ -102,7 +101,7 @@ class Lambert : Shader
 					}
 				}
 			}
-			lightContrib += avgColor / numSamples;
+			lightContrib += avgColor / light.getNumSamples();
 		}
 		return diffuseColor * lightContrib;
 	}
@@ -143,7 +142,7 @@ class Lambert : Shader
 		pdf = 1 / (2 * PI);
 	}
 
-	override void deserialize(Value val, SceneLoadContext context)
+	override void deserialize(const Value val, SceneLoadContext context)
 	{
 		super.deserialize(val, context);
 		string t;
@@ -263,7 +262,7 @@ class Phong : Shader
 		//throw new NotImplementedException("Phong shader does not need to eval!");
 	}
 
-	override void deserialize(Value val, SceneLoadContext context)
+	override void deserialize(const Value val, SceneLoadContext context)
 	{
 		super.deserialize(val, context);
 

@@ -34,33 +34,31 @@ class Plane : Geometry
 		// of if the ray is pointing down, and the plane is above us, we have no intersection
 		if ((ray.orig.y > y && ray.dir.y > -1e-9) || (ray.orig.y < y && ray.dir.y < 1e-9))
 			return false;
-		else
-		{
-			double yDiff = ray.dir.y;
-			double wantYDiff = ray.orig.y - this.y;
-			double mult = wantYDiff / -yDiff;
 
-			// if the distance to the intersection (mult) doesn't optimize our current distance, bail out:
-			if (mult > data.dist) return false;
-			
-			Vector p = ray.orig + ray.dir * mult;
-			if (fabs(p.x) > limit || fabs(p.z) > limit) return false;
-			
-			// calculate intersection:
-			data.p = p;
-			data.dist = mult;
-			data.normal = Vector(0, 1, 0);
-			data.dNdx = Vector(1, 0, 0);
-			data.dNdy = Vector(0, 0, 1);
-			data.u = data.p.x;
-			data.v = data.p.z;
-			data.g = this;
+		double yDiff = ray.dir.y;
+		double wantYDiff = ray.orig.y - this.y;
+		double mult = wantYDiff / -yDiff;
 
-			return true;
-		}
+		// if the distance to the intersection (mult) doesn't optimize our current distance, bail out:
+		if (mult > data.dist) return false;
+		
+		Vector p = ray.orig + ray.dir * mult;
+		if (fabs(p.x) > limit || fabs(p.z) > limit) return false;
+		
+		// calculate intersection:
+		data.p = p;
+		data.dist = mult;
+		data.normal = Vector(0, 1, 0);
+		data.dNdx = Vector(1, 0, 0);
+		data.dNdy = Vector(0, 0, 1);
+		data.u = data.p.x;
+		data.v = data.p.z;
+		data.g = this;
+
+		return true;
 	}
 
-	void deserialize(Value val, SceneLoadContext context)
+	void deserialize(const Value val, SceneLoadContext context)
 	{
 		context.set(this.y, val, "y");
 	}
@@ -131,7 +129,7 @@ class Sphere : Geometry
 		return (center - p).squaredLength() < R * R;
 	}
 	
-	void deserialize(Value val, SceneLoadContext context)
+	void deserialize(const Value val, SceneLoadContext context)
 	{
 		bool centerSet = context.set(this.center, val, "center");
 
@@ -236,7 +234,7 @@ class Cube : Geometry
 		return found;
 	}
 
-	void deserialize(Value val, SceneLoadContext context)
+	void deserialize(const Value val, SceneLoadContext context)
 	{
 		context.set(this.center, val, "center");
 		context.set(this.side, val, "side");
@@ -338,7 +336,7 @@ abstract class CsgOp : Geometry
 		return boolOp(left.isInside(p), right.isInside(p));
 	}
 
-	void deserialize(Value val, SceneLoadContext context)
+	void deserialize(const Value val, SceneLoadContext context)
 	{
 		string geomName;
 
