@@ -4,18 +4,10 @@ import std.experimental.logger;
 import gfm.sdl2, ae.utils.graphics.image;
 import util.prop;
 
-//For x64 compatability
-//Very questionable!!!
-int toInt(size_t val)
-{
-	return to!int(val);
-}
-
-
 //Default SDL2 GUI
 struct SDL2Gui
 {
-	size_t width, height;
+	uint width, height;
 
 	mixin property!(SDL2, "sdl2", Access.ReadOnly);
 	mixin property!(Window, "window", Access.ReadOnly);
@@ -24,18 +16,18 @@ struct SDL2Gui
 	mixin property!(SDL2Texture, "texture", Access.ReadOnly);
 	mixin property!(Logger, "log", Access.ReadOnly);	
 
-	this(size_t width, size_t height, string title, Logger log)
+	this(uint width, uint height, string title, Logger log)
 	{
 		init(width, height, title, log);
 	}
 
-	void init(size_t width, size_t height, string title, Logger log)
+	void init(uint width, uint height, string title, Logger log)
 	{
 		_log = log;
 		_sdl2 = new SDL2(log);
 		_window = new Window(sdl2, width, height, title);
 		_renderer = new SDL2Renderer(window, SDL_RENDERER_SOFTWARE);
-		_surface = new SDL2Surface(sdl2, toInt(width), toInt(height), 32,
+		_surface = new SDL2Surface(sdl2, width, height, 32,
 								  0x00FF0000,
 								  0x0000FF00,
 								  0x000000FF,
@@ -64,7 +56,8 @@ struct SDL2Gui
 			foreach (x; 0 .. surface.width)
 				pixels[y * surface.width + x] = to!uint(image[x, y]);
 
-		texture.updateTexture(surface.pixels, toInt(surface.pitch));
+		//TODO: Check this cast below.
+		texture.updateTexture(surface.pixels, cast(int)surface.pitch);
 		renderer.copy(texture, 0, 0);
 		renderer.present();
 	}
@@ -89,10 +82,10 @@ struct SDL2Gui
 // Default SDL2 Window
 class Window : SDL2Window
 {
-	this(SDL2 sdl2, size_t width, size_t height, string title)
+	this(SDL2 sdl2, uint width, uint height, string title)
 	{
 		super(sdl2, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		      toInt(width), toInt(height),
+		      width, height,
 		      SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS);
 
 		super.setTitle(title);
@@ -104,7 +97,7 @@ void testGUIMain()
 	import std.algorithm, std.range, std.math;
 	import ae.utils.graphics.view;
 	
-	size_t w = 640, h = 480;
+	uint w = 640, h = 480;
 
 	auto gui = SDL2Gui(w, h, "Pulsing circle", stdlog);
 	
@@ -128,7 +121,7 @@ void testGUIMain()
 		else
 			return 0xFF0000;
 		
-	})(toInt(w), toInt(h));
+	})(w, h);
 	
 	gui.draw(image);
 	

@@ -20,13 +20,13 @@ abstract class GuiBase(C) : AppSceleton
 		this.log = log;
 	}
 	
-	this(size_t width, size_t height, string windowTitle)
+	this(uint width, uint height, string windowTitle)
 	{
 		log = stdlog;
 		initGui(width, height, windowTitle);
 	}
 
-	protected void initGui(size_t width, size_t height, string windowTitle)
+	protected void initGui(uint width, uint height, string windowTitle)
 	{
 		gui.init(width, height, windowTitle, log);
 	}
@@ -39,7 +39,7 @@ abstract class GuiBase(C) : AppSceleton
 	/// All overriding classes should call super.init() first!
 	override void init()
 	{
-		screen.size(toInt(gui.width), toInt(gui.height));
+		screen.size(gui.width, gui.height);
 	}
 	
 	override void update()
