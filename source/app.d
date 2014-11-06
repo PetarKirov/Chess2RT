@@ -1,13 +1,49 @@
 module app;
 
-import std.getopt, std.path, std.stdio, std.typecons;
-import gui.guidemo, gui.rtdemo, gui.sdl2gui;
-import std.experimental.logger;
+import gui.rtdemo, gui.guidemo, gui.sdl2gui;
+import std.getopt;
+import std.stdio : writeln;
+import std.typecons : scoped;
 
-void runInScope(string filePath)
+void main(string[] args)
+{
+	string sceneFilePath = "";
+	
+	getopt(args, "file", &sceneFilePath);
+
+	if (sceneFilePath == "")
+		sceneFilePath = getPathToDefaultScene;
+	
+	runAppInScope(sceneFilePath);
+	
+	printDiagnostics();
+	
+	writeln("At the end.");
+}
+
+/// If no file is specified at the command line
+/// this function will return a path to
+/// the default scene, read from the file
+/// "data/default_scene.path"
+@property string getPathToDefaultScene()
+{
+	import std.file;
+
+	// The path to the file containting the path to the default scene file
+	enum link = "data/default_scene.path";
+	assert(link.exists, "Missing link to default scene file!");
+
+	auto finalPath = link.readText();
+	assert(finalPath.exists, "Missing default scene file!");
+
+	return finalPath;
+}
+
+void runAppInScope(string filePath)
 {
 	//auto app = scoped!GuiDemo(800, 600, "Test GUI");
-	auto app = scoped!RTDemo(stdlog, filePath);
+	auto app = scoped!RTDemo(filePath);
+
 	bool normalQuit = app.run();
 
 	if (normalQuit)
@@ -18,20 +54,7 @@ void runInScope(string filePath)
 	writeln("Close to the end...");
 }
 
-void main(string[] args)
-{
-	string sceneFilePath = "data/lecture5.sdl";
-
-	getopt(args, "file", &sceneFilePath);
-
-	runInScope(sceneFilePath);
-
-	diag();
-
-	writeln("At the end.");
-}
-
-void diag()
+void printDiagnostics()
 {
 	import rt.shader;
 

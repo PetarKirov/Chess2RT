@@ -9,7 +9,7 @@ class RTDemo : GuiBase!Color
 	Scene scene;
 	bool rendered;
 
-	this(Logger log, string sceneFilePath_)
+	this(string sceneFilePath_, Logger log = stdlog)
 	{
 		super(log);
 		this.sceneFilePath = sceneFilePath_;

@@ -5,7 +5,7 @@ import gui.guibase; import std.math;
 
 class GuiDemo : GuiBase!uint
 {
-	this(size_t width, size_t height, string windowTitle)
+	this(uint width, uint height, string windowTitle)
 	{
 		super(width, height, windowTitle);
 	}
@@ -25,15 +25,15 @@ private:
 	/// Draws a [green, blue] radial gradient on a red background
 	void drawCircle()
 	{
-		auto w = gui.width, h = gui.height;
+		uint w = gui.width, h = gui.height;
 		
 		double radius = 50.0;		
 		
 		double cx = w / 2;
 		double cy = h / 2;
 		
-		foreach (int y; 0 .. toInt(h))
-			foreach (int x; 0 .. toInt(w))
+		foreach (int y; 0 .. h)
+			foreach (int x; 0 .. w)
 		{
 			double dx = x - cx;
 			double dy = y - cy;
