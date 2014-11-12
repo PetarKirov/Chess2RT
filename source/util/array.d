@@ -99,3 +99,24 @@ unittest
 	assert(arrRef[0] == 42);
 	assert(arrRef[10] == 10);
 }
+
+/// Sorts an array using shell sort algorithm. Probably more
+/// suited for small arrays.
+/// Workarounds the missing @nogc sort function in phobos.
+void sort(T)(T[] arr) pure nothrow @nogc @safe 
+{
+	auto inc = arr.length / 2;
+	while (inc)
+	{
+		foreach (ref i, elem; arr)
+		{
+			while (i >= inc && arr[i - inc] > elem)
+			{
+				arr[i] = arr[i - inc];
+				i -= inc;
+			}
+			arr[i] = elem;
+		}
+		inc = (inc == 2) ? 1 : cast(int)(inc * 5.0 / 11);
+	}
+}

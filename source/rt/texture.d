@@ -1,13 +1,13 @@
 ﻿module rt.texture;
 
-import rt.importedtypes, rt.intersectable, rt.color, rt.sceneloader;
+import rt.importedtypes, rt.ray, rt.intersectable, rt.color, rt.sceneloader;
 import rt.bitmap;
 
 abstract class Texture : Deserializable
 {
 	Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @nogc;
 
-	void modifyNormal(in IntersectionData data) const @nogc
+	void modifyNormal(ref IntersectionData data) const @nogc
 	{
 	}
 

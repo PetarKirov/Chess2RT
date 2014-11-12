@@ -1,6 +1,6 @@
 ﻿module rt.camera;
 
-import rt.importedtypes, rt.sceneloader, rt.globalsettings;
+import rt.importedtypes, rt.ray, rt.sceneloader;
 
 enum Stereo3DOffset : byte
 {

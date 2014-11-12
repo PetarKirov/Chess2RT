@@ -10,16 +10,7 @@ import gfm.math.box;
 alias Vector = gfm.math.vector.vec3d;
 alias Matrix = gfm.math.matrix.mat3d;
 
-struct Ray
-{
-	Vector orig;
-	Vector dir;
-
-	int flags;
-	int depth;
-}
-
-Vector mul(const Vector v, const Matrix m) @nogc
+Vector mul(const Vector v, const Matrix m) pure nothrow @safe @nogc
 {
 	return Vector(
 		v.x * m.c[0][0] + v.y * m.c[1][0] + v.z * m.c[2][0],
@@ -28,7 +19,7 @@ Vector mul(const Vector v, const Matrix m) @nogc
 	);
 }
 
-Matrix scaledIdentity(double x, double y, double z) @nogc
+Matrix scaledIdentity(double x, double y, double z) pure nothrow @safe @nogc
 {
 	auto result = Matrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 	result.c[0][0] = x;
@@ -37,13 +28,13 @@ Matrix scaledIdentity(double x, double y, double z) @nogc
 	return result;
 }
 
-void clip(ref box2i box, int maxX, int maxY) @nogc
+void clip(ref box2i box, int maxX, int maxY) pure nothrow @safe @nogc
 {
 	box.max.x = min(box.max.x, maxX);
 	box.max.y = min(box.max.y, maxY);
 }
 
-Vector project(const Vector v, int a, int b, int c) @nogc
+Vector project(const Vector v, int a, int b, int c) pure nothrow @safe @nogc
 {
 	Vector result;
 	result[a] = v[0];
@@ -52,7 +43,7 @@ Vector project(const Vector v, int a, int b, int c) @nogc
 	return result;
 }
 
-Vector unproject(const Vector v, int a, int b, int c) @nogc
+Vector unproject(const Vector v, int a, int b, int c) pure nothrow @safe @nogc
 {
 	Vector result;
 	result[0] = v[a];
@@ -61,9 +52,15 @@ Vector unproject(const Vector v, int a, int b, int c) @nogc
 	return result;
 }
 
-Ray project(Ray v, int a, int b, int c) @nogc
+Vector reflect(const Vector ray, const Vector norm) pure nothrow @safe @nogc
 {
-	v.orig = project(v.orig, a, b, c);
-	v.dir = project(v.dir, a, b, c);
-	return v;
+	Vector result = ray - 2 * dot(ray, norm) * norm;
+	result.normalize();
+	return result;
+}
+
+Vector faceforward(const Vector ray, const Vector norm) pure nothrow @safe @nogc
+{
+	if (dot(ray, norm) < 0) return norm;
+	else return -norm;
 }

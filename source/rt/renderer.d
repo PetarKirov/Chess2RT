@@ -17,13 +17,27 @@ package struct TraceResult
 	Rebindable!(const Node) closestNode;
 	bool hitLight;
 	Color hitLightColor;
+
+	void opAssign(ref const TraceResult rhs) pure nothrow @safe @nogc
+	{
+		this.ray = rhs.ray;
+		this.data = rhs.data;
+		this.closestNode = rhs.closestNode;
+		this.hitLight = rhs.hitLight;
+		this.hitLightColor = rhs.hitLightColor;
+	}
 }
 
 class Renderer
 {
-	const Scene scene;
-	Image!Color outputImage;
-	Image!bool needsAA;
+	private
+	{
+		const Scene scene;
+		Image!Color outputImage;
+		Image!bool needsAA;
+	}
+
+	TraceResult lastTracingResult;
 
 	this(const Scene scene, Image!Color output)
 	{
@@ -240,12 +254,12 @@ private:
 								 raytrace(scene.camera.getScreenRay(x, y, Stereo3DOffset.Right)));
 	}
 
-	Color raytrace(const Ray ray) @nogc
+	public Color raytrace(const Ray ray) @nogc
 	{
 		return trace(ray, TraceType.Ray);
 	}
 
-	Color pathtrace(const Ray ray, const Color pathMultiplier) @nogc
+	public Color pathtrace(const Ray ray, const Color pathMultiplier) @nogc
 	{
 		return trace(ray, TraceType.Path);
 	}	
@@ -257,9 +271,6 @@ private:
 	
 		if (ray.depth > scene.settings.maxTraceDepth)
 			return Color(0, 0, 0);
-
-		//	if (ray.flags & RF_DEBUG)
-		//		cout << "  Raytrace[start = " << ray.start << ", dir = " << ray.dir << "]\n";
 
 		result.data.dist = 1e99;
 	
@@ -279,28 +290,24 @@ private:
 		final switch(traceType)
 		{
 			case TraceType.Ray:
-				return raytrace(result);
+				return raytrace_impl(result);
 			case TraceType.Path:
-				return pathtrace(result, Color(1, 1, 1));
+				return pathtrace_impl(result, Color(1, 1, 1));
 		}
 	}
 
 	/// traces a ray in the scene and returns the visible light that comes from that direction
-	Color raytrace(TraceResult result) @nogc
+	Color raytrace_impl(TraceResult result) @nogc
 	{
+		debug if (result.ray.isDebug)
+			this.lastTracingResult = result;
+
 		if (result.hitLight)
 			return result.hitLightColor;
 
 		// no intersection? use the environment, if present:
 		if (!result.closestNode)
 			return scene.environment.getEnvironment(result.ray.dir);
-	
-	//	if (ray.flags & RF_DEBUG) {
-	//		cout << "    Hit " << closestNode->geom->getName() << " at distance " << fixed << setprecision(2) << data.dist << endl;
-	//		cout << "      Intersection point: " << data.p << endl;
-	//		cout << "      Normal:             " << data.normal << endl;
-	//		cout << "      UV coods:           " << data.u << ", " << data.v << endl;
-	//	}
 
 		// if the node we hit has a bump map, apply it here:
 		if (result.closestNode.bumpmap)
@@ -310,7 +317,7 @@ private:
 		return result.closestNode.shader.shade(result.ray, result.data);
 	}
 
-	Color pathtrace(TraceResult result, const Color pathMultiplier) @nogc
+	Color pathtrace_impl(TraceResult result, const Color pathMultiplier) @nogc
 	{
 		if (result.hitLight)
 		{
@@ -321,7 +328,7 @@ private:
 			 * light would be over-represented and the image a bit too bright. We may discard light checks
 			 * for secondary rays altogether, but we would lose caustics and light reflections that way.
 			 */
-			if (result.ray.flags & RayFlags.RF_DIFFUSE)
+			if (result.ray.flags & RayFlags.Diffuse)
 				return Color(0, 0, 0);
 			else
 				return result.hitLightColor * pathMultiplier;

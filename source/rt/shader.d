@@ -137,7 +137,7 @@ class Lambert : Shader
 		w_out.depth++;
 		w_out.orig = x.p + N * 1e-6;
 		w_out.dir = hemisphereSample(N);
-		w_out.flags = w_out.flags | RayFlags.RF_DIFFUSE;
+		w_out.flags = w_out.flags | RayFlags.Diffuse;
 		colorEval = diffuseColor * (1 / PI) * max(0.0, dot(w_out.dir, N));
 		pdf = 1 / (2 * PI);
 	}
@@ -233,7 +233,7 @@ class Phong : Shader
 					
 					// R = vector after the ray from the light towards the intersection point
 					// is reflected at the intersection:
-					Vector R = rt.ray.reflect(-lightDir, N);
+					Vector R = reflect(-lightDir, N);
 					
 					double cosGamma = dot(R, -ray.dir);
 					if (cosGamma > 0)

@@ -1,7 +1,7 @@
 ﻿module rt.intersectable;
 
 import std.typecons : Rebindable;
-import rt.importedtypes, rt.geometry;
+import rt.importedtypes, rt.ray, rt.geometry;
 
 struct IntersectionData
 {
@@ -22,7 +22,7 @@ struct IntersectionData
 
 	Vector dNdx, dNdy;
 
-	void opAssign(ref const IntersectionData rhs) @nogc
+	void opAssign(ref const IntersectionData rhs) pure nothrow @nogc @safe
 	{
 		this.p = rhs.p;
 		this.normal = rhs.normal;
@@ -32,6 +32,12 @@ struct IntersectionData
 		this.g = rhs.g;
 		this.dNdx = rhs.dNdx;
 		this.dNdy = rhs.dNdy;
+	}
+
+	int opCmp(ref const IntersectionData rhs) const pure nothrow @nogc @safe
+	{
+		return dist < rhs.dist ? -1 :
+				rhs.dist < dist? 1 : 0;
 	}
 }
 

@@ -1,6 +1,6 @@
 ﻿module rt.node;
 
-import rt.intersectable, rt.geometry, rt.shader, rt.texture, rt.transform, rt.importedtypes, rt.sceneloader;
+import rt.importedtypes, rt.ray, rt.transform, rt.intersectable, rt.geometry, rt.shader, rt.texture, rt.sceneloader;
 
 class Node : Intersectable, Deserializable
 {
