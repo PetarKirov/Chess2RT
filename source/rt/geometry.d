@@ -1,9 +1,8 @@
 ﻿module rt.geometry;
 
-import std.algorithm : sort;
 import std.range : chain;
 import std.typecons : Rebindable;
-import rt.importedtypes, rt.intersectable, rt.sceneloader, util.array;
+import rt.importedtypes, rt.ray, rt.intersectable, rt.sceneloader, util.array;
 
 abstract class Geometry : Intersectable, Deserializable
 {
@@ -301,7 +300,7 @@ abstract class CsgOp : Geometry
 		foreach(elem; chain(leftData[], rightData[]))
 			allData ~= elem;
 
-		mySort(allData[]);
+		sort(allData[]);
 
 		// if we have an even number of intersections -> we're outside the object. If odd, we're inside:
 		bool inL, inR;
@@ -311,7 +310,7 @@ abstract class CsgOp : Geometry
 		foreach (current; allData[])
 		{			
 			// at each intersection, we flip the `insidedness' of one of the two variables:
-			if (&current.g == &left)
+			if (current.g is left)
 				inL = !inL;
 			else
 				inR = !inR;
@@ -353,36 +352,6 @@ abstract class CsgOp : Geometry
 		mixin(toStrBody);
 	}
 }
-
-void mySort(IntersectionData[] arr) @nogc
-{
-	long n = arr.length;
-
-	int i,j;
-	int iMin;
-
-	for (j = 0; j < n-1; j++) {
-		/* find the min element in the unsorted a[j .. n-1] */
-		
-		/* assume the min is the first element */
-		iMin = j;
-		/* test against elements after j to find the smallest */
-		for ( i = j+1; i < n; i++) {
-			/* if this element is less, then it is the new minimum */  
-			if (arr[i].dist < arr[iMin].dist) {
-				/* found new minimum; remember its index */
-				iMin = i;
-			}
-		}
-		
-		if(iMin != j) {
-			import std.algorithm : swap;
-			swap(arr[j], arr[iMin]);
-		}
-		
-	}
-}
-
 
 class CsgUnion : CsgOp
 {

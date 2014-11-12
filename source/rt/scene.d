@@ -65,7 +65,7 @@ class Scene
 		ray.orig = from;
 		ray.dir = to - from;
 		ray.dir.normalize();
-		ray.flags |= RayFlags.RF_SHADOW;
+		ray.flags |= RayFlags.Shadow;
 		
 		IntersectionData temp;
 		temp.dist = (to - from).length();

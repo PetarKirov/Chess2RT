@@ -1,6 +1,6 @@
 ﻿module rt.transform;
 
-import rt.importedtypes;
+import rt.importedtypes, rt.ray;
 
 /// A transformation class, which implements model-view transform. Objects can be
 /// arbitrarily scaled, rotated and translated.

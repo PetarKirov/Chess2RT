@@ -1,7 +1,7 @@
 ﻿module rt.light;
 
-import rt.importedtypes;
-import rt.color, rt.intersectable, rt.sceneloader;
+import rt.ray, rt.color;
+import rt.intersectable, rt.sceneloader;
 
 abstract class Light : Intersectable, Deserializable
 {

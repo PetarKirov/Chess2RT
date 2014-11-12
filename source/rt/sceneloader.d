@@ -314,24 +314,24 @@ class SdlValueWrapper : Value
 
 	override string getType() const @trusted
 	{
-		return tag.name;
+		return (cast(Tag)tag).name;
 	}
 	
 	override bool isSpecified(string propertyName) const @trusted
 	{
-		return propertyName in tag.tags;
+		return propertyName in (cast(Tag)tag).tags;
 	}
 	
 	override Value getChild( string propertyName) const @trusted
 	{
-		return new SdlValueWrapper(tag.tags[propertyName][0]);
+		return new SdlValueWrapper((cast(Tag)tag).tags[propertyName][0]);
 	}
 	
 	override Value[] getChildren() const @trusted
 	{
 		Value[] result;
 
-		foreach(subTag; tag.tags)
+		foreach(subTag; (cast(Tag)tag).tags)
 			result ~= new SdlValueWrapper(subTag);
 
 		return result;
@@ -341,7 +341,7 @@ class SdlValueWrapper : Value
 	{
 		sdlang.Value[] result;
 		
-		foreach(subTag; tag.values)
+		foreach(subTag; (cast(Tag)tag).values)
 			result ~= subTag;
 		
 		return result;
@@ -374,9 +374,9 @@ private:
 	static void print(const Tag tag)
 	{
 		import std.stdio;
-		writeln(tag.name);
+		writeln((cast(Tag)tag).name);
 		
-		foreach(t; tag.tags)
+		foreach(t; (cast(Tag)tag).tags)
 			print(t);
 	}
 }

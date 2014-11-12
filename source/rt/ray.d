@@ -1,73 +1,60 @@
 ﻿module rt.ray;
 
-import rt.importedtypes;
+import rt.importedtypes : Vector;
 
-// flags that mark a ray in some way, so the behaviour of the raytracer can be altered.
+/// Flags that mark a ray in some way, so the behaviour of the raytracer can be altered.
 enum RayFlags
 {
-	// RF_DEBUG - the ray is a debug one (launched from a mouse-click on the rendered image).
-	// raytrace() prints diagnostics when it encounters such a ray.
-	RF_DEBUG    = 0x0001,
+	None	= 0,
+
+	/// The ray is a debug one (launched from a mouse-click on the rendered image).
+	/// raytrace() prints diagnostics when it encounters such a ray.
+	Debug    = 1,
 	
-	// RF_SHADOW - the ray is a shadow ray. This hints the raytracer to skip some calculations
-	// (since the IntersectionData won't be used for shading), and to disable backface culling
-	// for Mesh objects.
-	RF_SHADOW   = 0x0002,
+	/// The ray is a shadow ray. This hints the raytracer to skip some calculations
+	/// (since the IntersectionData won't be used for shading), and to disable backface culling
+	/// for Mesh objects.
+	Shadow   = 2,
 	
-	// RF_GLOSSY - the ray has hit some glossy surface somewhere along the way.
-	// so if it meets a new glossy surface, it can safely use lower sampling settings.
-	RF_GLOSSY   = 0x0004,
+	/// The ray has hit some glossy surface somewhere along the way.
+	/// so if it meets a new glossy surface, it can safely use lower sampling settings.
+	Glossy   = 4,
 	
-	// last constituent of a ray path was a diffuse surface
-	RF_DIFFUSE  = 0x0008,
+	/// last constituent of a ray path was a diffuse surface
+	Diffuse  = 8,
 };
 
-//struct Ray
-//{
-//	Vector start, dir;
-//
-//	this(const Vector _start, const Vector _dir)
-//	{
-//		start = _start;
-//		dir = _dir;
-//	}
-//}
-
-Vector reflect(const Vector ray, const Vector norm) @nogc
+struct Ray
 {
-	Vector result = ray - 2 * dot(ray, norm) * norm;
-	result.normalize();
-	return result;
+	Vector orig, dir;
+	
+	RayFlags flags;
+	int depth;
+	
+	@property bool isDebug() const pure nothrow @safe @nogc
+	{
+		bool result = this.flags & RayFlags.Debug;
+
+		uint a = flags;
+		return result;
+	}
+
+	@property void isDebug(bool newVal) pure nothrow @safe @nogc
+	{
+		uint a = flags;
+
+		if (newVal)
+			flags |= RayFlags.Debug;
+		else
+			flags &= ~RayFlags.Debug;
+
+		a = flags;
+	}
 }
 
-Vector faceforward(const Vector ray, const Vector norm) @nogc
+Ray project(Ray v, int a, int b, int c) pure nothrow @safe @nogc
 {
-	if (dot(ray, norm) < 0) return norm;
-	else return -norm;
-}
-
-Vector project(const Vector v, int a, int b, int c) @nogc
-{
-	Vector result;
-	result[a] = v[0];
-	result[b] = v[1];
-	result[c] = v[2];
-	return result;
-}
-
-
-Vector unproject(const Vector v, int a, int b, int c) @nogc
-{
-	Vector result;
-	result[0] = v[a];
-	result[1] = v[b];
-	result[2] = v[c];
-	return result;
-}
-
-Ray project(Ray v, int a, int b, int c) @nogc
-{
-	v.orig = project(v.orig, a, b, c);
-	v.dir = project(v.dir, a, b, c);
+	v.orig = rt.importedtypes.project(v.orig, a, b, c);
+	v.dir = rt.importedtypes.project(v.dir, a, b, c);
 	return v;
 }

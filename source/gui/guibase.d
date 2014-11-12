@@ -60,6 +60,7 @@ abstract class GuiBase(C) : AppSceleton
 	{
 		import gfm.sdl2;
 		
-		return !gui.sdl2.keyboard().isPressed(SDLK_ESCAPE);
+		return !gui.sdl2.keyboard().isPressed(SDLK_ESCAPE) &&
+			!gui.sdl2.wasQuitRequested();
 	}
 }
