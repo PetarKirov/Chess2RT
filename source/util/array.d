@@ -37,7 +37,7 @@ struct MyArray(T)
 	{
 		int result = 0;
 		
-		foreach (ref elem; data)
+		foreach (ref elem; this[])
 		{
 			result = dg(elem);
 			if (result)
