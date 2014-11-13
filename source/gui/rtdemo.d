@@ -13,7 +13,7 @@ class RTDemo : GuiBase!Color
 	Scene scene;
 	Renderer renderer;
 	shared bool rendered;
-	shared uint tasksCount;
+	shared byte[] tasksCount = new shared byte[2];
 
 	this(string sceneFilePath_, Logger log = stdlog)
 	{
@@ -66,11 +66,13 @@ class RTDemo : GuiBase!Color
 		import core.atomic : atomicOp;
 		import std.parallelism : task, taskPool;
 
-		debug if (tasksCount == 0)
+		move();
+
+		debug if (tasksCount[0] == 0)
 		{
+			atomicOp!"+="(tasksCount[0], 1);
 			auto t = task(&printMouse);
 			taskPool.put(t);
-			atomicOp!"+="(tasksCount, 1);
 		}
 
 		return super.handleInput;
@@ -82,7 +84,7 @@ class RTDemo : GuiBase!Color
 		
 		if (!mouse.isButtonPressed(1)) //left mouse button
 		{
-			atomicOp!"-="(tasksCount, 1);
+			atomicOp!"-="(tasksCount[0], 1);
 			return;
 		}
 		
@@ -112,7 +114,27 @@ class RTDemo : GuiBase!Color
 		
 		writeln("Raytracing completed!\n");
 		
-		atomicOp!"-="(tasksCount, 1);
+		atomicOp!"-="(tasksCount[0], 1);
+	}
+
+	private void move()
+	{
+		move_impl(1073741903, 30, 0);  //Right is Pressed
+		move_impl(1073741904, -30, 0); //Left is Pressed
+		move_impl(1073741905, 0, -30);  //Down is Pressed
+		move_impl(1073741906, 0, 30); //Up is Pressed
+	}
+
+	private void move_impl(int kbd_key, int dx, int dz)
+	{
+		auto kbd = gui.sdl2.keyboard();
+
+		if (!kbd.isPressed(kbd_key))
+			return;
+
+		 scene.camera.move(dx, dz);
+		 rendered = false;
+		 scene.camera.beginFrame();
 	}
 
 	void printDebugInfo()

@@ -72,12 +72,15 @@ class Renderer
 
 						Color c = renderPixelNoAA(r.min.x + dx, r.min.y + dy, ex - dx, ey - dy);
 
-						//if (!drawRect(box2i(r.min.x + dx, r.min.y + dy, r.min.x + ex, r.min.y + ey), c))
-						//    return;
+						drawRect(c, 
+							box2i(r.min.x + dx, r.min.y + dy,
+								r.min.x + ex, r.min.y + ey));
 					}
 				}
 			}
 
+		if (scene.settings.interactive)
+			return;
 
 		// 2) Second pass - shoot _one_ ray per pixel:
 		foreach (b; buckets)
@@ -154,15 +157,13 @@ private:
 			bucket.clip(W, H);
 	}
 
-	bool drawRect(box2i r, const Color c)
+	void drawRect(Color c, box2i r) @nogc
 	{
 		r.clip(outputImage.w, outputImage.h);
 
 		foreach (y; r.min.y .. r.max.y)
 			foreach (x; r.min.x .. r.max.x)
 				outputImage[x, y] = c;
-
-		return true;
 	}
 
 	/// Gets the color for a single pixel, without antialiasing

@@ -15,6 +15,7 @@ Scene {
 		frameHeight         480
 		ambientLightColor 	0.2 0.2 0.2
 		AAEnabled			false
+		interactive			true
 	}
 
 	Camera {

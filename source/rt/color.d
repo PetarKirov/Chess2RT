@@ -28,7 +28,9 @@ struct Color
 {
 	union 
 	{
-		float components[3];
+		// The default value of float.nan makes the calculations
+		// very slow in the toRGB32() functions.
+		float components[3] = [ 0f, 0f, 0f ];
 		struct { float r, g, b;	}
 	}
 
