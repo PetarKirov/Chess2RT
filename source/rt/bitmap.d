@@ -3,7 +3,7 @@
 import std.math, std.path, std.string;
 import util.prop;
 import rt.color, imageio.bmp;
-import std.exception, std.string, rt.exception;
+import rt.exception, imageio.exception;
 
 /// Represents a bitmap (2d array of colors), e.g. a image
 /// supports loading/saving to BMP and EXR
