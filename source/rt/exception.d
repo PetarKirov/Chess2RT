@@ -46,42 +46,26 @@ class InvalidSceneException : RTException
 
 class EntityWithDuplicateName : InvalidSceneException
 {
-	@safe pure nothrow 
+	@safe pure 
 		this(string entityName,
-			 string msg = format("An entity named %s is already present!"),			
+			 string msg = null,
 			 Throwable next = null,
 			 string file = __FILE__, size_t line = __LINE__)
 		{
+			msg = msg? msg : format("An entity named %s is already present!", entityName);
 			super(msg, next, file, line);
 		}
 }
 
-class ImageTypeException : RTException
+class PropertyNotSpecifiedException : InvalidSceneException
 {
-	@safe pure nothrow 
-	this(string msg = "Image error!", Throwable next = null,
+	@safe pure 
+	this(string propertyName,
+	     string msg = null,
+	     Throwable next = null,
 	     string file = __FILE__, size_t line = __LINE__)
 	{
-		super(msg, next, file, line);
-	}
-}
-
-class UnknownImageTypeException : ImageTypeException
-{
-	@safe pure nothrow 
-	this(string msg = "Unknown image type!", Throwable next = null,
-	     string file = __FILE__, size_t line = __LINE__)
-	{
-		super(msg, next, file, line);
-	}
-}
-
-class ErorLoadingImageException : ImageTypeException
-{
-	@safe pure nothrow 
-	this(string msg = "Error loading image!", Throwable next = null,
-	     string file = __FILE__, size_t line = __LINE__)
-	{
+		msg = msg? msg : format("The required property '%s' is not specified!", propertyName);
 		super(msg, next, file, line);
 	}
 }
