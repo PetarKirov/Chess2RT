@@ -64,7 +64,7 @@ class Plane : Geometry
 
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
-		import util.prettyPrint;
+		import util.prettyprint;
 		mixin(toStrBody);
 	}
 }
@@ -140,7 +140,7 @@ class Sphere : Geometry
 
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
-		import util.prettyPrint;
+		import util.prettyprint;
 		mixin(toStrBody);
 	}
 }
@@ -241,7 +241,7 @@ class Cube : Geometry
 
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
-		import util.prettyPrint;
+		import util.prettyprint;
 		mixin(toStrBody);
 	}
 }
@@ -348,7 +348,7 @@ abstract class CsgOp : Geometry
 
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
-		import util.prettyPrint;
+		import util.prettyprint;
 		mixin(toStrBody);
 	}
 }

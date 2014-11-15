@@ -94,7 +94,7 @@ class Node : Intersectable, Deserializable
 
 	void toString(scope void delegate(const(char)[]) sink) const
 	{
-		import util.prettyPrint;
+		import util.prettyprint;
 		mixin(toStrBody);
 	}
 }
