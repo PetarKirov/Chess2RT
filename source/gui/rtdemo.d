@@ -120,10 +120,12 @@ class RTDemo : GuiBase!Color
 
 	private void move()
 	{
-		move_impl(1073741903, 30, 0);  //Right is Pressed
-		move_impl(1073741904, -30, 0); //Left is Pressed
-		move_impl(1073741905, 0, -30);  //Down is Pressed
-		move_impl(1073741906, 0, 30); //Up is Pressed
+		import derelict.sdl2.types;
+
+		move_impl(SDLK_RIGHT, 32, 0);  //Right is Pressed
+		move_impl(SDLK_LEFT, -32, 0); //Left is Pressed
+		move_impl(SDLK_DOWN, 0, -32);  //Down is Pressed
+		move_impl(SDLK_UP, 0, 32); //Up is Pressed
 	}
 
 	private void move_impl(int kbd_key, int dx, int dz)
@@ -133,9 +135,16 @@ class RTDemo : GuiBase!Color
 		if (!kbd.isPressed(kbd_key))
 			return;
 
-		 scene.camera.move(dx, dz);
-		 rendered = false;
-		 scene.camera.beginFrame();
+		import derelict.sdl2.types;
+		bool shouldRotate = kbd.isPressed(SDLK_LSHIFT);
+
+		if (shouldRotate)
+			scene.camera.rotate(dx / -8, dz / 8);
+		else
+			scene.camera.move(dx, dz);
+
+		rendered = false;
+		scene.camera.beginFrame();
 	}
 
 	void printDebugInfo()
