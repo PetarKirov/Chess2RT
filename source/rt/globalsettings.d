@@ -83,8 +83,6 @@ class GlobalSettings : Deserializable
 		context.set(this.ambientLightColor, val, "ambientLightColor");
 
 		context.set(this.debugEnabled, val, "debugEnabled");
-
-		adjustFrameSize();
 	}
 }
 

@@ -153,7 +153,7 @@ private:
 					res ~= box2i(x * BUCKET_SIZE, y * BUCKET_SIZE, (x + 1) * BUCKET_SIZE, (y + 1) * BUCKET_SIZE);
 		}
 	
-		foreach (bucket; res)
+		foreach (ref bucket; res)
 			bucket.clip(W, H);
 	}
 
