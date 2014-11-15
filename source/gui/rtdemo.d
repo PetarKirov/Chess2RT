@@ -66,7 +66,8 @@ class RTDemo : GuiBase!Color
 		import core.atomic : atomicOp;
 		import std.parallelism : task, taskPool;
 
-		move();
+		if (scene.settings.interactive)
+			move();
 
 		debug if (tasksCount[0] == 0)
 		{
