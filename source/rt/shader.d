@@ -1,11 +1,11 @@
 ﻿module rt.shader;
 
-import util.random;
+import std.typecons : Rebindable;
 import gfm.math : clamp;
-import rt.importedtypes;
-import rt.scene, rt.texture, rt.color, rt.intersectable, rt.ray, rt.exception;
-import rt.sceneloader;
+import rt.importedtypes, rt.ray, rt.color, rt.intersectable;
+import rt.scene, rt.texture, rt.exception, rt.sceneloader;
 import util.counter;
+import util.random;
 
 interface BRDF
 {
@@ -23,7 +23,7 @@ interface IShader
 abstract class Shader : IShader, BRDF, Deserializable
 {
 	Color color;
-	Scene scene;
+	Rebindable!(const Scene) scene;
 
 	this()
 	{
@@ -52,8 +52,8 @@ abstract class Shader : IShader, BRDF, Deserializable
 /// A Lambert (flat) shader
 class Lambert : Shader
 {
-	/// A diffuse texture, if not NULL.
-	Texture texture; 
+	/// A diffuse texture
+	Rebindable!(const Texture) texture; 
 
 	this() { this(Color(1, 1, 1)); }
 
@@ -147,12 +147,16 @@ class Lambert : Shader
 		super.deserialize(val, context);
 		string t;
 		context.set(t, val, "texture");
-		this.texture = context.named.textures[t];
+
+		// Texture is optional
+		this.texture = t in context.named.textures ?
+		context.named.textures[t] :
+		null;
 	}
 
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
-		import util.prettyPrint;
+		import util.prettyprint;
 		mixin(toStrBody);
 	}
 };
@@ -178,7 +182,7 @@ Vector hemisphereSample(const Vector normal) @nogc
 /// A Phong shader
 class Phong : Shader
 {
-	Texture texture; // optional diffuse texture
+	Rebindable!(const Texture) texture;  // optional diffuse texture
 	double exponent; // shininess of the material
 	float strength; // strength of the cos^n specular component (0..1)
 
@@ -283,7 +287,7 @@ class Phong : Shader
 
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
-		import util.prettyPrint;
+		import util.prettyprint;
 		mixin(toStrBody);
 	}
 }

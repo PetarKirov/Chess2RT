@@ -1,7 +1,7 @@
 ﻿module gui.guidemo;
 
-import gui.sdl2gui;
-import gui.guibase; import std.math;
+import std.math;
+import gui.sdl2gui, gui.guibase;
 
 class GuiDemo : GuiBase!uint
 {
