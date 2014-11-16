@@ -137,9 +137,9 @@ const:
 	/// the blue channel occupying the least-significant byte
 	uint toRGB32(uint redShift = 16, uint greenShift = 8, uint blueShift = 0)
 	{
-		uint ir = convertTo8bit_sRGB(r);
-		uint ig = convertTo8bit_sRGB(g);
-		uint ib = convertTo8bit_sRGB(b);
+		uint ir = convertTo8bit_sRGB_Cached(r);
+		uint ig = convertTo8bit_sRGB_Cached(g);
+		uint ib = convertTo8bit_sRGB_Cached(b);
 		return (ib << blueShift) |
 			(ig << greenShift) |
 				(ir << redShift);
@@ -178,14 +178,27 @@ private pure nothrow @safe @nogc
 		
 		return roundToByte(x);
 	}
+
+	ubyte convertTo8bit_sRGB_Cached(float x)
+	{
+		if (x <= 0) return 0;
+		if (x >= 1) return 255;
+		return SRGB_CompressCache[cast(int)(x * 4096.0f)];
+	}
 	
 	ubyte roundToByte(float x)
 	{
 		return cast(ubyte)floor(x * 255.0f);
 	}
 	
-	ubyte SRGB_CompressCache[4097];
-	float SRGB_DeCompressCache[4097];
+	immutable ubyte SRGB_CompressCache[4097];
+	immutable float SRGB_DeCompressCache[4097];
+
+	static this()
+	{
+		foreach (i; 0 .. 4097)
+			SRGB_CompressCache[i] = convertTo8bit_sRGB(i / 4096f);
+	}
 }
 
 // TODO: Add more colors
