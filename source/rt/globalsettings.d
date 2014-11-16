@@ -7,7 +7,7 @@ class GlobalSettings : Deserializable
 	// General:
 	uint frameWidth, frameHeight;
 	bool fullscreen;             // [Not implemented] Fullscreen
-	bool interactive;            // [Not implemented] Interactive mode
+	bool interactive;            // Interactive mode
 
 	// Multithreading:
 	uint bucketSize;			// Image sub-rectange (square) width
@@ -15,6 +15,7 @@ class GlobalSettings : Deserializable
 	
 	// Rendering:
 	bool prepassEnabled;		// Quick low-resolution preview rendering
+	bool prepassOnly;			// Render only prepass
 	bool GIEnabled;				// Global Illumination
 	bool AAEnabled;				// Anti-aliasing
 	double AAThreshold;			// Color difference threshold, before AA is triggered
@@ -50,6 +51,7 @@ class GlobalSettings : Deserializable
 		threadCount = 1;
 
 		prepassEnabled = true;
+		prepassOnly = false;
 		GIEnabled = false;
 		AAEnabled = true;
 		AAThreshold = 0.1;
@@ -73,6 +75,7 @@ class GlobalSettings : Deserializable
 		context.set(this.threadCount, val, "threadCount");
 
 		context.set(this.prepassEnabled, val, "prepassEnabled");
+		context.set(this.prepassOnly, val, "prepassOnly");
 		context.set(this.GIEnabled, val, "GIEnabled");
 		context.set(this.AAEnabled, val, "AAEnabled");
 		context.set(this.AAThreshold, val, "AAThreshold");
