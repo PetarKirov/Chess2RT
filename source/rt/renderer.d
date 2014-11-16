@@ -79,7 +79,7 @@ class Renderer
 				}
 			}
 
-		if (scene.settings.interactive)
+		if (scene.settings.prepassOnly)
 			return;
 
 		// 2) Second pass - shoot _one_ ray per pixel:
