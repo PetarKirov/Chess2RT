@@ -122,29 +122,87 @@ class RTDemo : GuiBase!Color
 	{
 		import derelict.sdl2.types;
 
-		move_impl(SDLK_RIGHT, 32, 0);  //Right is Pressed
-		move_impl(SDLK_LEFT, -32, 0); //Left is Pressed
-		move_impl(SDLK_DOWN, 0, -32);  //Down is Pressed
-		move_impl(SDLK_UP, 0, 32); //Up is Pressed
+		auto dMove = 32, dRotate = 4;
+
+		auto controls = 
+		[
+			Controls ([SDLK_RIGHT, SDLK_LCTRL], 0, 0, 0, 0, dRotate),
+			Controls ([SDLK_RIGHT, SDLK_LSHIFT], 0, 0, 0, -dRotate),
+			Controls ([SDLK_RIGHT], dMove),
+
+			Controls ([SDLK_LEFT, SDLK_LCTRL], 0, 0, 0, 0, -dRotate),
+			Controls ([SDLK_LEFT, SDLK_LSHIFT], 0, 0, 0, dRotate),
+			Controls ([SDLK_LEFT], -dMove),
+
+			Controls ([SDLK_DOWN, SDLK_LCTRL], 0, -dMove),
+			Controls ([SDLK_DOWN, SDLK_LSHIFT], 0, 0, 0, 0, 0, -dRotate),
+			Controls ([SDLK_DOWN], 0, 0, -dMove),
+
+			Controls ([SDLK_UP, SDLK_LCTRL], 0, dMove),
+			Controls ([SDLK_UP, SDLK_LSHIFT], 0, 0, 0, 0, 0, dRotate),
+			Controls ([SDLK_UP], 0, 0, dMove),
+		];
+
+		move_impl(controls);
 	}
 
-	private void move_impl(int kbd_key, int dx, int dz)
+	/// Encapsulates a camera control keys binding.
+	private static struct Controls
+	{
+		int[] keyCodes;
+		double dx = 0.0, dy = 0.0, dz = 0.0;
+		double dYaw = 0.0, dRoll = 0.0, dPitch = 0.0;
+
+		/// Params:
+		/// 	keyCodes =	array of SDL2 key codes to test
+		/// 	dx =		left/right movement
+		/// 	dy =		up/down movement
+		/// 	dz =		forward/backword movement
+		/// 	dYaw =		left/right rotation [0..360]
+		/// 	dRoll =		roll rotation [-180..180]
+		/// 	dPitch =	up/down rotation [-90..90]
+		this(int[] keyCodes, double dx = 0.0, double dy = 0.0, double dz = 0.0,
+			double dYaw = 0.0, double dRoll = 0.0, double dPitch = 0.0)
+		{
+			this.keyCodes = keyCodes;
+			this.dx = dx;
+			this.dy = dy;
+			this.dz = dz;
+			this.dYaw = dYaw;
+			this.dRoll = dRoll;
+			this.dPitch = dPitch;
+		}
+	}
+
+	/// Moves and/or rotates the camera according to the
+	/// first control settings that match.
+	/// Params:
+	/// 	controls = array of control settings to check
+	private void move_impl(Controls[] controls)
+	{
+		foreach (c; controls)
+		{
+			if (areKeysPressed(c.keyCodes))
+			{
+				scene.camera.move(c.dx, c.dy, c.dz);
+				scene.camera.rotate(c.dYaw, c.dRoll, c.dPitch);
+
+				rendered = false;
+				break;
+			}
+		}
+	}
+
+	/// Checks if all of the specified SDL2 keys are pressed.
+	private bool areKeysPressed(int[] keyCodes)
 	{
 		auto kbd = gui.sdl2.keyboard();
 
-		if (!kbd.isPressed(kbd_key))
-			return;
+		foreach (key; keyCodes)
+			if (!kbd.isPressed(key))
+				return false;
 
-		import derelict.sdl2.types;
-		bool shouldRotate = kbd.isPressed(SDLK_LSHIFT);
-
-		if (shouldRotate)
-			scene.camera.rotate(dx / -8, dz / 8);
-		else
-			scene.camera.move(dx, dz);
-
-		rendered = false;
-		scene.camera.beginFrame();
+		return true;
 	}
 
 	void printDebugInfo()
