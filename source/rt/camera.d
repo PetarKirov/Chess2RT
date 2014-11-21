@@ -123,18 +123,30 @@ class Camera : Deserializable
 		return result;
 	}
 
-	void move(double dx, double dz)
+	/// Moves the camera.
+	/// Params:
+	/// 	dx = left/right movement
+	/// 	dy = up/down movement
+	/// 	dz = forward/backword movement
+	void move(double dx, double dy, double dz)
 	{
 		pos += dx * rightDir;
+		pos += dy * upDir;
 		pos += dz * frontDir;
 	}
-	void rotate(double dx, double dz)
+
+	/// Rotates the camera.
+	/// Params:
+	/// 	dYaw = left/right rotation [0..360]
+	/// 	dRoll = roll rotation [-180..180]
+	/// 	dPitch = up/down rotation [-90..90]
+	void rotate(double dYaw, double dRoll, double dPitch)
 	{
-		pitch += dz;
-		if (pitch >  90) pitch = 90;
-		if (pitch < -90) pitch = -90;
-		
-		yaw += dx;
+		yaw += dYaw;
+		roll += dRoll;
+		pitch += dPitch;
+
+		pitch = clamp(pitch, -90, 90);
 	}
 
 	void deserialize(const Value val, SceneLoadContext context)
