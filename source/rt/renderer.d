@@ -59,7 +59,7 @@ class Renderer
 
 		// 1) First pass - use very coarse resolution rendering,
 		// tracing a single ray for a 16x16 block:
-		if (scene.settings.prepassEnabled || scene.settings.GIEnabled)
+		if (scene.settings.prepassEnabled)
 			foreach(r; buckets)
 			{
 				for (int dy = 0; dy < r.height; dy += 16)
@@ -159,18 +159,17 @@ private:
 
 	void drawRect(Color c, box2i r) @nogc
 	{
-		r.clip(outputImage.w, outputImage.h);
-
 		foreach (y; r.min.y .. r.max.y)
 			foreach (x; r.min.x .. r.max.x)
 				outputImage[x, y] = c;
 	}
 
 	/// Gets the color for a single pixel, without antialiasing
-	Color renderPixelNoAA(int x, int y, int dx = 1, int dy = 1) @nogc
+	public Color renderPixelNoAA(int x, int y, int dx = 1, int dy = 1) @nogc
 	{
-		outputImage[x, y] = renderSample(x, y, dx, dy);
-		return outputImage[x, y];
+		auto result = renderSample(x, y, dx, dy);
+		outputImage[x, y] = result;
+		return result;
 	}
 
 	// gets the color for a single pixel, with antialiasing.
