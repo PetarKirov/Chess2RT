@@ -77,33 +77,3 @@ class Scene
 		return true;
 	}
 }
-
-@disable
-Color Raytrace(Ray ray)
-{		
-	IntersectionData data;
-	Node closestNode;
-	
-	//version (debug)
-	//cout << "  Raytrace[start = " << ray.start << ", dir = " << ray.dir << "]\n";
-	
-	data.dist = 1e99;
-
-	Node[] nodes;
-
-	foreach (node; nodes)
-		if (node.geom.intersect(ray, data))
-			closestNode = node;
-	
-	if (!closestNode)
-		return Color(0, 0, 0);
-	
-	//version(debug) {
-	//cout << "    Hit " << closestNode->geom->getName() << " at distance " << fixed << setprecision(2) << data.dist << endl;
-	//cout << "      Intersection point: " << data.p << endl;
-	//cout << "      Normal:             " << data.normal << endl;
-	//cout << "      UV coods:           " << data.u << ", " << data.v << endl;
-	//}
-	
-	return closestNode.shader.shade(ray, data);
-}
