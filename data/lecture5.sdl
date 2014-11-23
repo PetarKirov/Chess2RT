@@ -16,6 +16,9 @@ Scene {
 		ambientLightColor 	0.2 0.2 0.2
 		AAEnabled			false
 		interactive			true
+		prepassOnly			true
+		prepassEnabled		false
+		GIEnabled			true
 	}
 
 	Camera {
@@ -69,11 +72,11 @@ Scene {
 
 		Sphere {
 			name		"sphere"
-			center		-100 60 200
+			center		-10 60 200
 			R			70
 		}
 
-		CsgDiff {
+		CsgUnion {
 			name		"diff"
 			left		"cube"
 			right		"sphere"
@@ -98,6 +101,8 @@ Scene {
 	}
 
 	Shaders {
+		
+
 		Lambert {
 			name		"floor_shader"
 			texture 	"bmp"
@@ -161,10 +166,10 @@ Scene {
 
 		// CSG object:
 
-		Node {
-			name		"csgNode"
-			geometry	"diff"
-			shader		"csg_shader"
-		}
+		//Node {
+		//	name		"csgNode"
+		//	geometry	"diff"
+		//	shader		"csg_shader"
+		//}
 	}
 }

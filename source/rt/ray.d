@@ -27,8 +27,17 @@ enum RayFlags
 struct Ray
 {
 	Vector orig, dir;
-	
-	RayFlags flags;
+
+	debug
+	{
+		RayFlags flags = RayFlags.Debug;
+	}
+	else
+	{
+		RayFlags flags = RayFlags.None;
+	}
+
+
 	int depth;
 	
 	@property bool isDebug() const pure nothrow @safe @nogc
