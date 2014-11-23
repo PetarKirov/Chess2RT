@@ -67,14 +67,18 @@ class RTDemo : GuiBase!Color
 		import std.parallelism : task, taskPool;
 
 		if (scene.settings.interactive)
-			move();
-
-		debug if (tasksCount[0] == 0)
 		{
-			atomicOp!"+="(tasksCount[0], 1);
-			auto t = task(&printMouse);
-			taskPool.put(t);
+			move();
 		}
+
+		printMouse();
+
+		//debug if (tasksCount[0] == 0)
+		//{
+			//atomicOp!"+="(tasksCount[0], 1);
+			//auto t = task(&printMouse);
+			//taskPool.put(t);
+		//}
 
 		return super.handleInput;
 	}
@@ -88,11 +92,11 @@ class RTDemo : GuiBase!Color
 			atomicOp!"-="(tasksCount[0], 1);
 			return;
 		}
-		
-		auto ray = scene.camera.getScreenRay(mouse.x, mouse.y);
-		ray.isDebug = true;
-		
-		renderer.raytrace(ray);
+
+		int x = mouse.x;
+		int y = mouse.y;
+
+		renderer.renderPixelNoAA(x, y);
 		
 		auto result = renderer.lastTracingResult;
 		

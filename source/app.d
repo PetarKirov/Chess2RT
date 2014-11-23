@@ -16,7 +16,7 @@ void main(string[] args)
 	
 	runAppInScope(sceneFilePath);
 	
-	printDiagnostics();
+	debug printDiagnostics();
 	
 	writeln("At the end.");
 }
