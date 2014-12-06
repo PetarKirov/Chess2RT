@@ -9,16 +9,15 @@ static this()
 	srand(cast(uint)time(null));
 }
 
-template uniform(string boundaries = "[)", T1, T2)
+template uniform(T1, T2)
 {
 	alias Result = CommonType!(T1, T2);
 
 	static assert(!is(Result == void));
 
+	// TODO: Switch to MT19937 or better.
 	Result uniform (T1 a, T2 b) @safe nothrow @nogc
 	{
-		//return uniform!(boundaries, T1, T2, Random)(a, b, rndGen);
-
 		double r = rand();
 		
 		auto delta = b - a;
