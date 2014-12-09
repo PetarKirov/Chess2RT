@@ -9,32 +9,13 @@ import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
 
 import std.concurrency;
 
-
-alias Args = shared Renderer;
-alias Action = void function(Args r) @system;
-
-void workerThread(Tid spawner)
-{
-	Action work;
-	Args args;
-
-	writeln("In other thread.");
-
-	receive((Action a, Args s) { work = a; args = s; });
-
-	writeln("Message recieved.");
-
-	work(args);
-
-	send(spawner, true);
-}
-
 class RTDemo : GuiBase!Color
 {
 	string sceneFilePath;
 	Scene scene;
 	Renderer renderer;
-	shared bool rendered;
+	shared bool needsRendering;
+	shared bool isRendering;
 	shared byte[] tasksCount = new shared byte[2];
 	Tid renderThread;
 
@@ -64,30 +45,29 @@ class RTDemo : GuiBase!Color
 					scene.settings.frameHeight);
 
 		this.renderer = new Renderer(scene, screen);
-
+		this.needsRendering = true;
+		
 		debug printDebugInfo();
-
-		renderThread = spawn(&workerThread, thisTid);
 	}
 
 	override void render()
 	{
 		//No need for re-rendering - nothing changes in the main loop.
-		if (rendered)
+		if (!needsRendering || isRendering)
 			return;
 
 		log.log("Rendering!!!");
 
-		scene.beginFrame();
+		isRendering = true;
 
-		send(renderThread,
-			 cast(Action)(shared Renderer r) @system
-			 {
-					(cast(Renderer)r).renderRT();
-			 },
-			 cast(Args)renderer);
-
-		rendered = true;
+		spawn((shared RTDemo this_s)
+			{
+				auto this_ = cast(RTDemo)this_s;					
+				this_.scene.beginFrame();
+				this_.renderer.renderRT();
+				this_s.isRendering = false;
+				this_s.needsRendering = false;
+			}, cast(shared RTDemo)this,);
 	}
 
 	override bool handleInput()
@@ -96,11 +76,9 @@ class RTDemo : GuiBase!Color
 		import std.parallelism : task, taskPool;
 
 		if (scene.settings.interactive)
-		{
 			move();
-		}
 
-		//printMouse();
+		printMouse();
 
 		//debug if (tasksCount[0] == 0)
 		//{
@@ -118,7 +96,7 @@ class RTDemo : GuiBase!Color
 		
 		if (!mouse.isButtonPressed(1)) //left mouse button
 		{
-			atomicOp!"-="(tasksCount[0], 1);
+			//atomicOp!"-="(tasksCount[0], 1);
 			return;
 		}
 
@@ -148,14 +126,20 @@ class RTDemo : GuiBase!Color
 		
 		writeln("Raytracing completed!\n");
 		
-		atomicOp!"-="(tasksCount[0], 1);
+		//atomicOp!"-="(tasksCount[0], 1);
 	}
 
 	private void move()
 	{
+		// Drop input if we can't handle it because we are already rendering
+		// Perhaps record the last input and handle it
+		// after we finish rendering.
+		if (needsRendering)
+			return;
+
 		import derelict.sdl2.types;
 
-		auto dMove = 32, dRotate = 4;
+		enum dMove = 32, dRotate = 4;
 
 		auto controls = 
 		[
@@ -220,7 +204,10 @@ class RTDemo : GuiBase!Color
 				scene.camera.move(c.dx, c.dy, c.dz);
 				scene.camera.rotate(c.dYaw, c.dRoll, c.dPitch);
 
-				rendered = false;
+				writefln("Camera movement: (x: %s y: %s z: %s) (yaw: %s roll: %s pitch: %s)",
+						 c.dx, c.dy, c.dz, c.dYaw, c.dRoll, c.dPitch);
+
+				needsRendering = true;
 				break;
 			}
 		}
