@@ -1,21 +1,46 @@
 ﻿module util.random;
 
+import std.c.stdlib : rand, srand, RAND_MAX;
+import std.c.time : time;
+import std.traits : CommonType;
 
-
-auto uniform(string boundaries = "[)", T1, T2) 
-	(T1 a, T2 b) @nogc
-		if (!is(CommonType!(T1, T2) == void))
+static this()
 {
-	//return uniform!(boundaries, T1, T2, Random)(a, b, rndGen);
-	
-	import std.c.stdlib, std.c.time;
-	
 	srand(cast(uint)time(null));
-	int r = rand();
-	
-	auto delta = b - a;
-	
-	return a + r % cast(int)delta;
+}
+
+template uniform(T1, T2)
+{
+	alias Result = CommonType!(T1, T2);
+
+	static assert(!is(Result == void));
+
+	// TODO: Switch to MT19937 or better.
+	Result uniform (T1 a, T2 b) @safe nothrow @nogc
+	{
+		double r = rand();
+		
+		auto delta = b - a;
+		
+		auto result = a + (r / RAND_MAX) * delta;
+
+		return cast(Result)result;
+	}
+}
+
+@safe nothrow @nogc unittest
+{
+	foreach (_; 0 .. 10)
+	{
+		auto res1 = uniform(0.0, 1.0);
+		assert(res1 >= 0.0 && res1 < 1.0);
+
+		auto res2 = uniform(-42, 42);
+		assert(res2 >= -42 && res2 < 42);
+
+		auto res3 = uniform(10_000, 2_000_000);
+		assert(res3 >= 10_000 && res3 < 2_000_000);
+	}
 }
 
 //
