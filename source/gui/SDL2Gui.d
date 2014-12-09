@@ -10,7 +10,7 @@ struct SDL2Gui
 	uint width, height;
 
 	mixin property!(SDL2, "sdl2", Access.ReadOnly);
-	mixin property!(Window, "window", Access.ReadOnly);
+	mixin property!(SDL2Window, "window", Access.ReadOnly);
 	mixin property!(SDL2Renderer, "renderer", Access.ReadOnly);
 	mixin property!(SDL2Surface, "surface", Access.ReadOnly);
 	mixin property!(SDL2Texture, "texture", Access.ReadOnly);
@@ -25,7 +25,10 @@ struct SDL2Gui
 	{
 		_log = log;
 		_sdl2 = new SDL2(log);
-		_window = new Window(sdl2, width, height, title);
+		_window = new SDL2Window(sdl2, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+								width, height,
+								SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS);
+		_window.setTitle(title);
 		_renderer = new SDL2Renderer(window, SDL_RENDERER_SOFTWARE);
 		_surface = new SDL2Surface(sdl2, width, height, 32,
 								  0x00FF0000,
@@ -76,19 +79,6 @@ struct SDL2Gui
 	{	
 		log.log("At ~SDL2Gui()");
 		this.close();
-	}
-}
-
-// Default SDL2 Window
-class Window : SDL2Window
-{
-	this(SDL2 sdl2, uint width, uint height, string title)
-	{
-		super(sdl2, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		      width, height,
-		      SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS);
-
-		super.setTitle(title);
 	}
 }
 
