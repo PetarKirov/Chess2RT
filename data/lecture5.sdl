@@ -16,9 +16,6 @@ Scene {
 		ambientLightColor 	0.2 0.2 0.2
 		AAEnabled			false
 		interactive			true
-		prepassOnly			true
-		prepassEnabled		false
-		GIEnabled			true
 	}
 
 	Camera {
