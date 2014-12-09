@@ -7,6 +7,28 @@ import std.datetime : benchmark;
 import std.experimental.logger;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
 
+import std.concurrency;
+
+
+alias Args = shared Renderer;
+alias Action = void function(Args r) @system;
+
+void workerThread(Tid spawner)
+{
+	Action work;
+	Args args;
+
+	writeln("In other thread.");
+
+	receive((Action a, Args s) { work = a; args = s; });
+
+	writeln("Message recieved.");
+
+	work(args);
+
+	send(spawner, true);
+}
+
 class RTDemo : GuiBase!Color
 {
 	string sceneFilePath;
@@ -14,6 +36,7 @@ class RTDemo : GuiBase!Color
 	Renderer renderer;
 	shared bool rendered;
 	shared byte[] tasksCount = new shared byte[2];
+	Tid renderThread;
 
 	this(string sceneFilePath_, Logger log = stdlog)
 	{
@@ -43,6 +66,8 @@ class RTDemo : GuiBase!Color
 		this.renderer = new Renderer(scene, screen);
 
 		debug printDebugInfo();
+
+		renderThread = spawn(&workerThread, thisTid);
 	}
 
 	override void render()
@@ -55,8 +80,12 @@ class RTDemo : GuiBase!Color
 
 		scene.beginFrame();
 
-		auto time = benchmark!(() => renderer.renderRT())(1);
-		log.logf("Time to render: %ss", time[0].msecs / 1000.0);
+		send(renderThread,
+			 cast(Action)(shared Renderer r) @system
+			 {
+					(cast(Renderer)r).renderRT();
+			 },
+			 cast(Args)renderer);
 
 		rendered = true;
 	}
@@ -71,7 +100,7 @@ class RTDemo : GuiBase!Color
 			move();
 		}
 
-		printMouse();
+		//printMouse();
 
 		//debug if (tasksCount[0] == 0)
 		//{
