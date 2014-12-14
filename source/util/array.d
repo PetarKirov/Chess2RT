@@ -2,6 +2,7 @@
 
 struct MyArray(T)
 {
+@trusted:
 	private T[] data;
 	private size_t length_;
 

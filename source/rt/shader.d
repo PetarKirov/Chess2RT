@@ -9,15 +9,15 @@ import util.random;
 
 interface BRDF
 {
-	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @nogc;
+	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc;
 	
 	void spawnRay(const IntersectionData x, const Ray w_in,
-	              ref Ray w_out, ref Color colorEval, ref float pdf) const @nogc;
+	              ref Ray w_out, ref Color colorEval, ref float pdf) const @safe @nogc;
 };
 
 interface IShader
 {	
-	Color shade(const Ray ray, const IntersectionData data) const @nogc;
+	Color shade(const Ray ray, const IntersectionData data) const @safe @nogc;
 };
 
 abstract class Shader : IShader, BRDF, Deserializable
@@ -64,7 +64,7 @@ class Lambert : Shader
 	}
 
 	mixin callCounter!shade shadeFunc;
-	Color shade(const Ray ray, const IntersectionData data) const @nogc
+	Color shade(const Ray ray, const IntersectionData data) const @safe @nogc
 	{
 		shadeFunc.callsCount++;
 
@@ -107,7 +107,7 @@ class Lambert : Shader
 	}
 
 	mixin callCounter!eval evalFunc;
-	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @nogc
+	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc
 	{
 		evalFunc.callsCount++;
 
@@ -122,7 +122,7 @@ class Lambert : Shader
 	
 	mixin callCounter!spawnRay spawnRayFunc;
 	void spawnRay(const IntersectionData x, const Ray w_in, 
-	              ref Ray w_out, ref Color colorEval, ref float pdf) const @nogc
+	              ref Ray w_out, ref Color colorEval, ref float pdf) const @safe @nogc
 	{
 		spawnRayFunc.callsCount++;
 
@@ -161,7 +161,7 @@ class Lambert : Shader
 	}
 };
 
-Vector hemisphereSample(const Vector normal) @nogc
+Vector hemisphereSample(const Vector normal) @safe @nogc
 {	
 	double u = uniform(0.0, 1.0);
 	double v = uniform(0.0, 1.0);
@@ -200,7 +200,7 @@ class Phong : Shader
 		this.strength = strength;
 	}
 
-	Color shade(const Ray ray, const IntersectionData data) const @nogc
+	Color shade(const Ray ray, const IntersectionData data) const @safe @nogc
 	{
 		// turn the normal vector towards us (if needed):
 		Vector N = faceforward(ray.dir, data.normal);
@@ -255,15 +255,14 @@ class Phong : Shader
 	}
 
 	void spawnRay(const IntersectionData x, const Ray w_in, 
-	              ref Ray w_out, ref Color colorEval, ref float pdf) const @nogc
+	              ref Ray w_out, ref Color colorEval, ref float pdf) const @safe @nogc
 	{
-		//throw new NotImplementedException("Phong shader does not need to spawn rays!");
+		assert(0);
 	}
 
-	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @nogc
+	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc
 	{
-		return NamedColors.red;
-		//throw new NotImplementedException("Phong shader does not need to eval!");
+		assert(0);
 	}
 
 	override void deserialize(const Value val, SceneLoadContext context)

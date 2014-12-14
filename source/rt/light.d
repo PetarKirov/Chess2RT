@@ -8,20 +8,20 @@ abstract class Light : Intersectable, Deserializable
 	Color lightColor;
 	float lightPower;
 
-	Color color() const @nogc
+	Color color() const @safe @nogc
 	{ 
 		return lightColor * lightPower;
 	}
 
-	bool isInside(const Vector v) const @nogc
+	bool isInside(const Vector v) const @safe @nogc
 	{
 		return false;
 	}
 
-	float solidAngle(const Vector x) const @nogc;
+	float solidAngle(const Vector x) const @safe @nogc;
 
 	/// get the number of samples this light requires
-	size_t getNumSamples() const @nogc;
+	size_t getNumSamples() const @safe @nogc;
 	
 	/**
 	 * Gets the n-th sample
@@ -33,7 +33,8 @@ abstract class Light : Intersectable, Deserializable
 	 * 	color = [out] the generated light "color". This is usually has large components (i.e.,
 	 *                      it's base color * power
 	 */
-	void getNthSample(size_t sampleIdx, const Vector shadePos, ref Vector samplePos, ref Color color) const @nogc;
+	void getNthSample(size_t sampleIdx, const Vector shadePos,
+					  ref Vector samplePos, ref Color color) const @safe @nogc;
 
 	void deserialize(const Value val, SceneLoadContext context)
 	{
@@ -57,18 +58,18 @@ class PointLight : Light
 		return 1;
 	}
 
-	override void getNthSample(size_t sampleIdx, const Vector shadePos, ref Vector samplePos, ref Color color) const @nogc
+	override void getNthSample(size_t sampleIdx, const Vector shadePos, ref Vector samplePos, ref Color color) const @safe @nogc
 	{
 		samplePos = pos;
 		color = this.color();
 	}
 
-	bool intersect(const Ray ray, ref IntersectionData data) const @nogc
+	bool intersect(const Ray ray, ref IntersectionData data) const @safe @nogc
 	{
 		return false; // you can't intersect a point light
 	}
 
-	override float solidAngle(const Vector x) const @nogc
+	override float solidAngle(const Vector x) const @safe @nogc
 	{
 		return 0;
 	}

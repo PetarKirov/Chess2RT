@@ -165,7 +165,7 @@ private:
 	}
 
 	/// Gets the color for a single pixel, without antialiasing
-	public Color renderPixelNoAA(int x, int y, int dx = 1, int dy = 1) @nogc
+	public Color renderPixelNoAA(int x, int y, int dx = 1, int dy = 1) @nogc @safe
 	{
 		auto result = renderSample(x, y, dx, dy);
 		outputImage[x, y] = result;
@@ -196,7 +196,7 @@ private:
 	}
 
 	// trace a ray through pixel coords (x, y).
-	Color renderSample(double x, double y, int dx = 1, int dy = 1) @nogc
+	Color renderSample(double x, double y, int dx = 1, int dy = 1) @nogc @safe
 	{
 		if (scene.camera.dof)
 		{
@@ -212,7 +212,7 @@ private:
 		}
 	}
 
-	Color renderSampleDof(double x, double y, int dx = 1, int dy = 1) @nogc
+	Color renderSampleDof(double x, double y, int dx = 1, int dy = 1) @nogc @safe
 	{
 		auto average = Color(0, 0, 0);
 	
@@ -231,7 +231,7 @@ private:
 		return average / scene.camera.numSamples;
 	}
 
-	Color renderSampleGI(double x, double y, int dx = 1, int dy = 1) @nogc
+	Color renderSampleGI(double x, double y, int dx = 1, int dy = 1) @nogc @safe
 	{
 		auto average = Color(0, 0, 0);
 	
@@ -244,7 +244,7 @@ private:
 		return average / scene.settings.pathsPerPixel;
 	}
 
-	Color renderSampleDefault(double x, double y, int dx = 1, int dy = 1) @nogc
+	Color renderSampleDefault(double x, double y, int dx = 1, int dy = 1) @nogc @safe
 	{
 		if (scene.camera.stereoSeparation == 0)
 			return raytrace(scene.camera.getScreenRay(x, y));
@@ -254,17 +254,17 @@ private:
 								 raytrace(scene.camera.getScreenRay(x, y, Stereo3DOffset.Right)));
 	}
 
-	public Color raytrace(const Ray ray) @nogc
+	public Color raytrace(const Ray ray) @nogc @safe
 	{
 		return trace(ray, TraceType.Ray);
 	}
 
-	public Color pathtrace(const Ray ray, const Color pathMultiplier) @nogc
+	public Color pathtrace(const Ray ray, const Color pathMultiplier) @nogc @safe
 	{
 		return trace(ray, TraceType.Path);
 	}	
 
-	Color trace(const Ray ray, TraceType traceType) @nogc
+	Color trace(const Ray ray, TraceType traceType) @nogc @safe
 	{
 		TraceResult result;
 		result.ray = ray;
@@ -300,7 +300,7 @@ private:
 	}
 
 	/// traces a ray in the scene and returns the visible light that comes from that direction
-	Color raytrace_impl(TraceResult result) @nogc
+	Color raytrace_impl(TraceResult result) @nogc @safe
 	{
 		if (result.hitLight)
 			return result.hitLightColor;
@@ -317,7 +317,7 @@ private:
 		return result.closestNode.shader.shade(result.ray, result.data);
 	}
 
-	Color pathtrace_impl(TraceResult result, const Color pathMultiplier) @nogc
+	Color pathtrace_impl(TraceResult result, const Color pathMultiplier) @nogc @safe
 	{
 		if (result.hitLight)
 		{

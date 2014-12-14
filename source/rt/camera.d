@@ -43,7 +43,7 @@ class Camera : Deserializable
 	double stereoSeparation = 0.0;
 
 	/// Must be called before each frame. Computes the corner variables, needed for getScreenRay()
-	void beginFrame()
+	void beginFrame() @safe @nogc
 	{
 		double x = -aspect;
 		double y = +1;
@@ -83,7 +83,7 @@ class Camera : Deserializable
 	/// generates a screen ray through a pixel (x, y - screen coordinates, not necessarily integer).
 	/// if the camera parameter is present - offset the rays' start to the left or to the right,
 	/// for use in stereoscopic rendering
-	Ray getScreenRay(double x, double y, Stereo3DOffset offset = Stereo3DOffset.None) const @nogc
+	Ray getScreenRay(double x, double y, Stereo3DOffset offset = Stereo3DOffset.None) const @nogc @safe
 	{
 		Ray result; // A, B -     C = A + (B - A) * x
 		result.orig = this.pos;
@@ -178,7 +178,7 @@ private:
 	Vector frontDir, rightDir, upDir;
 }
 
-void unitDiscSample(ref double x, ref double y) @nogc
+void unitDiscSample(ref double x, ref double y) @nogc  @safe
 {
 	import util.random, std.math;
 	
