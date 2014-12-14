@@ -59,7 +59,7 @@ class Scene
 
 	/// checks for visibility between points `from' and `to'
 	/// (from is assumed to be near a surface, whereas to is near a light)s
-	bool testVisibility(const Vector from, const Vector to) const @safe @nogc
+	bool testVisibility(const Vector from, const Vector to) const @safe @nogc pure
 	{
 		Ray ray;
 		ray.orig = from;

@@ -60,7 +60,7 @@ class Renderer
 		// 1) First pass - use very coarse resolution rendering,
 		// tracing a single ray for a 16x16 block:
 		if (scene.settings.prepassEnabled)
-			foreach(r; buckets)
+			foreach(r; buckets[])
 			{
 				for (int dy = 0; dy < r.height; dy += 16)
 				{
@@ -83,7 +83,7 @@ class Renderer
 			return;
 
 		// 2) Second pass - shoot _one_ ray per pixel:
-		foreach (b; buckets)
+		foreach (b; buckets[])
 		{
 			foreach (y; b.min.y .. b.max.y)
 				foreach (x; b.min.x .. b.max.x)
@@ -127,7 +127,7 @@ class Renderer
 			}
 		}
 
-		foreach (b; buckets)
+		foreach (b; buckets[])
 			foreach (y; b.min.y .. b.max.y)
 				foreach (x; b.min.x .. b.max.x)
 					renderPixelAA(x, y);
@@ -136,7 +136,7 @@ class Renderer
 private:
 
 	/// Generates a list of buckets (image sub-rectangles) to be rendered, in a zigzag pattern
-	void getBucketsList(uint frameWidth, uint frameHeight, ref MyArray!box2i res) @nogc
+	void getBucketsList(uint frameWidth, uint frameHeight, ref MyArray!box2i res) @nogc pure
 	{
 		const int BUCKET_SIZE = scene.settings.bucketSize;
 		int W = frameWidth;
@@ -153,11 +153,11 @@ private:
 					res ~= box2i(x * BUCKET_SIZE, y * BUCKET_SIZE, (x + 1) * BUCKET_SIZE, (y + 1) * BUCKET_SIZE);
 		}
 	
-		foreach (ref bucket; res)
+		foreach (ref bucket; res[])
 			bucket.clip(W, H);
 	}
 
-	void drawRect(Color c, box2i r) @nogc
+	void drawRect(Color c, box2i r) @nogc pure
 	{
 		foreach (y; r.min.y .. r.max.y)
 			foreach (x; r.min.x .. r.max.x)
@@ -300,7 +300,7 @@ private:
 	}
 
 	/// traces a ray in the scene and returns the visible light that comes from that direction
-	Color raytrace_impl(TraceResult result) @nogc @safe
+	Color raytrace_impl(TraceResult result) @nogc @safe pure
 	{
 		if (result.hitLight)
 			return result.hitLightColor;

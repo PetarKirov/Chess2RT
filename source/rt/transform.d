@@ -19,7 +19,7 @@ struct Transform
 		sink(typeid(this).toString());
 	}
 
- @safe @nogc:
+ @safe @nogc pure:
 
 	void reset()
 	{

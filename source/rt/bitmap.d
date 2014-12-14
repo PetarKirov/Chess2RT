@@ -11,7 +11,7 @@ struct Bitmap
 {
 	Image!Color data;
 
-	@property const @safe @nogc
+	@property const @safe @nogc pure
 	{
 		uint width() { return data.width; }
 		uint height() { return data.height; }
@@ -41,7 +41,7 @@ struct Bitmap
 	@disable
 	void freeMem() { data.alloc(0, 0); }
 
-	private bool isInvalidPos(uint x, uint y) const @safe @nogc
+	private bool isInvalidPos(uint x, uint y) const @safe @nogc pure
 	{
 		return data.pixels.length == 0 ||
 			!data.width ||
@@ -52,7 +52,7 @@ struct Bitmap
 
 	/// Gets a bilinear-filtered pixel from float coords (x, y).
 	/// The coordinates wrap when near the edges.
-	inout(Color) getFilteredPixel(float x, float y) inout @safe @nogc
+	inout(Color) getFilteredPixel(float x, float y) inout @safe @nogc pure
 	{
 		if (isInvalidPos(cast(uint)x, cast(uint)y))
 			return NamedColors.red;

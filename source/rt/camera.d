@@ -83,7 +83,8 @@ class Camera : Deserializable
 	/// generates a screen ray through a pixel (x, y - screen coordinates, not necessarily integer).
 	/// if the camera parameter is present - offset the rays' start to the left or to the right,
 	/// for use in stereoscopic rendering
-	Ray getScreenRay(double x, double y, Stereo3DOffset offset = Stereo3DOffset.None) const @nogc @safe
+	Ray getScreenRay(double x, double y,
+					 Stereo3DOffset offset = Stereo3DOffset.None) const @nogc @safe // not pure because of uniform(..) in unitDiscSample(..)
 	{
 		Ray result; // A, B -     C = A + (B - A) * x
 		result.orig = this.pos;
@@ -178,7 +179,7 @@ private:
 	Vector frontDir, rightDir, upDir;
 }
 
-void unitDiscSample(ref double x, ref double y) @nogc  @safe
+void unitDiscSample(ref double x, ref double y) @safe @nogc // not pure because of uniform(..)
 {
 	import util.random, std.math;
 	

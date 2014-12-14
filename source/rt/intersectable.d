@@ -58,13 +58,13 @@ const interface Intersectable
 	 * @retval false if no intersection exists, or it is further than the current data.dist. In this case,
 	 *         the `data' struct should remain unchanged.
 	 */
-	bool intersect(in Ray ray, ref IntersectionData info) @safe @nogc;	
+	bool intersect(in Ray ray, ref IntersectionData info) @safe @nogc pure;	
 
 	/**
 	* Checks if the given point is "inside" the geometry, for whatever definition of
 	* 'inside' is appropriate for the object.
 	*/ 
-	bool isInside(in Vector p) @safe @nogc;
+	bool isInside(in Vector p) @safe @nogc pure;
 };
 
 

@@ -4,7 +4,7 @@ import rt.importedtypes, rt.color, rt.sceneloader;
 
 class Environment : Deserializable
 {
-	Color getEnvironment(const Vector dir) const @safe @nogc
+	Color getEnvironment(const Vector dir) const @safe @nogc pure
 	{
 		return Color(0, 0, 0);
 	}
