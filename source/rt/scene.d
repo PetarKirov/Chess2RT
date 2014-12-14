@@ -52,14 +52,14 @@ class Scene
 
 	/// Notifies the scene so that a new frame is about to begin.
 	/// It calls the beginFrame() method of all scene elements
-	void beginFrame()
+	void beginFrame() @safe
 	{	 
 	  camera.beginFrame();
 	}
 
 	/// checks for visibility between points `from' and `to'
 	/// (from is assumed to be near a surface, whereas to is near a light)s
-	bool testVisibility(const Vector from, const Vector to) const @nogc
+	bool testVisibility(const Vector from, const Vector to) const @safe @nogc
 	{
 		Ray ray;
 		ray.orig = from;
