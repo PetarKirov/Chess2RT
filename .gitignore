@@ -7,6 +7,8 @@ bin/
 *.obj
 *.dll
 
+!libs/*/*.dll
+
 # VisualD and Visual Studio
 *.sln
 *.suo
