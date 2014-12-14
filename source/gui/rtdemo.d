@@ -74,65 +74,50 @@ class RTDemo : GuiBase!Color
 	{
 		import core.atomic : atomicOp;
 		import std.parallelism : task, taskPool;
+		import derelict.sdl2.types;
 
 		if (scene.settings.interactive)
 			move();
 
-		printMouse();
+		auto mouse = gui.sdl2.mouse();
 
-		//debug if (tasksCount[0] == 0)
-		//{
-			//atomicOp!"+="(tasksCount[0], 1);
-			//auto t = task(&printMouse);
-			//taskPool.put(t);
-		//}
+		if (mouse.isButtonPressed(SDL_BUTTON_LMASK))
+			printMouse(mouse.x, mouse.y);
 
 		return super.handleInput;
 	}
 
-	private void printMouse()
+	private void printMouse(int x, int y)
 	{
-		auto mouse = gui.sdl2.mouse();
-		
-		if (!mouse.isButtonPressed(1)) //left mouse button
-		{
-			//atomicOp!"-="(tasksCount[0], 1);
-			return;
-		}
-
-		int x = mouse.x;
-		int y = mouse.y;
-
-		renderer.renderPixelNoAA(x, y);
+		auto color = renderer.renderPixelNoAA(x, y);
 		
 		auto result = renderer.lastTracingResult;
 		
-		writefln("Mouse click at: (%s %s)", mouse.x, mouse.y);
+		writefln("Mouse click at: (%s %s)", x, y);
 		writefln("  Raytrace[start = %s, dir = %s]", result.ray.orig, result.ray.dir);
 		
 		if (result.hitLight)
-			writeln("Hit light with color: ", to!string(result.hitLightColor));
+			writeln("    Hit light with color: ", to!string(result.hitLightColor));
 		
 		else if(!result.closestNode)
-			writeln("Hit environment: ", to!string(scene.environment.getEnvironment(result.ray.dir)));
+			writeln("    Hit environment: ", to!string(scene.environment.getEnvironment(result.ray.dir)));
 		
 		else
 		{
 			writefln("    Hit %s at distance %s", typeid(result.closestNode.geom), result.data.dist);
+			writefln("      Color: %s", color);
 			writefln("      Intersection point: %s", result.data.p);
 			writefln("      Normal:             %s", result.data.normal);
 			writefln("      UV coods:           %s, %s", result.data.u, result.data.v);
 		}
 		
 		writeln("Raytracing completed!\n");
-		
-		//atomicOp!"-="(tasksCount[0], 1);
 	}
 
 	private void move()
 	{
-		// Drop input if we can't handle it because we are already rendering
-		// Perhaps record the last input and handle it
+		// Ignore input events while rendering because we are already rendering.
+		// Perhaps we can save the last input event and handle it
 		// after we finish rendering.
 		if (needsRendering)
 			return;
