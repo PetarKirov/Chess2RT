@@ -58,7 +58,7 @@ void printDiagnostics()
 {
 	import rt.shader;
 
-	writeln(Lambert.shadeFunc.callsCount);
-	writeln(Lambert.spawnRayFunc.callsCount);
-	writeln(Lambert.evalFunc.callsCount);
+	//writeln(Lambert.shadeFunc.callsCount);
+	//writeln(Lambert.spawnRayFunc.callsCount);
+	//writeln(Lambert.evalFunc.callsCount);
 }

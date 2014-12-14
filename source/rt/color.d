@@ -205,9 +205,9 @@ private pure nothrow @safe @nogc
 /// A set of predefined colors
 struct NamedColors
 {
-	static Color black = Color(0f, 0f, 0f);
-	static Color white = Color(1f, 1f, 1f);
-	static Color red = Color(1f, 0f, 0f);
-	static Color green = Color(0f, 1f, 0f);
-	static Color blue = Color(0f, 0f, 1f);
+	enum Color black = Color(0f, 0f, 0f);
+	enum Color white = Color(1f, 1f, 1f);
+	enum Color red = Color(1f, 0f, 0f);
+	enum Color green = Color(0f, 1f, 0f);
+	enum Color blue = Color(0f, 0f, 1f);
 }

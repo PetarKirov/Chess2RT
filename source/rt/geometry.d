@@ -21,12 +21,12 @@ class Plane : Geometry
 
 	this(double _y = 0, double _limit = 1e99) { y = _y; limit = _limit; }
 
-	bool isInside(in Vector p) const @safe @nogc
+	bool isInside(in Vector p) const @safe @nogc pure
 	{
 		return false;
 	}
 
-	bool intersect(in Ray ray, ref IntersectionData data) const @safe @nogc
+	bool intersect(in Ray ray, ref IntersectionData data) const @safe @nogc pure
 	{
 		// intersect a ray with a XZ plane:
 		// if the ray is pointing to the horizon, or "up", but the plane is below us,
@@ -88,7 +88,7 @@ class Sphere : Geometry
 		this.R = R;
 	}
 
-	bool intersect(in Ray ray, ref IntersectionData info) const @safe @nogc
+	bool intersect(in Ray ray, ref IntersectionData info) const @safe @nogc pure
 	{
 		// compute the sphere intersection using a quadratic equation:
 		Vector H = ray.orig - center;
@@ -123,7 +123,7 @@ class Sphere : Geometry
 		return true;
 	}
 
-	bool isInside(in Vector p) const @safe @nogc
+	bool isInside(in Vector p) const @safe @nogc pure
 	{
 		return (center - p).squaredLength() < R * R;
 	}
@@ -161,14 +161,14 @@ class Cube : Geometry
 		this.side = side;
 	}
 
-	bool isInside(const Vector p) const @safe @nogc
+	bool isInside(const Vector p) const @safe @nogc pure
 	{
 		return (fabs(p.x - center.x) <= side * 0.5 &&
 		        fabs(p.y - center.y) <= side * 0.5 &&
 		        fabs(p.z - center.z) <= side * 0.5);
 	}
 
-	bool intersect(in Ray ray, ref IntersectionData data) const @safe @nogc
+	bool intersect(in Ray ray, ref IntersectionData data) const @safe @nogc pure
 	{
 		// check for intersection with the negative Y and positive Y sides
 		bool found = intersectCubeSide(ray, center, data);
@@ -195,7 +195,7 @@ class Cube : Geometry
 		return found;
 	}
 
-	private bool intersectCubeSide(in Ray ray, in Vector center, ref IntersectionData data) const @safe @nogc
+	private bool intersectCubeSide(in Ray ray, in Vector center, ref IntersectionData data) const @safe @nogc pure
 	{
 		if (fabs(ray.dir.y) < 1e-9)
 			return false;
@@ -265,9 +265,9 @@ abstract class CsgOp : Geometry
 		this.right = right;
 	}
 
-	bool boolOp(bool inLeft, bool inRight) const @safe @nogc;
+	bool boolOp(bool inLeft, bool inRight) const @safe @nogc pure;
 
-	void findAllIntersections(const Geometry geom, Ray ray, ref MyArray!IntersectionData l) const @safe @nogc
+	void findAllIntersections(const Geometry geom, Ray ray, ref MyArray!IntersectionData l) const @safe @nogc pure
 	{
 		double currentLength = 0;
 		
@@ -288,7 +288,7 @@ abstract class CsgOp : Geometry
 		}
 	}
 
-	bool intersect(in Ray ray, ref IntersectionData data) const @safe @nogc
+	bool intersect(in Ray ray, ref IntersectionData data) const @safe @nogc pure
 	{
 		alias ID = IntersectionData;
 
@@ -330,7 +330,7 @@ abstract class CsgOp : Geometry
 		return false;
 	}	
 
-	bool isInside(const Vector p) const @safe @nogc
+	bool isInside(const Vector p) const @safe @nogc pure
 	{
 		return boolOp(left.isInside(p), right.isInside(p));
 	}
@@ -357,7 +357,7 @@ class CsgUnion : CsgOp
 {
 	this() { }
 
-	override bool boolOp(bool inLeft, bool inRight) const @safe @nogc
+	override bool boolOp(bool inLeft, bool inRight) const @safe @nogc pure
 	{
 		return inLeft || inRight;
 	}
@@ -367,7 +367,7 @@ class CsgInter : CsgOp
 {
 	this() { }
 
-	override bool boolOp(bool inLeft, bool inRight) const @safe @nogc
+	override bool boolOp(bool inLeft, bool inRight) const @safe @nogc pure
 	{
 		return inLeft && inRight;
 	}
@@ -378,7 +378,7 @@ class CsgDiff : CsgOp
 	this() { }
 
 	/// Overrides the generic intersector to handle a corner case
-	override bool intersect(in Ray ray, ref IntersectionData data) const @safe @nogc
+	override bool intersect(in Ray ray, ref IntersectionData data) const @safe @nogc pure
 	{
 		if (!super.intersect(ray, data)) return false;
 		/*
@@ -395,7 +395,7 @@ class CsgDiff : CsgOp
 		return true;
 	}
 	
-	override bool boolOp(bool inLeft, bool inRight) const @safe @nogc
+	override bool boolOp(bool inLeft, bool inRight) const @safe @nogc pure
 	{
 		return inLeft && !inRight;
 	}

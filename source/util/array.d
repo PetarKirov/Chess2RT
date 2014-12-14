@@ -1,8 +1,33 @@
 ﻿module util.array;
 
+//Extremely ugly hack to workaround purity
+void my_free_impl(void* ptr) @nogc nothrow
+{
+	import std.c.stdlib : free;
+	free(ptr);
+}
+
+void my_free(void* ptr) @nogc nothrow pure
+{
+	alias F = void function(void*) @nogc nothrow pure;
+	(cast(F)&my_free_impl)(ptr);
+}
+
+void* my_malloc_impl(size_t size) @nogc nothrow
+{
+	import std.c.stdlib : malloc;
+	return malloc(size);
+}
+
+void* my_malloc(size_t size) @nogc nothrow pure
+{
+	alias M = void* function(size_t) @nogc nothrow pure;
+	return (cast(M)&my_malloc_impl)(size);
+}
+
 struct MyArray(T)
 {
-@trusted:
+@trusted pure:
 	private T[] data;
 	private size_t length_;
 
@@ -33,38 +58,21 @@ struct MyArray(T)
 		
 		data[length_++] = value;
 	}
-
-	int opApply(int delegate(ref T) @nogc dg) @nogc
-	{
-		int result = 0;
-		
-		foreach (ref elem; this[])
-		{
-			result = dg(elem);
-			if (result)
-				break;
-		}
-
-		return result;
-	}
 	
 	void reserve(size_t newCapacity) @nogc
 	{
-		import std.c.stdlib : malloc, free;
-
-		auto newData = malloc(T.sizeof * newCapacity);
+		auto newData = my_malloc(T.sizeof * newCapacity);
 		assert(newData);
 		T[] newArr = (cast(T*)newData)[0 .. newCapacity];
 
 		newArr[0 .. data.length] = data[];
-		free(data.ptr);
+		my_free(data.ptr);
 		data = newArr;
 	}
 
 	void free() @nogc
 	{
-		import std.c.stdlib : free;
-		free(data.ptr);
+		my_free(data.ptr);
 		data = null;
 		length_ = 0;
 	}

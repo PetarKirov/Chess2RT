@@ -20,7 +20,7 @@ class Node : Intersectable, Deserializable
 	}
 
 	// intersect a ray with a node, considering the Model transform attached to the node.
-	bool intersect(const Ray ray, ref IntersectionData data) const @nogc @safe
+	bool intersect(const Ray ray, ref IntersectionData data) const @nogc @safe pure
 	{		
 		// world space -> object's canonic space
 		Ray rayCanonic;

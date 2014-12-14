@@ -5,9 +5,9 @@ import rt.bitmap;
 
 abstract class Texture : Deserializable
 {
-	Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc;
+	Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc pure;
 
-	void modifyNormal(ref IntersectionData data) const @safe @nogc
+	void modifyNormal(ref IntersectionData data) const @safe @nogc pure
 	{
 	}
 
@@ -33,7 +33,7 @@ class Checker : Texture
 		this.size = size;
 	}
 
-	override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc
+	override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc pure
 	{
 		/*
 		 * The checker texture works like that. Partition the whole 2D space
@@ -74,7 +74,7 @@ class Procedure2 : Texture
 
 	this() { }
 
-	override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc
+	override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc pure
 	{
 		auto result = Color(0, 0, 0);
 
@@ -113,7 +113,7 @@ class BitmapTexture : Texture
 		this.assumedGamma = assumedGamma;
 	}
 
-	override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc
+	override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc pure
 	{
 		u *= scaling;
 		v *= scaling;

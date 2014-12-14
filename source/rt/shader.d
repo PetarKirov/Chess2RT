@@ -9,7 +9,7 @@ import util.random;
 
 interface BRDF
 {
-	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc;
+	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc pure;
 	
 	void spawnRay(const IntersectionData x, const Ray w_in,
 	              ref Ray w_out, ref Color colorEval, ref float pdf) const @safe @nogc;
@@ -17,7 +17,7 @@ interface BRDF
 
 interface IShader
 {	
-	Color shade(const Ray ray, const IntersectionData data) const @safe @nogc;
+	Color shade(const Ray ray, const IntersectionData data) const @safe @nogc pure;
 };
 
 abstract class Shader : IShader, BRDF, Deserializable
@@ -63,11 +63,8 @@ class Lambert : Shader
 		this.texture = texture;
 	}
 
-	mixin callCounter!shade shadeFunc;
-	Color shade(const Ray ray, const IntersectionData data) const @safe @nogc
+	Color shade(const Ray ray, const IntersectionData data) const @safe @nogc pure
 	{
-		shadeFunc.callsCount++;
-
 		// turn the normal vector towards us (if needed):
 		Vector N = faceforward(ray.dir, data.normal);
 		
@@ -106,11 +103,8 @@ class Lambert : Shader
 		return diffuseColor * lightContrib;
 	}
 
-	mixin callCounter!eval evalFunc;
-	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc
+	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc pure
 	{
-		evalFunc.callsCount++;
-
 		Vector N = faceforward(w_in.dir, x.normal);
 		Color diffuseColor = this.color;
 
@@ -120,12 +114,9 @@ class Lambert : Shader
 		return diffuseColor * (1 / PI) * max(0.0, dot(w_out.dir, N));
 	}
 	
-	mixin callCounter!spawnRay spawnRayFunc;
 	void spawnRay(const IntersectionData x, const Ray w_in, 
 	              ref Ray w_out, ref Color colorEval, ref float pdf) const @safe @nogc
 	{
-		spawnRayFunc.callsCount++;
-
 		Vector N = faceforward(w_in.dir, x.normal);
 		Color diffuseColor = this.color;
 
@@ -161,7 +152,7 @@ class Lambert : Shader
 	}
 };
 
-Vector hemisphereSample(const Vector normal) @safe @nogc
+Vector hemisphereSample(const Vector normal) @safe @nogc // not pure because of uniform(..)
 {	
 	double u = uniform(0.0, 1.0);
 	double v = uniform(0.0, 1.0);
@@ -200,7 +191,7 @@ class Phong : Shader
 		this.strength = strength;
 	}
 
-	Color shade(const Ray ray, const IntersectionData data) const @safe @nogc
+	Color shade(const Ray ray, const IntersectionData data) const @safe @nogc pure
 	{
 		// turn the normal vector towards us (if needed):
 		Vector N = faceforward(ray.dir, data.normal);
@@ -255,12 +246,12 @@ class Phong : Shader
 	}
 
 	void spawnRay(const IntersectionData x, const Ray w_in, 
-	              ref Ray w_out, ref Color colorEval, ref float pdf) const @safe @nogc
+	              ref Ray w_out, ref Color colorEval, ref float pdf) const @safe @nogc pure
 	{
 		assert(0);
 	}
 
-	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc
+	Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc pure
 	{
 		assert(0);
 	}
