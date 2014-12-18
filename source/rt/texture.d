@@ -130,7 +130,8 @@ class BitmapTexture : Texture
 		context.set(this.scaling, val, "scaling");
 		context.set(this.assumedGamma, val, "assumedGamma");
 		bmp = Bitmap();
-		string fileName = context.get!string(val, "file");
+		string fileName = context.resolveRelativePath(
+				context.get!string(val, "file"));
 		bmp.loadImage(fileName);
 
 		if (assumedGamma == 2.2f)

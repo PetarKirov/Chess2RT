@@ -48,19 +48,29 @@ struct Color
 
 pure nothrow @safe @nogc:
 
-	this(float r_, float g_, float b_) //!< Construct a color from floatingpoint values
+	/// Construct a Color from floating point values.
+	this(float r_, float g_, float b_)
 	{
 		this.r = r_;
 		this.g = g_;
 		this.b = b_;
 	}
 
-	this(uint rgbColor) //!< Construct a color from R8G8B8 value like "0xffce08"
+	/// Construct a color from R8G8B8 value like "0xffce08".
+	this(uint rgbColor)
 	{
 		enum divider = 1.0f / 255.0f;
 		r = ((rgbColor >> 16) & 0xff) * divider;
 		g = ((rgbColor >> 8) & 0xff) * divider;
 		b = ((rgbColor >> 0) & 0xff) * divider;
+	}
+
+	this(ubyte r_, ubyte g_, ubyte b_) //!< Construct a color from R8G8B8 value like "0xffce08"
+	{
+		enum divider = 1.0f / 255.0f;
+		r = r_ * divider;
+		g = g_ * divider;
+		b = b_ * divider;
 	}
 
 	/// 0 = desaturate; 1 = don't change

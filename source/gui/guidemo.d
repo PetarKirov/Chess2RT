@@ -14,7 +14,7 @@ class GuiDemo : GuiBase!uint
 	{
 		if (rendered) return;
 		
-		drawCircle();
+		drawImage();
 		
 		rendered = true;
 	}
@@ -45,6 +45,61 @@ private:
 				screen[x, y] = 0xFF0000;
 		}
 	}
+
+	void drawImage()
+	{
+		import imageio.bmp;
+
+		string imgPath = "data/texture/zaphod.bmp";
+		Image!ARGB pixels;
+
+		loadBmp(pixels, imgPath);
+
+		pixels.cropCopyTo(screen);
+	}
 }
 
+void cropCopyTo(Img1, Img2)(Img1 source, Img2 dest)
+{
+	foreach (y; 0 .. dest.h)
+		foreach (x; 0 .. dest.w)
+			if (x < source.w && y < source.h)
+				dest[x, y] = cast(typeof(dest[0, 0]))source[x, y];
+			else
+				dest[x, y] = 0;
+}
 
+void scaleCopyTo(Img1, Img2)(Img1 source, Img2 dest)
+{
+	foreach (y; 0 .. dest.h)
+		foreach (x; 0 .. dest.w)
+		{
+			// TODO...
+		}
+}
+
+struct ARGB
+{
+	union
+	{
+		uint value;
+		struct { ubyte b, g, r, a; }
+	}
+
+	this (uint hexColor) { this.value = hexColor; }
+	this (ubyte r_, ubyte g_, ubyte b_) { r = r_; g = g_; b = b_;}
+	T opCast(T)() if (is(T == uint)) { return value; }
+}
+
+unittest
+{
+	auto alpha = ARGB(0xFF000000);
+	auto red = ARGB(0x00FF0000);
+	auto green = ARGB(0x0000FF00);
+	auto blue = ARGB(0x000000FF);
+
+	assert(alpha.a == 255);
+	assert(red.r == 255);
+	assert(green.g == 255);
+	assert(blue.b == 255);
+}
