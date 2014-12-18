@@ -2,6 +2,7 @@
 
 import sdlang, std.json;
 import std.file, std.path, std.string;
+import std.typecons : Tuple, tuple;
 import std.conv, std.traits, std.range, std.exception, std.variant;
 
 import rt.exception, rt.scene, rt.importedtypes, rt.color;
@@ -15,13 +16,14 @@ interface Deserializable
 }
 
 /// Main entry point
-Scene parseSceneFromFile(string fileName)
+Scene parseSceneFromFile(string filename)
 {
 	try
 	{
-		return fileName
+		return filename
+			.absolutePath()
 			.readAndParseData()
-			.loadFromAbstractDataFormat;
+			.loadFromAbstractDataFormat();
 	}
 	catch (FileException fEx)
 	{
@@ -37,26 +39,31 @@ Scene parseSceneFromFile(string fileName)
 	}
 }
 
-private: 
+private:
 
-const(Value) readAndParseData(string fileName)
+alias ParseInfo = Tuple!(const(Value), "parsedValue", string, "filename");
+
+ParseInfo readAndParseData(string filename)
 {
-	string ext = fileName.extension.toLower;
-	string data = fileName.readText;
+	string ext = filename.extension.toLower;
+	string data = filename.readText;
 	
 	switch (ext)
 	{
-		case ".json": return parseJSON(data).makeVal();
-		case ".sdl": return parseSource(data).tags[0].makeVal();
+		case ".json": return ParseInfo(parseJSON(data).makeVal(),
+									   filename);
+		case ".sdl": return ParseInfo(parseSource(data).tags[0].makeVal(),
+									  filename);
 		default:
 			throw new InvalidSceneException(
 				"Error loading scene: unknown file type!");
 	}
 }
 
-Scene loadFromAbstractDataFormat(const Value val)
+Scene loadFromAbstractDataFormat(ParseInfo info)
 {
-	SceneLoadContext context = new SceneLoadContext();	
+	auto val = info.parsedValue;
+	SceneLoadContext context = new SceneLoadContext(info.filename);	
 	context.scene = new Scene();
 	
 	with (context)
@@ -82,6 +89,12 @@ final class SceneLoadContext
 {
 	Scene scene;	
 	NamedEntities named() { return scene.namedEntities; }
+	immutable string filePath;
+
+	this(string filePath_ = null)
+	{
+		this.filePath = filePath_;
+	}
 	
 	// Note: only one method is really needed.
 	// The others are for convenience.
@@ -118,6 +131,11 @@ final class SceneLoadContext
 		property = extractValue!T(subValue);
 
 		return true;
+	}
+
+	string resolveRelativePath(string path) const pure @safe
+	{
+		return absolutePath(path, this.filePath.dirName);
 	}
 
 private:
