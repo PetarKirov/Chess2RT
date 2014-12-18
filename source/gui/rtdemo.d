@@ -6,6 +6,7 @@ import std.stdio : writeln, writefln;
 import std.datetime : benchmark;
 import std.experimental.logger;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
+import gui.controls;
 
 import std.concurrency;
 
@@ -146,34 +147,6 @@ class RTDemo : GuiBase!Color
 		];
 
 		move_impl(controls);
-	}
-
-	/// Encapsulates a camera control keys binding.
-	private static struct Controls
-	{
-		int[] keyCodes;
-		double dx = 0.0, dy = 0.0, dz = 0.0;
-		double dYaw = 0.0, dRoll = 0.0, dPitch = 0.0;
-
-		/// Params:
-		/// 	keyCodes =	array of SDL2 key codes to test
-		/// 	dx =		left/right movement
-		/// 	dy =		up/down movement
-		/// 	dz =		forward/backword movement
-		/// 	dYaw =		left/right rotation [0..360]
-		/// 	dRoll =		roll rotation [-180..180]
-		/// 	dPitch =	up/down rotation [-90..90]
-		this(int[] keyCodes, double dx = 0.0, double dy = 0.0, double dz = 0.0,
-			double dYaw = 0.0, double dRoll = 0.0, double dPitch = 0.0)
-		{
-			this.keyCodes = keyCodes;
-			this.dx = dx;
-			this.dy = dy;
-			this.dz = dz;
-			this.dYaw = dYaw;
-			this.dRoll = dRoll;
-			this.dPitch = dPitch;
-		}
 	}
 
 	/// Moves and/or rotates the camera according to the
