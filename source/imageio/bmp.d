@@ -154,7 +154,7 @@ struct Image(C)
 	alias w = width;
 	alias h = height;
 	
-	this(uint w, uint h)
+	this(size_t w, size_t h)
 	{
 		alloc(w, h);
 	}
@@ -169,17 +169,17 @@ struct Image(C)
 			pixels.length = width * height;
 	}
 
-	inout auto ref opIndex(uint x, uint y) inout
+	inout auto ref opIndex(size_t x, size_t y) inout
 	{
 		return scanline(y)[x];
 	}
 
-	C opIndexAssign(C value, uint x, uint y)
+	C opIndexAssign(C value, size_t x, size_t y)
 	{
 		return scanline(y)[x] = value;
 	}
 
-	inout(C)[] scanline(uint y) inout
+	inout(C)[] scanline(size_t y) inout
 	{
 		assert(y >= 0 && y < height);
 		return pixels[width * y .. width * (y + 1)];

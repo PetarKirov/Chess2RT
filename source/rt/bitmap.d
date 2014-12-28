@@ -13,13 +13,13 @@ struct Bitmap
 
 	@property const @safe @nogc pure
 	{
-		uint width() { return data.width; }
-		uint height() { return data.height; }
+		size_t width() { return data.width; }
+		size_t height() { return data.height; }
 	}
 
 	/// Gets the pixel at coordinates (x, y).
 	/// Returns red if (x, y) is outside of the image.
-	inout(Color) getPixel(uint x, uint y) inout
+	inout(Color) getPixel(size_t x, size_t y) inout
 	{
 		if (isInvalidPos(x, y))
 			return NamedColors.red;
@@ -28,20 +28,20 @@ struct Bitmap
 	}
 
 	/// Sets the pixel at coordinates (x, y).
-	void setPixel(int x, int y, in Color col)
+	void setPixel(size_t x, size_t y, in Color col)
 	{
 		if (isInvalidPos(x, y)) return;
 		data[x, y] = col;
 	}
 
-	void generateEmptyImage(uint width, uint height) { data.alloc(width, height); }
+	void generateEmptyImage(size_t width, size_t height) { data.alloc(width, height); }
 
 	~this() { }
 
 	@disable
 	void freeMem() { data.alloc(0, 0); }
 
-	private bool isInvalidPos(uint x, uint y) const @safe @nogc pure
+	private bool isInvalidPos(size_t x, size_t y) const @safe @nogc pure
 	{
 		return data.pixels.length == 0 ||
 			!data.width ||
@@ -54,13 +54,13 @@ struct Bitmap
 	/// The coordinates wrap when near the edges.
 	inout(Color) getFilteredPixel(float x, float y) inout @safe @nogc pure
 	{
-		if (isInvalidPos(cast(uint)x, cast(uint)y))
+		if (isInvalidPos(cast(size_t)x, cast(size_t)y))
 			return NamedColors.red;
 
-		int tx = cast(int)floor(x);
-		int ty = cast(int)floor(y);
-		int tx_next = (tx + 1) % data.width;
-		int ty_next = (ty + 1) % data.height;
+		auto tx = cast(size_t)floor(x);
+		auto ty = cast(size_t)floor(y);
+		auto tx_next = (tx + 1) % data.width;
+		auto ty_next = (ty + 1) % data.height;
 		float p = x - tx;
 		float q = y - ty;
 		return data[tx		, ty	] * ((1.0f - p) * (1.0f - q))
