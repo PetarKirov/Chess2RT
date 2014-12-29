@@ -1,13 +1,24 @@
 ﻿module gui.rtdemo;
 
 import core.atomic : atomicOp;
-import std.conv : to;
-import std.stdio : writeln, writefln;
-import std.datetime : benchmark;
+import std.stdio : writefln;
+import std.datetime : benchmark, Clock;
 import std.experimental.logger;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
 
 import std.concurrency;
+
+string getNewImageFileName()
+{
+	import std.format : format;
+	import std.array : replace;
+
+	auto time = Clock.currTime()
+					.toISOExtString()
+					.replace(":", "_");
+
+	return format("output/img_%s.bmp", time);
+}
 
 class RTDemo : GuiBase!Color
 {
@@ -80,11 +91,27 @@ class RTDemo : GuiBase!Color
 			move();
 
 		auto mouse = gui.sdl2.mouse();
+		auto kbd = gui.sdl2.keyboard();
 
 		if (mouse.isButtonPressed(SDL_BUTTON_LMASK))
 			printMouse(mouse.x, mouse.y);
 
+		if (kbd.isPressed(SDLK_F12))
+			takeScreenshot();
+
 		return super.handleInput;
+	}
+	
+	void takeScreenshot()
+	{
+		import rt.bitmap;
+		import std.file : mkdir, exists;
+
+		if (!exists("output"))
+			mkdir("output");
+
+		auto bitmap = const Bitmap(this.screen);
+		bitmap.saveImage(getNewImageFileName());
 	}
 
 	private void printMouse(int x, int y)
@@ -97,10 +124,10 @@ class RTDemo : GuiBase!Color
 		writefln("  Raytrace[start = %s, dir = %s]", result.ray.orig, result.ray.dir);
 		
 		if (result.hitLight)
-			writeln("    Hit light with color: ", to!string(result.hitLightColor));
+			writefln("    Hit light with color: ", result.hitLightColor);
 		
 		else if(!result.closestNode)
-			writeln("    Hit environment: ", to!string(scene.environment.getEnvironment(result.ray.dir)));
+			writefln("    Hit environment: ", scene.environment.getEnvironment(result.ray.dir));
 		
 		else
 		{
@@ -111,7 +138,7 @@ class RTDemo : GuiBase!Color
 			writefln("      UV coods:           %s, %s", result.data.u, result.data.v);
 		}
 		
-		writeln("Raytracing completed!\n");
+		writefln("Raytracing completed!\n");
 	}
 
 	private void move()
@@ -214,6 +241,6 @@ class RTDemo : GuiBase!Color
 	{
 		foreach (namedEntity; scene.namedEntities.tupleof)
 			foreach (name, entity; namedEntity)
-				writefln("'%s' -> %s", name, to!string(entity));
+				writefln("'%s' -> %s", name, entity);
 	}
 }

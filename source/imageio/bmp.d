@@ -5,6 +5,8 @@ import ae.utils.graphics.image;
 import rt.exception;
 import imageio.exception;
 import std.exception : enforce;
+import std.math : lrint;
+import imageio.exception, imageio.image;
 
 void loadBmp(C)(ref Image!C result, string filePath)
 {
@@ -145,6 +147,69 @@ private T readStruct(T)(File f)
 	return tmp[0];
 }
 
+private void writeStruct(T)(File f, in ref T data)
+{
+	import std.traits : isArray;
+
+	static if (is(T == struct))
+	{
+		T[1] tmp = cast(T[1])data;
+		f.rawWrite(tmp[]);
+	}
+	else static if (isArray!T)
+	{
+		f.rawWrite(data);
+	}
+	else
+		static assert(0, "Only structs and arrays are supported");
+}
+
+void saveBmp(C)(in Image!C img, string filePath)
+{
+	writeln(filePath);
+
+	enum ver = Ver.V1;
+	auto fileSize = 0;
+	auto fileHeader = BmpFileHeader(
+						FileSignature.Win, fileSize, 0, 0,
+						BmpFileHeader.sizeof + ver);
+						
+	auto dibHeader = DIBHeader!ver(
+						ver,
+						cast(int)img.width, cast(int)img.height,
+						1, 24, 
+						Compression.BI_RGB,
+						cast(uint)(fileSize - (BmpFileHeader.sizeof + ver)),
+						72.dpiToPPM,
+						72.dpiToPPM,
+						0, 0);
+						
+	auto file = File(filePath, "wb");
+	
+	file.writeStruct(fileHeader);
+	file.writeStruct(dibHeader);
+	
+	auto row_converted = new ubyte[3][img.width];
+	
+	foreach_reverse (y; 0 .. img.height)
+	{
+		auto row = img.scanline(y);
+		
+		foreach (x; 0 .. img.width)
+		{
+			auto pixel = cast(uint)row[x]; //RGB32
+			row_converted[x] = (cast(ubyte*)&pixel)[0 .. 3];
+		}
+		
+		file.writeStruct(row_converted);
+	}	
+	
+	file.flush();
+	file.close();
+	
+	writeln(file);
+}
+
 struct Image(C)
 {
 	size_t width;
@@ -168,6 +233,8 @@ struct Image(C)
 		if (pixels.length < width * height)
 			pixels.length = width * height;
 	}
+	
+	alias size = alloc;
 
 	inout auto ref opIndex(size_t x, size_t y) inout
 	{
@@ -250,11 +317,7 @@ static assert (BmpFileHeader.sizeof == 14);
 /// Device-independent bitmap (DIB) Header
 struct DIBHeader(DIBVersion V)
 {
-	union
-	{
-		uint size;
-		DIBVersion version_;
-	}
+	DIBVersion version_;
 
 	static if (V == DIBVersion.BITMAPCOREHEADER)
 	{
@@ -312,6 +375,22 @@ static assert (DIBHeader!(DIBVersion.BITMAPV3INFOHEADER).sizeof == DIBVersion.BI
 static assert (DIBHeader!(DIBVersion.BITMAPV4INFOHEADER).sizeof == DIBVersion.BITMAPV4INFOHEADER);
 static assert (DIBHeader!(DIBVersion.BITMAPV5INFOHEADER).sizeof == DIBVersion.BITMAPV5INFOHEADER);
 
+double horizontalDPI(Ver V)(DIBHeader!v header) if (v >= V.V1)
+{
+	return header.horzResolution.ppmToDPI;
+}
+
+double verticalDPI(Ver V)(DIBHeader!V header) if (v >= V.V1)
+{
+	return header.vertResolution.ppmToDPI;
+}
+
+/// Converts a value in pixels-per-meter to dots-per-inch.
+double ppmToDPI(double ppm) { return ppm / 100.0 * 2.54; }
+
+/// Converts a value in dots-per-inch to pixels-per-meter.
+int dpiToPPM(double dpi) { return cast(int)lrint(dpi * 100.0 / 2.54); }
+
 struct WinBitfieldsMasks(DIBVersion V) if (V >= DIBVersion.BITMAPV2INFOHEADER)
 {
 align(1):
@@ -363,21 +442,11 @@ struct CIE_XYZ_Triple
 
 static assert (CIE_XYZ_Triple.sizeof == 36);
 
-double horizontalDPI(Ver V)(DIBHeader!v header) if (v >= V.V1)
-{
-	return header.horzResolution / 100.0 * 2.54;
-}
-
-double verticalDPI(Ver V)(DIBHeader!V header) if (v >= V.V1)
-{
-	return header.vertResolution / 100.0 * 2.54;
-}
-
 unittest
 {
 	// Example 1 from http://en.wikipedia.org/wiki/BMP_file_format
 
-	byte[] testImage = 
+	ubyte[] testImage =
 	[
 		// BMP Header
 		0x42, 0x4D,					//	"BM"				ID field (42h, 4Dh)
@@ -413,7 +482,7 @@ unittest
 {
 	// Example 2 from http://en.wikipedia.org/wiki/BMP_file_format
 
-	byte[] testImage = 
+	ubyte[] testImage =
 	[
 		// BMP Header
 		0x42, 0x4D,					// "BM"						Magic number (unsigned integer 66, 77)

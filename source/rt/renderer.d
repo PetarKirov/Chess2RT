@@ -1,7 +1,8 @@
 ﻿module rt.renderer;
 
 import util.random, util.array, std.typecons : Rebindable;
-import ae.utils.graphics.image, gfm.math.box;
+import imageio.bmp : Image; // ae.utils.graphics.image
+import gfm.math.box;
 import rt.scene, rt.color, rt.importedtypes, rt.intersectable, rt.node, rt.camera, rt.ray, rt.light;
 
 package enum TraceType

@@ -3,7 +3,8 @@
 interface AppSceleton
 {
 	/// Main application loop
-	/// Retruns: true if the application is closing normally.
+	/// Retruns:
+	///		true if the application is closing normally.
 	final bool run(string[] args = null)
 	{
 		init();
@@ -24,7 +25,8 @@ interface AppSceleton
 	void init();
 
 	/// Handles the input.
-	/// Returns: false - if the app should be closed and true - otherwise.
+	/// Returns:
+	///		false - if the app should be closed and true - otherwise.
 	bool handleInput();
 
 	/// Updates the application state after handling input.
