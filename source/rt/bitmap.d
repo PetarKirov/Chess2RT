@@ -75,47 +75,22 @@ struct Bitmap
 	{
 		switch (filename.extension.toLower)
 		{
-			case ".bmp": loadBmp(data, filename); break;
-			case ".exr": loadExr(this, filename); break;
+			case ".bmp": loadBmp(data, filename.absolutePath.buildNormalizedPath); break;
+			case ".exr": loadExr(this, filename.absolutePath.buildNormalizedPath); break;
 			default: throw new UnknownImageTypeException();
 		}
 	}
 
 	/// Save the bitmap to an image.
 	/// The format is detected from extension.
-	void saveImage(string filename)
+	void saveImage(string filename) inout
 	{
 		switch (filename.extension.toLower)
 		{
-			case ".bmp": saveBmp(this, filename); break;
-			case ".exr": saveExr(this, filename); break;
+			case ".bmp": saveBmp(data, filename.absolutePath.buildNormalizedPath); break;
+			case ".exr": saveExr(this, filename.absolutePath.buildNormalizedPath); break;
 			default: throw new UnknownImageTypeException();
 		}
-	}
-
-	/// Loads an image from a BMP file.
-	void loadBMP(string filename)
-	{
-		assert(0, "Not implemented!");
-	}
-
-	/// Loads an EXR file.
-	void loadEXR(string filename)
-	{
-		loadExr(this, filename);
-	}
-
-	/// Saves the image to a BMP file (with clamping, etc). Uses the sRGB colorspace.
-	void saveBMP(string filename)
-	{
-		saveBmp(this, filename);
-	}
-	
-	/// Saves the image into the EXR format, preserving the dynamic range, using Half for storage. Note that
-	/// in contrast with saveBMP(), it does not use gamma-compression on saving.
-	void saveEXR(string filename)
-	{
-		saveExr(this, filename);
 	}
 
 	void remapRGB(scope float delegate(float) remapFn)
@@ -183,17 +158,12 @@ struct Bitmap
 
 private:
 
-void saveBmp(Bitmap bmp, string filename)
-{
-	throw new NotImplementedException();
-}
-
 void loadExr(Bitmap bmp, string filename)
 {
 	throw new NotImplementedException();
 }
 
-void saveExr(Bitmap bmp, string filename)
+void saveExr(const Bitmap bmp, string filename)
 {
 	throw new NotImplementedException();
 }
