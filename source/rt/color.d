@@ -30,7 +30,7 @@ struct Color
 	{
 		// The default value of float.nan makes the calculations
 		// very slow in the toRGB32() functions.
-		float components[3] = [ 0f, 0f, 0f ];
+		float[3] components = [ 0f, 0f, 0f ];
 		struct { float r, g, b;	}
 	}
 
@@ -201,8 +201,8 @@ private pure nothrow @safe @nogc
 		return cast(ubyte)floor(x * 255.0f);
 	}
 	
-	immutable ubyte SRGB_CompressCache[4097];
-	immutable float SRGB_DeCompressCache[4097];
+	immutable ubyte[4097] SRGB_CompressCache;
+	immutable float[4097] SRGB_DeCompressCache;
 
 	static this()
 	{
