@@ -5,21 +5,24 @@ import std.getopt;
 import std.stdio : writeln;
 import std.typecons : scoped;
 
-void main(string[] args)
-{
-	string sceneFilePath = "";
+version(unittest)
+	void main() {}
+else
+	void main(string[] args)
+	{
+		string sceneFilePath = "";
 	
-	getopt(args, "file", &sceneFilePath);
+		getopt(args, "file", &sceneFilePath);
 
-	if (sceneFilePath == "")
-		sceneFilePath = getPathToDefaultScene;
+		if (sceneFilePath == "")
+			sceneFilePath = getPathToDefaultScene;
 	
-	runAppInScope(sceneFilePath);
+		runAppInScope(sceneFilePath);
 	
-	debug printDiagnostics();
+		debug printDiagnostics();
 	
-	writeln("At the end.");
-}
+		writeln("At the end.");
+	}
 
 /// If no file is specified at the command line
 /// this function will return a path to

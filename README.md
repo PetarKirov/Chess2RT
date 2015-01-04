@@ -30,7 +30,7 @@ You need:
   + **DUB**
   + **SDL2**
     * Linux: PPA packages exist e.g. [here][4]
-    * Windows: Use libsdl from the /libs folder or download _SDL2-devel-2.0.3-VC.zip_ from [here][3]
+    * Windows: Use libsdl from the /lib folder or download _SDL2-devel-2.0.3-VC.zip_ from [here][3]
 
 2. Git clone:
 ```git clone https://github.com/ZombineDev/Chess2RT.git```
@@ -57,8 +57,8 @@ Acknowledgement
 I developed this project for the 3D Graphics and Raytracing course at fmi.uni-sofia.
 Most of the code in `./source/rt/` is based on https://github.com/anrieff/trinity/.
 
-This project uses [SDL 2.03](https://www.libsdl.org). Windows x86 and x64 binaries
-are included in the corresponding /libs/[Win32 or Win64] folders.
+This project uses [SDL 2.03](https://www.libsdl.org). Windows x86 and x86_64 binaries
+are included in the corresponding /lib/[Win32 or Win64] folders.
 
 [1]: http://dlang.org/download.html
 [2]: http://code.dlang.org/download

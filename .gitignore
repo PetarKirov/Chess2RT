@@ -7,7 +7,7 @@ bin/
 *.obj
 *.dll
 
-!libs/*/*.dll
+!lib/*/*.dll
 
 # VisualD and Visual Studio
 *.sln
@@ -20,4 +20,3 @@ bin/
 .dub/
 dub.selections.json
 dub.userprefs
- 

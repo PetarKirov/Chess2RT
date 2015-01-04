@@ -236,7 +236,7 @@ struct Image(C)
 	
 	alias size = alloc;
 
-	inout auto ref opIndex(size_t x, size_t y) inout
+	auto ref inout(C) opIndex(size_t x, size_t y) inout
 	{
 		return scanline(y)[x];
 	}
@@ -446,7 +446,7 @@ unittest
 {
 	// Example 1 from http://en.wikipedia.org/wiki/BMP_file_format
 
-	ubyte[] testImage =
+	ubyte[] testImageRawData =
 	[
 		// BMP Header
 		0x42, 0x4D,					//	"BM"				ID field (42h, 4Dh)
@@ -482,7 +482,7 @@ unittest
 {
 	// Example 2 from http://en.wikipedia.org/wiki/BMP_file_format
 
-	ubyte[] testImage =
+	ubyte[] testImageRawData =
 	[
 		// BMP Header
 		0x42, 0x4D,					// "BM"						Magic number (unsigned integer 66, 77)
