@@ -44,7 +44,7 @@ class Renderer
 	{
 		this.scene = scene;
 		this.outputImage = output;
-		this.needsAA.size(outputImage.w, outputImage.h);
+		this.needsAA.alloc(outputImage.w, outputImage.h);
 	}
 
 	void renderRT() @nogc

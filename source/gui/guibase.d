@@ -39,7 +39,7 @@ abstract class GuiBase(C) : AppSceleton
 	/// All overriding classes should call super.init() first!
 	override void init()
 	{
-		screen.size(gui.width, gui.height);
+		screen.alloc(gui.width, gui.height);
 	}
 	
 	override void update()

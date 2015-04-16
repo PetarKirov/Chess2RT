@@ -2,6 +2,7 @@
 
 import std.math;
 import gui.sdl2gui, gui.guibase;
+import imageio.image;
 
 class GuiDemo : GuiBase!uint
 {

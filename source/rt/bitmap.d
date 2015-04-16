@@ -2,7 +2,7 @@
 
 import std.math, std.path, std.string;
 import util.prop;
-import rt.color, imageio.bmp;
+import rt.color, imageio.bmp, imageio.image;
 import rt.exception, imageio.exception;
 
 /// Represents a bitmap (2d array of colors), e.g. a image
@@ -36,18 +36,9 @@ struct Bitmap
 
 	void generateEmptyImage(size_t width, size_t height) { data.alloc(width, height); }
 
-	~this() { }
-
-	@disable
-	void freeMem() { data.alloc(0, 0); }
-
 	private bool isInvalidPos(size_t x, size_t y) const @safe @nogc pure
 	{
-		return data.pixels.length == 0 ||
-			!data.width ||
-			!data.height ||
-			x >= data.width ||
-			y >= data.height;
+		return data.empty || x >= data.width || y >= data.height;
 	}
 
 	/// Gets a bilinear-filtered pixel from float coords (x, y).

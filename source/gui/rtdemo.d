@@ -52,7 +52,7 @@ class RTDemo : GuiBase!Color
 					  "RT Demo!");
 
 		//Set the screen size according to the settings in the scene file
-		screen.size(scene.settings.frameWidth,
+		screen.alloc(scene.settings.frameWidth,
 					scene.settings.frameHeight);
 
 		this.renderer = new Renderer(scene, screen);
