@@ -1,20 +1,16 @@
 ﻿module imageio.bmp;
 
-import std.bitmanip, std.stdio;
-import ae.utils.graphics.image;
-import rt.exception;
-import imageio.exception;
+import std.stdio : File, writeln;
 import std.exception : enforce;
 import std.math : lrint;
 import imageio.exception, imageio.image;
 
+/// Loads a BMP image located at `filePath` into `result` in memory structure.
 void loadBmp(C)(ref Image!C result, string filePath)
 {
 	auto file = File(filePath);
-	auto fileHeader = file.readStruct!BmpFileHeader();
+	auto fileHeader = file.readStruct!BmpFileHeader;
 	auto version_ = file.readStruct!DIBVersion;
-
-	file.seek(BmpFileHeader.sizeof, 0);
 
 	enforce(fileHeader.signature == FileSignature.Win,
 			new ImageIOException("Only file headers beginning with 'BM' are supported!"));
@@ -48,6 +44,7 @@ private void loadImpl(C, DIBVersion V)(ref Image!C result, File file, uint offse
 {
 	import std.algorithm : among;
 
+	file.seek(BmpFileHeader.sizeof, 0);
 	auto header = file.readStruct!(DIBHeader!V);
 
 	enforce(header.colorPlanesCount == 1,
@@ -166,7 +163,7 @@ private void writeStruct(T)(File f, in ref T data)
 
 void saveBmp(C)(in Image!C img, string filePath)
 {
-	writeln(filePath);
+	debug writeln("Start saving: `", filePath, "`...");
 
 	enum ver = Ver.V1;
 	auto fileSize = 0;
@@ -207,50 +204,7 @@ void saveBmp(C)(in Image!C img, string filePath)
 	file.flush();
 	file.close();
 	
-	writeln(file);
-}
-
-struct Image(C)
-{
-	size_t width;
-	size_t height;
-	C[] pixels;
-
-	alias w = width;
-	alias h = height;
-	
-	this(size_t w, size_t h)
-	{
-		alloc(w, h);
-	}
-
-@safe pure nothrow:
-
-	void alloc(size_t width, size_t height)
-	{
-		this.width = width;
-		this.height = height;
-		if (pixels.length < width * height)
-			pixels.length = width * height;
-	}
-	
-	alias size = alloc;
-
-	auto ref inout(C) opIndex(size_t x, size_t y) inout
-	{
-		return scanline(y)[x];
-	}
-
-	C opIndexAssign(C value, size_t x, size_t y)
-	{
-		return scanline(y)[x] = value;
-	}
-
-	inout(C)[] scanline(size_t y) inout
-	{
-		assert(y >= 0 && y < height);
-		return pixels[width * y .. width * (y + 1)];
-	}
+	debug writeln("`", filePath, "` finished saving.");
 }
 
 enum FileSignature : ubyte[2]
