@@ -1,4 +1,4 @@
-Chess2RT
+Chess2RT [![Build Status](https://travis-ci.org/ZombineDev/Chess2RT.svg?branch=master)](https://travis-ci.org/ZombineDev/Chess2RT)
 ========
 A raytracer renderer, written in D, which will eventually be used for a
 3d rendered chess game (and/or a variation of it).
