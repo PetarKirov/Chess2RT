@@ -49,7 +49,7 @@ class RTDemo : GuiBase!Color
 
 		super.initGui(scene.settings.frameWidth,
 					  scene.settings.frameHeight,
-					  "RT Demo!");
+					  r"RT Demo ¯\_(ツ)_/¯");
 
 		//Set the screen size according to the settings in the scene file
 		screen.alloc(scene.settings.frameWidth,
