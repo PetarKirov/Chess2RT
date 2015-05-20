@@ -1,6 +1,7 @@
 ﻿module rt.sceneloader;
 
-import sdlang, std.json;
+import sdlang : SDLangParseException, parseSource, SDLValue = Value, SDLTag = Tag;
+import std.json : JSONException, parseJSON, JSONValue, JSON_TYPE;
 import std.file, std.path, std.string;
 import std.typecons : Tuple, tuple;
 import std.conv, std.traits, std.range, std.exception, std.variant;
@@ -12,7 +13,7 @@ import util.factory2;
 /// files should implement this interface.
 interface Deserializable
 {
-	void deserialize(const Value val, SceneLoadContext context);
+	void deserialize(const SceneDscNode val, SceneLoadContext context);
 }
 
 /// Main entry point
@@ -41,7 +42,7 @@ Scene parseSceneFromFile(string filename)
 
 private:
 
-alias ParseInfo = Tuple!(const(Value), "parsedValue", string, "filename");
+alias ParseInfo = Tuple!(const(SceneDscNode), "parsedValue", string, "filename");
 
 ParseInfo readAndParseData(string filename)
 {
@@ -50,10 +51,8 @@ ParseInfo readAndParseData(string filename)
 	
 	switch (ext)
 	{
-		case ".json": return ParseInfo(parseJSON(data).makeVal(),
-									   filename);
-		case ".sdl": return ParseInfo(parseSource(data).tags[0].makeVal(),
-									  filename);
+		case ".json": return ParseInfo(parseJSON(data).makeVal(), filename);
+		case ".sdl": return ParseInfo(parseSource(data).tags[0].makeVal(), filename);
 		default:
 			throw new InvalidSceneException(
 				"Error loading scene: unknown file type!");
@@ -98,19 +97,19 @@ final class SceneLoadContext
 	
 	// Note: only one method is really needed.
 	// The others are for convenience.
-	bool set(T)(ref T property, const Value val, string propertyName)
+	bool set(T)(ref T property, const SceneDscNode val, string propertyName)
 	{
 		return setTo(val, property, propertyName);
 	}
 	
-	T get(T)(const Value val, string propertyName)
+	T get(T)(const SceneDscNode val, string propertyName)
 	{
 		T result;
 		setTo(val, result, propertyName);
 		return result;
 	}
 
-	bool setTo(T)(const Value val, ref T property, string propertyName)
+	bool setTo(T)(const SceneDscNode val, ref T property, string propertyName)
 	{		
 		// First - check if the property is specified in the sceme file:
 		// Construct default if nothing specified.
@@ -140,7 +139,7 @@ final class SceneLoadContext
 
 private:
 
-	T extractValue(T)(const Value val)
+	T extractValue(T)(const SceneDscNode val)
 	{
 		static if (isBoolean!T || isIntegral!T || isFloatingPoint!T || isSomeString!T)
 		{
@@ -181,9 +180,9 @@ private:
 			static assert(0, "Unsupported type: " ~ T.stringof);
 	}
 	
-	T createObject(T)(const Value v)
+	T createObject(T)(const SceneDscNode root)
 	{
-		string type = v.getType;
+		string type = root.getType;
 
 		T obj = makeInstanceOf!T(type);
 
@@ -191,12 +190,12 @@ private:
 			throw new InvalidSceneException(
 				"Unknown object type (or not yet supported): " ~ type);
 
-		obj.deserialize(v, this);
+		obj.deserialize(root, this);
 		
 		static if (NamedEntities.canBeStored!T)
-			if (v.isSpecified("name"))
+			if (root.isSpecified("name"))
 			{
-				string name = v.getChild("name").getString;
+				string name = root.getChild("name").getString;
 				enforce(name !in scene.namedEntities.getArray!T(),
 				        new EntityWithDuplicateName(name));
 				scene.namedEntities.getArray!T()[name] = obj;
@@ -206,11 +205,11 @@ private:
 	}
 }
 
-private Value makeVal(const JSONValue json) { return new JsonValueWrapper(json); }
+private SceneDscNode makeVal(const JSONValue json) { return new JsonValueWrapper(json); }
 
-private Value makeVal(const Tag sdl) { return new SdlValueWrapper(sdl); }
+private SceneDscNode makeVal(const SDLTag sdl) { return new SdlValueWrapper(sdl); }
 
-interface Value
+interface SceneDscNode
 {
 	final T get(T)() const @safe
 	{
@@ -226,13 +225,13 @@ interface Value
 
 	bool isSpecified(string propertyName) const @trusted;
 
-	Value getChild(string propertyName) const @trusted;
+	SceneDscNode getChild(string propertyName) const @trusted;
 
-	Value[] getChildren() const @trusted;
+	SceneDscNode[] getChildren() const @trusted;
 
 	/// SDL specific, for JSON it will return the same content
 	/// as the one returned from getChildren, but wrapped in sdlang.Value-s
-	sdlang.Value[] getValues() const @trusted;
+	SDLValue[] getValues() const @trusted;
 
 protected:
 	bool getBool() const @trusted;
@@ -241,7 +240,7 @@ protected:
 	string getString() const @trusted;
 }
 
-class JsonValueWrapper : Value
+class JsonValueWrapper : SceneDscNode
 {
 	this(const JSONValue v) { json = v; }
 
@@ -255,14 +254,14 @@ class JsonValueWrapper : Value
 		return (propertyName in json.object) != null;
 	}
 
-	override Value getChild( string propertyName) const @trusted
+	override SceneDscNode getChild( string propertyName) const @trusted
 	{
 		return new JsonValueWrapper(json[propertyName]);
 	}
 
-	override Value[] getChildren() const @trusted
+	override SceneDscNode[] getChildren() const @trusted
 	{
-		Value[] result;
+		SceneDscNode[] result;
 
 		foreach (subJson; json.array)
 			result ~= new JsonValueWrapper(subJson);
@@ -270,12 +269,12 @@ class JsonValueWrapper : Value
 		return result;
 	}
 
-	override sdlang.Value[] getValues() const @trusted
+	override SDLValue[] getValues() const @trusted
 	{
-		sdlang.Value[] result;
+		SDLValue[] result;
 		
 		foreach (subJson; json.array)
-			result ~= sdlang.Value(number(subJson));
+			result ~= SDLValue(number(subJson));
 		
 		return result;
 	}
@@ -326,40 +325,40 @@ private:
 	}
 }
 
-class SdlValueWrapper : Value
+class SdlValueWrapper : SceneDscNode
 {
-	this(const Tag v) { tag = v; }
+	this(const SDLTag v) { tag = v; }
 
 	override string getType() const @trusted
 	{
-		return (cast(Tag)tag).name;
+		return (cast(SDLTag)tag).name;
 	}
 	
 	override bool isSpecified(string propertyName) const @trusted
 	{
-		return propertyName in (cast(Tag)tag).tags;
+		return propertyName in (cast(SDLTag)tag).tags;
 	}
 	
-	override Value getChild( string propertyName) const @trusted
+	override SceneDscNode getChild( string propertyName) const @trusted
 	{
-		return new SdlValueWrapper((cast(Tag)tag).tags[propertyName][0]);
+		return new SdlValueWrapper((cast(SDLTag)tag).tags[propertyName][0]);
 	}
 	
-	override Value[] getChildren() const @trusted
+	override SceneDscNode[] getChildren() const @trusted
 	{
-		Value[] result;
+		SceneDscNode[] result;
 
-		foreach(subTag; (cast(Tag)tag).tags)
+		foreach(subTag; (cast(SDLTag)tag).tags)
 			result ~= new SdlValueWrapper(subTag);
 
 		return result;
 	}
 
-	override sdlang.Value[] getValues() const @trusted
+	override SDLValue[] getValues() const @trusted
 	{
-		sdlang.Value[] result;
+		SDLValue[] result;
 		
-		foreach(subTag; (cast(Tag)tag).values)
+		foreach(subTag; (cast(SDLTag)tag).values)
 			result ~= subTag;
 		
 		return result;
@@ -387,14 +386,14 @@ protected:
 	}
 
 private:
-	const Tag tag;
+	const SDLTag tag;
 
-	static void print(const Tag tag)
+	static void print(const SDLTag tag)
 	{
 		import std.stdio;
-		writeln((cast(Tag)tag).name);
+		writeln((cast(SDLTag)tag).name);
 		
-		foreach(t; (cast(Tag)tag).tags)
+		foreach(t; (cast(SDLTag)tag).tags)
 			print(t);
 	}
 }

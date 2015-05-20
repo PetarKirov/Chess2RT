@@ -150,7 +150,7 @@ class Camera : Deserializable
 		pitch = clamp(pitch, -90, 90);
 	}
 
-	void deserialize(const Value val, SceneLoadContext context)
+	void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		this.frameWidth = context.scene.settings.frameWidth;
 		this.frameHeight = context.scene.settings.frameHeight;

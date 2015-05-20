@@ -64,7 +64,7 @@ class GlobalSettings : Deserializable
 		debugEnabled = false;		
 	}
 
-	void deserialize(const Value val, SceneLoadContext context)
+	void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		context.set(this.frameWidth, val, "frameWidth");
 		context.set(this.frameHeight, val, "frameHeight");

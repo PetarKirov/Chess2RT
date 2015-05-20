@@ -53,7 +53,7 @@ class Checker : Texture
 		return white ? color2 : color1;
 	}
 
-	void deserialize(const Value val, SceneLoadContext context)
+	void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		context.set(this.color1, val, "color1");
 		context.set(this.color2, val, "color2");
@@ -85,7 +85,7 @@ class Procedure2 : Texture
 		return result;
 	}
 
-	void deserialize(const Value val, SceneLoadContext context)
+	void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		context.set(this.colorU, val, "colorU");
 		context.set(this.colorV, val, "colorV");
@@ -125,7 +125,7 @@ class BitmapTexture : Texture
 		return bmp.getFilteredPixel(tx, ty); // fetch from the bitmap with bilinear filtering
 	}
 
-	void deserialize(const Value val, SceneLoadContext context)
+	void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		context.set(this.scaling, val, "scaling");
 		context.set(this.assumedGamma, val, "assumedGamma");

@@ -35,7 +35,7 @@ abstract class Shader : IShader, BRDF, Deserializable
 		this.color = color;
 	}
 
-	void deserialize(const Value val, SceneLoadContext context)
+	void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		this.scene = context.scene;
 		context.set(this.color, val, "color");
@@ -133,7 +133,7 @@ class Lambert : Shader
 		pdf = 1 / (2 * PI);
 	}
 
-	override void deserialize(const Value val, SceneLoadContext context)
+	override void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		super.deserialize(val, context);
 		string t;
@@ -232,7 +232,7 @@ class Phong : Shader
 					
 					double cosGamma = dot(R, -ray.dir);
 					if (cosGamma > 0)
-						avgSpecular += baseLight * pow(cosGamma, exponent) * strength; // specular contribution
+						avgSpecular += baseLight * (cosGamma ^^ exponent) * strength; // specular contribution
 					
 				}
 			}
@@ -256,7 +256,7 @@ class Phong : Shader
 		assert(0);
 	}
 
-	override void deserialize(const Value val, SceneLoadContext context)
+	override void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		super.deserialize(val, context);
 
