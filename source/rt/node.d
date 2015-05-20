@@ -66,7 +66,7 @@ class Node : Intersectable, Deserializable
 	 */
 	}
 
-	void deserialize(const Value val, SceneLoadContext context)
+	void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		string geom, shad, bump;
 		context.set(geom, val, "geometry");

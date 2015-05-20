@@ -1,8 +1,8 @@
 ﻿module rt.importedtypes;
 
-public import std.math;
-public import gfm.math.funcs;
-
+public import std.algorithm : min, max, clamp;
+public import std.math : PI, fabs, sqrt, sin, cos, tan, asin, acos, atan2, floor;
+public import gfm.math.funcs : radians;
 public import gfm.math.vector;
 public import gfm.math.matrix;
 import gfm.math.box;

@@ -57,7 +57,7 @@ class Plane : Geometry
 		return true;
 	}
 
-	void deserialize(const Value val, SceneLoadContext context)
+	void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		context.set(this.y, val, "y");
 	}
@@ -128,7 +128,7 @@ class Sphere : Geometry
 		return (center - p).squaredLength() < R * R;
 	}
 	
-	void deserialize(const Value val, SceneLoadContext context)
+	void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		bool centerSet = context.set(this.center, val, "center");
 
@@ -233,7 +233,7 @@ class Cube : Geometry
 		return found;
 	}
 
-	void deserialize(const Value val, SceneLoadContext context)
+	void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		context.set(this.center, val, "center");
 		context.set(this.side, val, "side");
@@ -335,7 +335,7 @@ abstract class CsgOp : Geometry
 		return boolOp(left.isInside(p), right.isInside(p));
 	}
 
-	void deserialize(const Value val, SceneLoadContext context)
+	void deserialize(const SceneDscNode val, SceneLoadContext context)
 	{
 		string geomName;
 
