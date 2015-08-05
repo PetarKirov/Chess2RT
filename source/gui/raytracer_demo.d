@@ -3,10 +3,27 @@
 import core.atomic : atomicOp;
 import std.stdio : writefln;
 import std.datetime : benchmark, Clock;
-import std.experimental.logger;
+import std.experimental.logger : Logger, sharedLog;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
 
 import std.concurrency;
+
+/// Returns a path to the default scene
+/// read from the file "data/default_scene.path"
+string getPathToDefaultScene()
+{
+	import std.file : exists, readText;
+	import std.string : strip;
+	
+	// The path to the file containting the path to the default scene file
+	enum link = "data/default_scene.path";
+	assert(link.exists, "Missing link to default scene file!");
+	
+	auto finalPath = link.readText().strip();
+	assert(finalPath.exists, "Missing default scene file!");
+	
+	return finalPath;
+}
 
 string getNewImageFileName()
 {
@@ -22,7 +39,6 @@ string getNewImageFileName()
 
 class RTDemo : GuiBase!Color
 {
-	string sceneFilePath;
 	Scene scene;
 	Renderer renderer;
 	shared bool needsRendering;
@@ -30,26 +46,33 @@ class RTDemo : GuiBase!Color
 	shared byte[] tasksCount = new shared byte[2];
 	Tid renderThread;
 
-	this(string sceneFilePath_, Logger log = stdlog)
+	this(Logger log = sharedLog)
 	{
 		super(log);
-		this.sceneFilePath = sceneFilePath_;
+		logger.log("At RTDemo.ctor");
 	}
 
 	~this()
 	{
-		log.log("At ~RTDemo");	
+		logger.log("At RTDemo.dtor");
 	}
 
-	override void init()
+	override void init(Variant init_settings)
 	{
-		log.log("Loading scene: " ~ sceneFilePath);
+		auto sceneFilePath = init_settings.get!string == "" ?
+			getPathToDefaultScene() :
+			init_settings.get!string;
+
+		logger.log("Loading scene: " ~ sceneFilePath);
 
 		scene = parseSceneFromFile(sceneFilePath);
 
-		super.initGui(scene.settings.frameWidth,
-					  scene.settings.frameHeight,
-					  r"RT Demo ¯\_(ツ)_/¯");
+		logger.log("Scene parsed successfully.");
+
+		gui.init(scene.settings.frameWidth,
+				 scene.settings.frameHeight,
+				 "Raytracing: '" ~ sceneFilePath ~ r"'... ¯\_(ツ)_/¯",
+				 logger);
 
 		//Set the screen size according to the settings in the scene file
 		screen.alloc(scene.settings.frameWidth,
@@ -58,7 +81,7 @@ class RTDemo : GuiBase!Color
 		this.renderer = new Renderer(scene, screen);
 		this.needsRendering = true;
 		
-		debug log.log(scene);
+		debug logger.logf("%s", scene);
 	}
 
 	override void render()
@@ -67,7 +90,7 @@ class RTDemo : GuiBase!Color
 		if (!needsRendering || isRendering)
 			return;
 
-		log.log("Rendering!!!");
+		logger.log("Rendering!!!");
 
 		isRendering = true;
 

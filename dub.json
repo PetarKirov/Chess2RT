@@ -7,9 +7,18 @@
 	"targetPath": "bin/",
 	
 	"dependencies": {
+		"derelict-util": ">=2.0.3",
+		"derelict-sdl2": ">=1.9.6",
+		"logger": ">=2.66.0",
 		"gfm:sdl2": ">=2.3.4",
 		"gfm:math": ">=2.3.4",
-		"sdlang-d": "~master"
+		"sdlang-d": ">=0.9.2"
+	},
+
+	"buildTypes": {
+		"gdb_release": {
+			"buildOptions": ["releaseMode", "optimize", "inline", "debugInfo"]
+		}
 	},
 
 	"copyFiles-windows-x86": ["lib/win32/SDL2.dll"],
@@ -18,22 +27,22 @@
 	"configurations": [
 		{
 			"name": "win32",
-			"platforms": ["windows"],
+			"platforms": ["windows-x86"],
 			"targetPath": "bin/Win32"
 		},
 		{
 			"name": "win64",
-			"platforms": ["windows"],
+			"platforms": ["windows-x86_64"],
 			"targetPath": "bin/Win64"
 		},
 		{
 			"name": "linux32",
-			"platforms": ["linux"],
+			"platforms": ["linux-x86"],
 			"targetPath": "bin/Linux32"
 		},
 		{
 			"name": "linux64",
-			"platforms": ["linux"],
+			"platforms": ["linux-x86_64"],
 			"targetPath": "bin/Linux64"
 		}		
 	],

@@ -88,7 +88,7 @@ void testGUIMain()
 	
 	uint w = 640, h = 480;
 
-	auto gui = SDL2Gui(w, h, "Pulsing circle", stdlog);
+	auto gui = SDL2Gui(w, h, "Pulsing circle", sharedLog);
 	
 	double radius = 50.0;
 	
