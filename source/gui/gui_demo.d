@@ -54,7 +54,9 @@ private:
 		string imgPath = "data/texture/zaphod.bmp";
 		Image!ARGB pixels;
 
-		loadBmp(pixels, imgPath);
+		import std.file, imageio.buffer;
+
+		loadBmp(pixels, RawBuffer(imgPath.read()));
 
 		pixels.cropCopyTo(screen);
 	}

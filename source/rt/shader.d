@@ -6,6 +6,7 @@ import rt.importedtypes, rt.ray, rt.color, rt.intersectable;
 import rt.scene, rt.texture, rt.exception, rt.sceneloader;
 import util.counter;
 import util.random;
+import util.prettyprint;
 
 interface BRDF
 {
@@ -23,7 +24,8 @@ interface IShader
 abstract class Shader : IShader, BRDF, Deserializable
 {
 	Color color;
-	Rebindable!(const Scene) scene;
+
+	@DontPrint Rebindable!(const Scene) scene;
 
 	this()
 	{
@@ -43,9 +45,8 @@ abstract class Shader : IShader, BRDF, Deserializable
 
 	void toString(scope void delegate(const(char)[]) sink) const
 	{
-		sink("color: ");
-		color.toString(sink);
-		sink(" ");
+		import util.prettyprint;
+		//printBaseMembers!(typeof(this), sink)(this);
 	}
 }
 
@@ -148,7 +149,7 @@ class Lambert : Shader
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
 		import util.prettyprint;
-		mixin(toStrBody);
+		//printMembers!(typeof(this), sink)(this);
 	}
 };
 
@@ -278,6 +279,6 @@ class Phong : Shader
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
 		import util.prettyprint;
-		mixin(toStrBody);
+		//printMembers!(typeof(this), sink)(this);
 	}
 }

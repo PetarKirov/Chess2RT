@@ -1,7 +1,7 @@
 ﻿module rt.renderer;
 
 import util.random, util.array, std.typecons : Rebindable;
-import imageio.bmp : Image; // ae.utils.graphics.image
+import imageio.bmp : Image;
 import gfm.math.box;
 import rt.scene, rt.color, rt.importedtypes, rt.intersectable, rt.node, rt.camera, rt.ray, rt.light;
 

@@ -20,24 +20,16 @@ Available [here](https://github.com/ZombineDev/Chess2RT/blob/master/perf-results
 Build Instructions
 ------------------
 You need:
-+ git to be in $PATH (dub needs it)
-+ D compiler (e.g. [DMD][1]) with D support level >= DMD *v2.066.1*
-+ [DUB][2] package manager *v0.9.22*, or newer
-+ [SDL][3] _2.0.3_ binaries (included for windows)
++ D compiler with frontend >= **v2.067** (e.g. [DMD][1])
++ [dub][2] package manager >= **v0.9.23**
++ [SDL 2][3] binaries >= **v2.0.0** (SDL 2.0.3 is included for windows)
 
-1. Install what's needed (if you haven't yet)
-  + **D compiler**
-  + **DUB**
-  + **SDL2**
-    * Linux: PPA packages exist e.g. [here][4]
-    * Windows: Use libsdl from the /lib folder or download _SDL2-devel-2.0.3-VC.zip_ from [here][3]
+1. Install what's needed (if you haven't yet).
 
 2. Git clone:
 ```git clone https://github.com/ZombineDev/Chess2RT.git```
 
-3. (Windows only) put *SDL2*.dll in the corresponding bin/ folder (were the .exe will be produced).
-
-4. Run DUB:
+3. Run DUB:
 
 ```
 cd Chess2RT
@@ -57,11 +49,14 @@ Acknowledgement
 I developed this project for the 3D Graphics and Raytracing course at fmi.uni-sofia.
 Most of the code in `./source/rt/` is based on https://github.com/anrieff/trinity/.
 
-This project uses [SDL 2.03](https://www.libsdl.org). Windows x86 and x86_64 binaries
-are included in the corresponding /lib/[Win32 or Win64] folders.
+This project uses:
++ [SDL 2][3] (SDL 2.0.3 binaries for Windows x86 and x86_64
+  are included in `lib/`)
++ [GFM][4] (package on http://code.dlang.org)
++ [SDLang-D][5] (package on http://code.dlang.org)
 
 [1]: http://dlang.org/download.html
 [2]: http://code.dlang.org/download
 [3]: http://www.libsdl.org/download-2.0.php
-[4]: https://launchpad.net/~zoogie/+archive/ubuntu/sdl2-snapshots
-[5]: http://sdl.ikayzo.org/
+[4]: https://github.com/d-gamedev-team/gfm
+[5]: https://github.com/Abscissa/SDLang-D

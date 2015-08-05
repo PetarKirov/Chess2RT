@@ -76,4 +76,19 @@ class Scene
 		
 		return true;
 	}
+
+	void toString(scope void delegate(const(char)[]) sink) const
+	{
+		sink("\n");
+
+		foreach (namedEntity; namedEntities.tupleof)
+			foreach (name, entity; namedEntity)
+			{
+				sink("'");
+				sink(name);
+				sink("' -> ");
+				entity.toString(sink);
+				sink("\n");
+			}
+	}
 }

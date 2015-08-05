@@ -1,8 +1,8 @@
 ﻿module gui.sdl2gui;
 
-import std.experimental.logger;
-import gfm.sdl2, ae.utils.graphics.image;
-import util.prop;
+import gfm.sdl2, std.experimental.logger;
+import std.conv : to;
+import imageio.image, util.prop;
 
 //Default SDL2 GUI
 struct SDL2Gui
@@ -24,7 +24,7 @@ struct SDL2Gui
 	void init(uint width, uint height, string title, Logger log)
 	{
 		_log = log;
-		_sdl2 = new SDL2(log);
+		_sdl2 = new SDL2(log, SharedLibVersion(2, 0, 0));
 		_window = new SDL2Window(sdl2, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 								width, height,
 								SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS);
@@ -47,7 +47,7 @@ struct SDL2Gui
 		renderer.clear();
 	}
 
-	void draw(SRC)(auto ref SRC image) if (isView!SRC)
+	void draw(SRC)(auto ref SRC image)
 	{
 		uint* pixels = cast(uint*)surface.pixels;
 		
@@ -85,7 +85,6 @@ struct SDL2Gui
 void testGUIMain()
 {
 	import std.algorithm, std.range, std.math;
-	import ae.utils.graphics.view;
 	
 	uint w = 640, h = 480;
 
@@ -98,29 +97,31 @@ void testGUIMain()
 	
 	double vx = 1;
 	double vy = 1;
-	
-	auto image = procedural!((x, y) { 
-		double xd = x - cx;
-		double yd = y - cy;
-		
-		auto dist = sqrt(xd^^2 + yd^^2);
-		if (dist < radius)
-		{
-			return ((cast(int)(dist / radius * 255)) << 8) + 0x0000FF;
+
+	struct ProcImage
+	{
+		auto opIndex(size_t x, size_t y) {
+			double xd = x - cx;
+			double yd = y - cy;
+
+			auto dist = sqrt(xd^^2 + yd^^2);
+			if (dist < radius)
+			{
+				return ((cast(int)(dist / radius * 255)) << 8) + 0x0000FF;
+			}
+			else
+				return 0xFF0000;
 		}
-		else
-			return 0xFF0000;
-		
-	})(w, h);
+	}
 	
-	gui.draw(image);
+	gui.draw(ProcImage());
 	
 	double time = 0;
 	while(!gui.sdl2.keyboard().isPressed(SDLK_ESCAPE))
 	{
 		gui.sdl2.processEvents();
 		
-		gui.draw(image);
+		gui.draw(ProcImage());
 		
 		auto sinTick = (sin(time) * 0.5 + 0.5);
 		radius = 50 * sinTick;

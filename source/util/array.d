@@ -1,35 +1,32 @@
 ﻿module util.array;
 
 //Extremely ugly hack to workaround purity
-void my_free_impl(void* ptr) @nogc nothrow
-{
-	import std.c.stdlib : free;
-	free(ptr);
-}
 
-void my_free(void* ptr) @nogc nothrow pure
-{
-	alias F = void function(void*) @nogc nothrow pure;
-	(cast(F)&my_free_impl)(ptr);
-}
-
-void* my_malloc_impl(size_t size) @nogc nothrow
+T[] pure_malloc(T)(size_t count) @nogc nothrow pure
 {
 	import std.c.stdlib : malloc;
-	return malloc(size);
+	alias M = void* function(size_t) @nogc nothrow pure;
+
+	void* mem = (cast(M)&malloc)(T.sizeof * count);
+
+	assert (mem);
+
+	return (cast(T*)mem)[0 .. count];
 }
 
-void* my_malloc(size_t size) @nogc nothrow pure
+void pure_free(void* ptr) @nogc nothrow pure
 {
-	alias M = void* function(size_t) @nogc nothrow pure;
-	return (cast(M)&my_malloc_impl)(size);
+	import std.c.stdlib : free;
+	alias F = void function(void*) @nogc nothrow pure;
+
+	(cast(F)&free)(ptr);
 }
 
 struct MyArray(T)
 {
 @trusted pure:
-	private T[] data;
-	private size_t length_;
+	private T[] storage;
+	private size_t elements_count;
 
 	enum defaultInitialCapacity = 16;
 
@@ -40,46 +37,41 @@ struct MyArray(T)
 
 	~this() @nogc
 	{
-		free();
+		this.free();
+	}
+
+	inout(T[]) opIndex() @nogc inout
+	{
+		return storage[0 .. elements_count];
 	}
 
 	@property size_t length() const
 	{
-		return this.length_;
+		return this.elements_count;
 	}
 	
 	void opOpAssign(string op)(T value) @nogc
 		if (op == "~")
 	{
-		if (length >= data.length)
-			reserve(data.length == 0 ?
-			        defaultInitialCapacity :
-			        data.length * 2);
-		
-		data[length_++] = value;
+		if (elements_count >= storage.length)
+			reserve(storage.length > 0 ? storage.length * 2 : defaultInitialCapacity);
+
+		storage[elements_count++] = value;
 	}
 	
-	void reserve(size_t newCapacity) @nogc
+	void reserve(size_t new_capacity) @nogc
 	{
-		auto newData = my_malloc(T.sizeof * newCapacity);
-		assert(newData);
-		T[] newArr = (cast(T*)newData)[0 .. newCapacity];
-
-		newArr[0 .. data.length] = data[];
-		my_free(data.ptr);
-		data = newArr;
+		T[] new_storage = pure_malloc!T(new_capacity);
+		new_storage[0 .. storage.length] = this.storage[];
+		pure_free(this.storage.ptr);
+		this.storage = new_storage;
 	}
 
 	void free() @nogc
 	{
-		my_free(data.ptr);
-		data = null;
-		length_ = 0;
-	}
-
-	inout(T[]) opIndex() @nogc inout
-	{
-		return data[0 .. length];
+		pure_free(this.storage.ptr);
+		this.storage = null;
+		this.elements_count = 0;
 	}
 }
 
@@ -88,9 +80,9 @@ unittest
 	MyArray!int arr;
 	arr.reserve(8);
 
-	assert(arr.data);
-	assert(arr.data.ptr);
-	assert(arr.data.length == 8);
+	assert(arr.storage);
+	assert(arr.storage.ptr);
+	assert(arr.storage.length == 8);
 	assert(arr.length == 0);
 
 	arr ~= 42;
@@ -100,7 +92,7 @@ unittest
 	foreach (i; 1 .. 11)
 		arr ~= i;
 
-	assert(arr.data.length == 16);
+	assert(arr.storage.length == 16);
 	assert(arr.length == 11);
 
 	auto arrRef = arr[];
