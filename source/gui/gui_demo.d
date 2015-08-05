@@ -49,14 +49,11 @@ private:
 
 	void drawImage()
 	{
-		import imageio.bmp;
+		import imageio.bmp, imageio.buffer : UntypedBuffer;
+		import std.file : read;
 
 		string imgPath = "data/texture/zaphod.bmp";
-		Image!ARGB pixels;
-
-		import std.file, imageio.buffer;
-
-		loadBmp(pixels, RawBuffer(imgPath.read()));
+		Image!ARGB pixels = imgPath.read().UntypedBuffer.loadBmp!ARGB;
 
 		pixels.cropCopyTo(screen);
 	}
@@ -88,6 +85,8 @@ struct ARGB
 		uint value;
 		struct { ubyte b, g, r, a; }
 	}
+
+pure:
 
 	this (uint hexColor) { this.value = hexColor; }
 	this (ubyte r_, ubyte g_, ubyte b_) { r = r_; g = g_; b = b_;}

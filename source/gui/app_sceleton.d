@@ -1,15 +1,15 @@
 ﻿module gui.appsceleton;
 
-interface AppSceleton
+import std.variant : Variant;
+
+abstract class AppSceleton
 {
 	/// Main application loop
 	/// Retruns:
 	///		true if the application is closing normally.
-	final bool run(string[] args = null)
+	bool run(Variant init_params = null)
 	{
-		init();
-		render();
-		display();
+		init(init_params);
 		
 		while(handleInput())
 		{
@@ -22,7 +22,7 @@ interface AppSceleton
 	}
 
 	/// Initializes the application's resources.
-	void init();
+	void init(Variant init_params);
 
 	/// Handles the input.
 	/// Returns:

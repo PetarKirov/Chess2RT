@@ -77,7 +77,7 @@ class Scene
 		return true;
 	}
 
-	void toString(scope void delegate(const(char)[]) sink) const
+	void toString(scope void delegate(const(char)[]) sink) const @trusted
 	{
 		sink("\n");
 

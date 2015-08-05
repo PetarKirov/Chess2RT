@@ -1,45 +1,63 @@
 ﻿module gui.guibase;
 
-import std.experimental.logger;
+import std.experimental.logger : Logger, sharedLog;
+import std.variant : Variant;
+import gui.appsceleton, gui.sdl2gui;
 import imageio.bmp : Image;
 
-import gui.appsceleton, gui.sdl2gui;
-
-//C = Color type
+/// Base class based on SDL2 for GUI.
+/// 
+/// Params:
+///		C =	The type of the pixel color.
 abstract class GuiBase(C) : AppSceleton
 {
 	protected
 	{
 		SDL2Gui gui;
 		Image!C screen;
-		Logger log;
+		Logger logger;
 	}
 
-	this(Logger log)
+	this(Logger customLogger)
 	{
-		this.log = log;
+		this.logger = customLogger;
 	}
-	
+
 	this(uint width, uint height, string windowTitle)
 	{
-		log = stdlog;
-		initGui(width, height, windowTitle);
-	}
-
-	protected void initGui(uint width, uint height, string windowTitle)
-	{
-		gui.init(width, height, windowTitle, log);
+		this(sharedLog);
+		this.init(InitSettings(width, height, windowTitle).Variant);
 	}
 	
 	~this()
 	{
-		log.log("At ~GuiBase()");
+		logger.log("At ~GuiBase()");
 	}
 
-	/// All overriding classes should call super.init() first!
-	override void init()
+	static struct InitSettings
 	{
-		screen.alloc(gui.width, gui.height);
+		uint width, height;
+		string windowTitle;
+	}
+
+	override void init(Variant init_params)
+	{
+		if (init_params.peek!InitSettings is null)
+			return;
+
+		auto params = init_params.get!InitSettings;
+
+		gui.init(params.width, params.height, params.windowTitle, logger);
+
+		screen.alloc(params.width, params.height);
+	}
+
+	override bool handleInput()
+	{
+		import gfm.sdl2 : SDLK_ESCAPE;
+		
+		return !gui.sdl2.keyboard().isPressed(SDLK_ESCAPE) &&
+			!gui.sdl2.wasQuitRequested();
 	}
 	
 	override void update()
@@ -54,13 +72,5 @@ abstract class GuiBase(C) : AppSceleton
 	final override void display()
 	{
 		gui.draw(screen);
-	}
-	
-	override bool handleInput()
-	{
-		import gfm.sdl2;
-		
-		return !gui.sdl2.keyboard().isPressed(SDLK_ESCAPE) &&
-			!gui.sdl2.wasQuitRequested();
 	}
 }
