@@ -1,9 +1,10 @@
 ﻿module rt.bitmap;
 
-import std.math, std.path, std.string;
+import std.math, std.string, std.path, std.file : read;
+import std.stdio : writefln;
 import util.prop;
 import rt.color, imageio.bmp, imageio.image;
-import rt.exception, imageio.exception;
+import rt.exception, imageio.exception, imageio.buffer : UntypedBuffer;
 
 /// Represents a bitmap (2d array of colors), e.g. a image
 /// supports loading/saving to BMP and EXR
@@ -21,10 +22,11 @@ struct Bitmap
 	/// Returns red if (x, y) is outside of the image.
 	inout(Color) getPixel(size_t x, size_t y) inout
 	{
-		if (isInvalidPos(x, y))
-			return NamedColors.red;
-		else
-			return data[x, y];
+		// Use built-in bounds checking to expose possible bugs.
+		//if (isInvalidPos(x, y))
+		//	return NamedColors.red;
+
+		return data[x, y];
 	}
 
 	/// Sets the pixel at coordinates (x, y).
@@ -64,10 +66,13 @@ struct Bitmap
 	/// The format is detected from extension.
 	void loadImage(string filename)
 	{
-		switch (filename.extension.toLower)
+		auto file_ext = filename.extension.toLower;
+		auto file_stream = UntypedBuffer(filename.absolutePath.buildNormalizedPath.read);
+
+		switch (file_ext)
 		{
-			case ".bmp": loadBmp(data, filename.absolutePath.buildNormalizedPath); break;
-			case ".exr": loadExr(this, filename.absolutePath.buildNormalizedPath); break;
+			case ".bmp": this.data = loadBmp!Color(file_stream); break;
+			case ".exr": this.data = loadExr!Color(file_stream); break;
 			default: throw new UnknownImageTypeException();
 		}
 	}
@@ -76,12 +81,21 @@ struct Bitmap
 	/// The format is detected from extension.
 	void saveImage(string filename) inout
 	{
-		switch (filename.extension.toLower)
+		auto file_ext = filename.extension.toLower;
+		auto file_path = filename.absolutePath.buildNormalizedPath;
+		UntypedBuffer file_stream;
+
+		debug writefln("Start saving: `%s`...", file_path);
+
+		switch (file_ext)
 		{
-			case ".bmp": saveBmp(data, filename.absolutePath.buildNormalizedPath); break;
-			case ".exr": saveExr(this, filename.absolutePath.buildNormalizedPath); break;
+			case ".bmp": saveBmp(data, file_stream); break;
+			case ".exr": saveExr(data, file_stream); break;
 			default: throw new UnknownImageTypeException();
 		}
+
+		std.file.write(file_path, file_stream[]);
+		debug writefln("`%s` finished saving.", file_path);
 	}
 
 	void remapRGB(scope float delegate(float) remapFn)
@@ -149,12 +163,12 @@ struct Bitmap
 
 private:
 
-void loadExr(Bitmap bmp, string filename)
+Image!ColorType loadExr(ColorType)(UntypedBuffer file_stream) pure
 {
 	throw new NotImplementedException();
 }
 
-void saveExr(const Bitmap bmp, string filename)
+void saveExr(C)(in Image!C img, ref UntypedBuffer file_stream) pure
 {
 	throw new NotImplementedException();
 }

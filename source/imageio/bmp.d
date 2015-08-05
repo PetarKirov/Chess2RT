@@ -1,71 +1,61 @@
 ﻿module imageio.bmp;
 
-import std.stdio : File, writeln;
+import std.algorithm : among;
 import std.exception : enforce;
 import std.math : lrint;
-import imageio.exception, imageio.image;
+import imageio.exception, imageio.image, imageio.buffer, imageio.meta;
 
-/// Loads a BMP image located at `filePath` into `result` in memory structure.
-void loadBmp(C)(ref Image!C result, string filePath)
+/// Extracts an Image!C from a BMP file stream.
+Image!ColorType loadBmp(ColorType)(UntypedBuffer file_stream) pure
 {
-	auto file = File(filePath);
-	auto fileHeader = file.readStruct!BmpFileHeader;
-	auto version_ = file.readStruct!DIBVersion;
+	mixin TemplateSwitchOn!(Ver, PrepareHeadFor!(loadImpl, ColorType)) TemplateSwitch;
 
-	enforce(fileHeader.signature == FileSignature.Win,
-			new ImageIOException("Only file headers beginning with 'BM' are supported!"));
+	auto file_header = file_stream.read!BmpFileHeader;
+	auto ver = file_stream.read!Ver;
+	auto offset = file_header.offsetToPixelArray;
 
-	auto offset = fileHeader.offsetToPixelArray;
+	enforce(file_header.signature == FileSignature.Win,
+		new ImageIOException(
+			"Only files beginning with 'BM' are supported!"));
 
-	Ver ver = cast(Ver)version_;
-	final switch (ver)
-	{
-		case Ver.V0:
-			loadImpl!(C,Ver.V0)(result, file, offset); break;
-
-		case Ver.V1:
-			loadImpl!(C, Ver.V1)(result, file, offset); break;
-
-		case Ver.V2:
-			loadImpl!(C, Ver.V2)(result, file, offset); break;
-
-		case Ver.V3:
-			loadImpl!(C, Ver.V3)(result, file, offset); break;
-
-		case Ver.V4:
-			loadImpl!(C, Ver.V4)(result, file, offset); break;
-
-		case Ver.V5:
-			loadImpl!(C, Ver.V5)(result, file, offset); break;
-	}
+	return TemplateSwitch.call(ver, file_stream, offset);
 }
 
-private void loadImpl(C, DIBVersion V)(ref Image!C result, File file, uint offsetToPixelArray)
+private Image!C loadImpl(C, Ver V)
+	(ref UntypedBuffer file_stream, uint offsetToPixelArray) pure
 {
-	import std.algorithm : among;
+	// ========= Read Header ============
 
-	file.seek(BmpFileHeader.sizeof, 0);
-	auto header = file.readStruct!(DIBHeader!V);
+	// The Device Independant Bitmap (DIB) header is after the BmpFileHeader,
+	// so we need to skip the first BmpFileHeader.sizeof bytes.
 
+	file_stream.seek(BmpFileHeader.sizeof);
+	auto header = file_stream.read!(DIBHeader!V);
+
+	// Check the DIB header's bpp and color planes count
 	enforce(header.colorPlanesCount == 1,
-			new ErrorLoadingImageException("Can not load .bmp file with multiple color planes!"));
+		new ErrorLoadingImageException(
+			format( "Only .bmp files with 1 color plane are supported. Not: %s",
+					header.colorPlanesCount)));
 
 	enforce(header.bpp.among(1, 2, 4, 8, 16, 24, 32, 64),
-			new ErrorLoadingImageException("Can not load .bmp file with such bpp!"));
-
-	result.alloc(header.width, header.height);
+		new ErrorLoadingImageException(
+			format( "Only .bmp files with 1, 2, 4, 8, 16, 24, "
+					"32 or 64 bpp are supported. Not: %s",
+					header.bpp)));
 
 	// ========= Read Palette ===========
-
-	alias PaletteElem = WinPaletteElement!V;
-
-	PaletteElem[] palette;
 
 	// 1, 2, 4 and 8 bpp images use a palette.
 	// Images with higher bpp can also contain a palette,
 	// but it is used only for optimization purposes on 
 	// some devices and NOT for indexing,
 	// so we can skip reading it.
+
+	alias PaletteItem = WinPaletteElement!V;
+
+	const(PaletteItem)[] palette;
+
 	if (header.bpp.among(1, 2, 4, 8))
 	{
 		static if (V == DIBVersion.BITMAPCOREHEADER)
@@ -74,14 +64,11 @@ private void loadImpl(C, DIBVersion V)(ref Image!C result, File file, uint offse
 		}
 		else static if (V >= DIBVersion.BITMAPINFOHEADER)
 		{
-			uint paletteSize = header.colorsUsed ? header.colorsUsed : 2 ^^ header.bpp;
+			uint paletteSize = header.colorsUsed ?
+				header.colorsUsed : 2 ^^ header.bpp;
 		}
 
-		palette = new PaletteElem[paletteSize];
-		auto read = file.rawRead(palette);
-
-		enforce(read.length == palette.length,
-				new ErrorLoadingImageException());
+		palette = file_stream.readArray!PaletteItem(paletteSize);
 	}
 
 	//  ======== Read Pixels ============
@@ -89,33 +76,37 @@ private void loadImpl(C, DIBVersion V)(ref Image!C result, File file, uint offse
 	// We need to jump directly to the pixel array,
 	// instead of relying on the current position
 	// in the file being correct.
-	file.seek(offsetToPixelArray, 0);
+	file_stream.seek(offsetToPixelArray);
 
 	// rowSize = bpp/8 * width + (bpp/8) mod 4
 	size_t rowSize = ((header.bpp * header.width + 31) / 32) * 4;
 
-	ubyte[] row = new ubyte[rowSize];
+	auto result = Image!C(header.width, header.height);
 
 	// - If header.height > 0 scanlines are stored from the bottom up
 	// - If header.height < 0 scanlines are stored
-	// top down (can not be compressed) - used for Ver == V0 (BITMAPCOREHEADER )
+	// top down (can not be compressed) - used for Ver == V0 (BITMAPCOREHEADER)
 
-	foreach_reverse (y; 0 .. header.height)
+	if (header.bpp == 24)
 	{
-		file.rawRead(row);
+		alias Pixel = WinPaletteElement!(Ver.V0);
 
-		if (header.bpp == 24)
+		foreach_reverse (y; 0 .. header.height)
 		{
-			auto s = header.bpp / 8;
+			auto row = file_stream.readArray!Pixel(header.width);
 
 			foreach (x; 0 .. header.width)
 			{
-				auto pixel = row[x * s .. (x + 1) * s ]; // B8 G8 R8
-				result[x, y] = C(pixel[2], pixel[1], pixel[0]);
+				result[x, y] = C(row[x].as!uint);
 			}
 		}
-		else if (header.bpp <= 8)
+	}
+	else if (header.bpp <= 8)
+	{
+		foreach_reverse (y; 0 .. header.height)
 		{
+			auto row = file_stream.readArray!ubyte(header.width);
+
 			immutable bpp = header.bpp;
 			immutable mask = (2 ^^ bpp) - 1;
 			immutable maxShift = 8 / bpp;
@@ -125,66 +116,42 @@ private void loadImpl(C, DIBVersion V)(ref Image!C result, File file, uint offse
 				foreach_reverse (s; 0 .. maxShift)
 				{
 					auto idx = (pack >> (bpp * s)) & mask;
-					PaletteElem pixel = palette[idx];
+					PaletteItem pixel = palette[idx];
 					result[i * maxShift + maxShift - (s + 1), y] =
 						C(pixel.red, pixel.green, pixel.blue);
 				}
 			}
 		}
 	}
-	
-}
-
-private T readStruct(T)(File f)
-{
-	T[1] tmp = void;
-
-	f.rawRead(tmp);
-
-	return tmp[0];
-}
-
-private void writeStruct(T)(File f, in ref T data)
-{
-	import std.traits : isArray;
-
-	static if (is(T == struct))
-	{
-		T[1] tmp = cast(T[1])data;
-		f.rawWrite(tmp[]);
-	}
-	else static if (isArray!T)
-	{
-		f.rawWrite(data);
-	}
 	else
-		static assert(0, "Only structs and arrays are supported");
+		assert(0, "Not implemented: bpp > 8 && bpp != 24");
+
+	return result;
 }
 
-void saveBmp(C)(in Image!C img, string filePath)
+void saveBmp(C)(in Image!C img, ref UntypedBuffer file_stream) pure
 {
-	debug writeln("Start saving: `", filePath, "`...");
-
 	enum ver = Ver.V1;
 	auto fileSize = 0;
 	auto fileHeader = BmpFileHeader(
-						FileSignature.Win, fileSize, 0, 0,
-						BmpFileHeader.sizeof + ver);
-						
+		FileSignature.Win, fileSize, 0, 0,
+		BmpFileHeader.sizeof + ver);
+
 	auto dibHeader = DIBHeader!ver(
-						ver,
-						cast(int)img.width, cast(int)img.height,
-						1, 24, 
-						Compression.BI_RGB,
-						cast(uint)(fileSize - (BmpFileHeader.sizeof + ver)),
-						72.dpiToPPM,
-						72.dpiToPPM,
-						0, 0);
+		ver,
+		cast(int)img.width, cast(int)img.height,
+		1, 24,
+		Compression.BI_RGB,
+		cast(uint)(fileSize - (BmpFileHeader.sizeof + ver)),
+		72.dpiToPPM,
+		72.dpiToPPM,
+		0, 0);
 						
-	auto file = File(filePath, "wb");
+	file_stream = UntypedBuffer(fileHeader.sizeof + dibHeader.sizeof +
+		dibHeader.bpp / 8 * img.width * img.height);
 	
-	file.writeStruct(fileHeader);
-	file.writeStruct(dibHeader);
+	file_stream.writeStruct(fileHeader);
+	file_stream.writeStruct(dibHeader);
 	
 	auto row_converted = new ubyte[3][img.width];
 	
@@ -198,13 +165,8 @@ void saveBmp(C)(in Image!C img, string filePath)
 			row_converted[x] = (cast(ubyte*)&pixel)[0 .. 3];
 		}
 		
-		file.writeStruct(row_converted);
-	}	
-	
-	file.flush();
-	file.close();
-	
-	debug writeln("`", filePath, "` finished saving.");
+		file_stream.writeStruct(row_converted);
+	}
 }
 
 enum FileSignature : ubyte[2]
@@ -231,7 +193,7 @@ enum DIBVersion : int
 
 // Convinence alias to DIBVersion.
 // For internal use only.
-private enum Ver
+private enum Ver : DIBVersion
 {
 	V0 = DIBVersion.BITMAPCOREHEADER, 
 	//OS22XBITMAPHEADER =	64, unsupported for now (it makes the code cleaner)
@@ -269,7 +231,7 @@ align(1):
 static assert (BmpFileHeader.sizeof == 14);
 
 /// Device-independent bitmap (DIB) Header
-struct DIBHeader(DIBVersion V)
+struct DIBHeader(Ver V)
 {
 	DIBVersion version_;
 
@@ -286,13 +248,13 @@ struct DIBHeader(DIBVersion V)
 		int width;
 		int height;
 		ushort colorPlanesCount;
-		ushort bpp;
+		ushort bpp; // bits per pixel
 
 		/* Fields added for Windows 3.x follow this line */
 		uint compression;
-		uint sizeOfBitmap;
-		int  horzResolution;
-		int  vertResolution;
+		uint sizeOfPixelArray; // in bytes
+		int  pixelsPerMeterX;
+		int  pixelsPerMeterY;
 		uint colorsUsed;
 		uint colorsImportant;
 	}
@@ -322,64 +284,74 @@ struct DIBHeader(DIBVersion V)
 	}
 }
 
-static assert (DIBHeader!(DIBVersion.BITMAPCOREHEADER).sizeof == DIBVersion.BITMAPCOREHEADER);
-static assert (DIBHeader!(DIBVersion.BITMAPINFOHEADER).sizeof == DIBVersion.BITMAPINFOHEADER);
-static assert (DIBHeader!(DIBVersion.BITMAPV2INFOHEADER).sizeof == DIBVersion.BITMAPV2INFOHEADER);
-static assert (DIBHeader!(DIBVersion.BITMAPV3INFOHEADER).sizeof == DIBVersion.BITMAPV3INFOHEADER);
-static assert (DIBHeader!(DIBVersion.BITMAPV4INFOHEADER).sizeof == DIBVersion.BITMAPV4INFOHEADER);
-static assert (DIBHeader!(DIBVersion.BITMAPV5INFOHEADER).sizeof == DIBVersion.BITMAPV5INFOHEADER);
+static assert (DIBHeader!(Ver.V0).sizeof == DIBVersion.BITMAPCOREHEADER);
+static assert (DIBHeader!(Ver.V1).sizeof == DIBVersion.BITMAPINFOHEADER);
+static assert (DIBHeader!(Ver.V2).sizeof == DIBVersion.BITMAPV2INFOHEADER);
+static assert (DIBHeader!(Ver.V3).sizeof == DIBVersion.BITMAPV3INFOHEADER);
+static assert (DIBHeader!(Ver.V4).sizeof == DIBVersion.BITMAPV4INFOHEADER);
+static assert (DIBHeader!(Ver.V5).sizeof == DIBVersion.BITMAPV5INFOHEADER);
 
-double horizontalDPI(Ver V)(DIBHeader!v header) if (v >= V.V1)
+double horizontalDPI(Ver V)(DIBHeader!v header) pure if (v >= V.V1)
 {
 	return header.horzResolution.ppmToDPI;
 }
 
-double verticalDPI(Ver V)(DIBHeader!V header) if (v >= V.V1)
+double verticalDPI(Ver V)(DIBHeader!V header) pure if (v >= V.V1)
 {
 	return header.vertResolution.ppmToDPI;
 }
 
 /// Converts a value in pixels-per-meter to dots-per-inch.
-double ppmToDPI(double ppm) { return ppm / 100.0 * 2.54; }
+double ppmToDPI(double ppm) pure { return ppm / 100.0 * 2.54; }
 
 /// Converts a value in dots-per-inch to pixels-per-meter.
-int dpiToPPM(double dpi) { return cast(int)lrint(dpi * 100.0 / 2.54); }
+int dpiToPPM(double dpi) pure { return cast(int)lrint(dpi * 100.0 / 2.54); }
 
-struct WinBitfieldsMasks(DIBVersion V) if (V >= DIBVersion.BITMAPV2INFOHEADER)
+struct WinBitfieldsMasks(Ver V)
+	if (V >= Ver.V2)
 {
 align(1):
 	uint redBitMask;
 	uint greenBitMask;
 	uint blueBitMask;
 	
-	static if (V >= DIBVersion.BITMAPV3INFOHEADER)
+	static if (V >= Ver.V3)
 	{
 		uint alphaMask;
-	}	
+	}
 }
 
-align(1) struct WinPaletteElement(DIBVersion V)
+align(1) struct WinPaletteElement(Ver V)
 {
 	ubyte blue;
 	ubyte green;
 	ubyte red;
 
-	static if (V >= DIBVersion.BITMAPINFOHEADER)
+	static if (V >= Ver.V1)
 	{
 		ubyte alpha;
 	}
+
+	T opCast(T)() const
+		if (is(T == uint))
+	{
+		static if (V == Ver.V0)
+			return blue << 0 | green << 8 | red << 16;
+		else
+			return blue << 0 | green << 8 | red << 16 | alpha << 24;
+	}
 }
 
-static assert (WinPaletteElement!(DIBVersion.BITMAPCOREHEADER).sizeof == 3);
-static assert (WinPaletteElement!(DIBVersion.BITMAPINFOHEADER).sizeof == 4);
+static assert (WinPaletteElement!(Ver.V0).sizeof == 3);
+static assert (WinPaletteElement!(Ver.V1).sizeof == 4);
 
-private alias _WPE1 = WinPaletteElement!(DIBVersion.BITMAPCOREHEADER);
-private alias _WPE1Arr = _WPE1[2];
-static assert (_WPE1Arr.sizeof == 6);
+private alias WPE1 = WinPaletteElement!(Ver.V0);
+private alias WPE2 = WinPaletteElement!(Ver.V1);
+private alias WPE1x2 = WPE1[2];
+private alias WPE2x2 = WPE2[2];
 
-private alias _WPE2 = WinPaletteElement!(DIBVersion.BITMAPINFOHEADER);
-private alias _WPE2Arr = _WPE2[2];
-static assert (_WPE2Arr.sizeof == 8);
+static assert (WPE1x2.sizeof == 6);
+static assert (WPE2x2.sizeof == 8);
 
 struct CIE_XYZ_Triple
 {
@@ -400,7 +372,9 @@ unittest
 {
 	// Example 1 from http://en.wikipedia.org/wiki/BMP_file_format
 
-	ubyte[] testImageRawData =
+	UntypedBuffer testImageRawData;
+
+	testImageRawData.write(
 	[
 		// BMP Header
 		0x42, 0x4D,					//	"BM"				ID field (42h, 4Dh)
@@ -429,14 +403,16 @@ unittest
 		0xFF, 0x00, 0x00,			// 255 0 0				Blue, Pixel (0,0)
 		0x00, 0xFF, 0x00,			// 0 255 0				Green, Pixel (1,0)
 		0x00, 0x00,					// 0 0					Padding for 4 byte alignment (could be a value other than zero)
-	];
+	]);
+
+
 }
 
 unittest
 {
 	// Example 2 from http://en.wikipedia.org/wiki/BMP_file_format
 
-	ubyte[] testImageRawData =
+	UntypedBuffer testImageRawData =
 	[
 		// BMP Header
 		0x42, 0x4D,					// "BM"						Magic number (unsigned integer 66, 77)
