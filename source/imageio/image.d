@@ -14,32 +14,30 @@ struct Image(C)
 		alloc(w, h);
 	}
 
-	pure nothrow:
+	@trusted pure nothrow:
 
-	@trusted
 	void alloc(size_t width, size_t height)
 	{
+		import std.array : uninitializedArray;
+
 		this.width = width;
 		this.height = height;
-		if (pixels.length < width * height)
-			pixels = cast(C[])new void[C.sizeof * width * height];
+
+		if (this.pixels.length < width * height)
+			this.pixels = uninitializedArray!(C[])(width * height);
 	}
 
-	@trusted
 	auto ref inout(C) opIndex(size_t x, size_t y) inout
 	{
 		return scanline(y)[x];
 	}
 
-
-	@trusted
 	inout(C)[] scanline(size_t y) inout
 	{
 		assert(y >= 0 && y < height);
 		return pixels[width * y .. width * (y + 1)];
 	}
 
-	@trusted
 	@property bool empty() const
 	{
 		return pixels.ptr is null || pixels.length == 0;
