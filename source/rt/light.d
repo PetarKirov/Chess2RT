@@ -45,7 +45,7 @@ abstract class Light : Intersectable, Deserializable
 	void toString(scope void delegate(const(char)[]) sink) const
 	{
 		import util.prettyprint;
-		mixin(toStrBaseBody);
+		printBaseMembers!(typeof(this), sink)(this);
 	}
 }
 
@@ -84,6 +84,6 @@ class PointLight : Light
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
 		import util.prettyprint;
-		mixin(toStrBody);
+		printMembers!(typeof(this), sink)(this);
 	}
 }

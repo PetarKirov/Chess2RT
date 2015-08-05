@@ -3,10 +3,11 @@
 import std.range : chain;
 import std.typecons : Rebindable;
 import rt.importedtypes, rt.ray, rt.intersectable, rt.sceneloader, util.array;
+import util.prettyprint;
 
 abstract class Geometry : Intersectable, Deserializable
 {
-	void toString(scope void delegate(const(char)[]) sink) const
+	@DontPrint void toString(scope void delegate(const(char)[]) sink) const
 	{
 	}
 }
@@ -65,7 +66,7 @@ class Plane : Geometry
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
 		import util.prettyprint;
-		mixin(toStrBody);
+		printMembers!(typeof(this), sink)(this);
 	}
 }
 
@@ -141,7 +142,7 @@ class Sphere : Geometry
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
 		import util.prettyprint;
-		mixin(toStrBody);
+		printMembers!(typeof(this), sink)(this);
 	}
 }
 
@@ -242,7 +243,7 @@ class Cube : Geometry
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
 		import util.prettyprint;
-		mixin(toStrBody);
+		printMembers!(typeof(this), sink)(this);
 	}
 }
 
@@ -349,7 +350,7 @@ abstract class CsgOp : Geometry
 	override void toString(scope void delegate(const(char)[]) sink) const
 	{
 		import util.prettyprint;
-		mixin(toStrBody);
+		printMembers!(typeof(this), sink)(this);
 	}
 }
 

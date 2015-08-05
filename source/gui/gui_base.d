@@ -1,7 +1,7 @@
 ﻿module gui.guibase;
 
 import std.experimental.logger;
-import imageio.bmp : Image; //ae.utils.graphics.image;
+import imageio.bmp : Image;
 
 import gui.appsceleton, gui.sdl2gui;
 

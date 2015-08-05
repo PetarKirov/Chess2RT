@@ -58,7 +58,7 @@ class RTDemo : GuiBase!Color
 		this.renderer = new Renderer(scene, screen);
 		this.needsRendering = true;
 		
-		debug printDebugInfo();
+		debug log.log(scene);
 	}
 
 	override void render()
@@ -235,12 +235,5 @@ class RTDemo : GuiBase!Color
 				return false;
 
 		return true;
-	}
-
-	void printDebugInfo()
-	{
-		foreach (namedEntity; scene.namedEntities.tupleof)
-			foreach (name, entity; namedEntity)
-				writefln("'%s' -> %s", name, entity);
 	}
 }

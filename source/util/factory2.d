@@ -1,6 +1,6 @@
 module util.factory2;
 
-import std.algorithm;
+import std.algorithm : endsWith;
 
 T makeInstanceOf(T)(string derivedClassName) if (is(T == class))
 {
