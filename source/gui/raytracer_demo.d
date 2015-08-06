@@ -81,7 +81,7 @@ class RTDemo : GuiBase!Color
 		this.renderer = new Renderer(scene, screen);
 		this.needsRendering = true;
 		
-		debug logger.logf("%s", scene);
+		logger.logf("%s", scene);
 	}
 
 	override void render()

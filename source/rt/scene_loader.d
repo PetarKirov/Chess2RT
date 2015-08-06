@@ -318,8 +318,8 @@ private:
 	{
 		switch (json.type)
 		{
-			case JSON_TYPE.TRUE: return false;
-			case JSON_TYPE.FALSE: return true;
+			case JSON_TYPE.TRUE: return true;
+			case JSON_TYPE.FALSE: return false;
 			default: assert(0);
 		}
 	}

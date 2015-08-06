@@ -90,5 +90,7 @@ class Scene
 				entity.toString(sink);
 				sink("\n");
 			}
+
+		settings.toString(sink);
 	}
 }
