@@ -1,8 +1,9 @@
 module imageio.buffer;
 
-import std.range.primitives;
-import std.traits : isScalarType, hasElaborateDestructor;
 import std.format : format;
+import std.range.primitives;
+import std.traits : isScalarType, hasElaborateDestructor,
+	hasElaborateCopyConstructor, hasElaborateAssign, hasIndirections;
 
 enum Endianness
 {
@@ -32,12 +33,14 @@ T adjustEndianness(T, Endianness endianness)(T from)
 		return swapEndian(from);
 }
 
+enum isPOD(T) = !hasElaborateDestructor!T && !hasElaborateAssign!T &&
+	!hasElaborateDestructor!T && !hasIndirections!T;
+
 alias UntypedBuffer = Buffer!void;
 
 struct Buffer(T)
 {
-	static assert (!hasElaborateDestructor!T,
-		"No destructors will be called!");
+	static assert (isPOD!T, "Only Plain Old Data (POD) types can be used!");
 
 	T[] data;
 
@@ -126,7 +129,6 @@ struct Buffer(T)
 		}
 
 		const(U)[] readArray(U)(size_t count)
-			if (isScalarType!U || is(U == struct) || is(U == union))
 		{
 			const(U)* start_ptr = cast(U*)&this.data[start];
 
@@ -136,7 +138,7 @@ struct Buffer(T)
 		}
 
 		void writeStruct(U)(ref const U to_write)
-			if (is(T == ubyte) || is(T == byte) || is(T == void))
+			if (is(U == struct) && isPOD!U)
 		{
 			ubyte* raw = cast(ubyte*)&to_write;
 			

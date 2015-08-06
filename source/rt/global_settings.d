@@ -5,30 +5,32 @@ import rt.color, rt.sceneloader;
 class GlobalSettings : Deserializable
 {
 	// General:
-	uint frameWidth, frameHeight;
-	bool fullscreen;             // [Not implemented] Fullscreen
-	bool interactive;            // Interactive mode
+	uint frameWidth = 640;				// Frame size; will be adjusted
+	uint frameHeight = 480;				// to bucket size.
+	bool fullscreen = false;            // [Not implemented] Fullscreen mode?
+	bool interactive = false;           // Interactive mode?
 
 	// Multithreading:
-	uint bucketSize;			// Image sub-rectange (square) width
-	size_t threadCount;			// [Not implemented] Number of rendering threads; default (or 0) - autodetect
+	uint bucketSize = 48;				// Image sub-rectange (square) width.
+	size_t threadCount = 1;				// [Not implemented] Number of rendering threads; default (or 0) - autodetect.
 	
 	// Rendering:
-	bool prepassEnabled;		// Quick low-resolution preview rendering
-	bool prepassOnly;			// Render only prepass
-	bool GIEnabled;				// Global Illumination
-	bool AAEnabled;				// Anti-aliasing
-	double AAThreshold;			// Color difference threshold, before AA is triggered
+	bool prepassEnabled = true;			// Quick low-resolution preview rendering.
+	bool prepassOnly = false;			// Render only prepass.
+	bool GIEnabled = false;				// Global Illumination.
+	bool AAEnabled = true;				// Anti-aliasing.
+	double AAThreshold = 0.1;			// Color difference threshold, before AA is triggered.
 
 	// Shading:
-	uint pathsPerPixel;			// Paths per pixel
-	uint maxTraceDepth;			// Maximum recursion depth
+	uint pathsPerPixel = 40;			// Paths per pixel.
+	uint maxTraceDepth = 4;				// Maximum recursion depth.
 
 	// Lighting:
-	Color ambientLightColor;	// Color of the ambient light
+	Color ambientLightColor =			// Color of the ambient light.
+		NamedColors.black;
 	
 	// Debug:
-	bool debugEnabled;			// [Not implemented] If on, various raytracing-related procedures will dump debug info.
+	bool debugEnabled = true;			// [Not implemented] If on, various raytracing-related procedures will dump debug info.
 
 	/// Adjust the frame size to be a multiple of the bucketsize
 	void adjustFrameSize()
@@ -38,30 +40,6 @@ class GlobalSettings : Deserializable
 
 		if (frameHeight % bucketSize != 0) 
 			frameHeight = (frameHeight / bucketSize + 1) * bucketSize;
-	}
-
-	this()
-	{
-		frameWidth = 640;	//Will be adjusted to bucket size
-		frameHeight = 480;
-		fullscreen = false;
-		interactive = false;
-
-		bucketSize = 48;
-		threadCount = 1;
-
-		prepassEnabled = true;
-		prepassOnly = false;
-		GIEnabled = false;
-		AAEnabled = true;
-		AAThreshold = 0.1;
-
-		pathsPerPixel = 40;
-		maxTraceDepth = 4;
-
-		ambientLightColor = NamedColors.black;
-
-		debugEnabled = false;		
 	}
 
 	void deserialize(const SceneDscNode val, SceneLoadContext context)
@@ -86,6 +64,12 @@ class GlobalSettings : Deserializable
 		context.set(this.ambientLightColor, val, "ambientLightColor");
 
 		context.set(this.debugEnabled, val, "debugEnabled");
+	}
+
+	void toString(scope void delegate(const(char)[]) sink) const @trusted
+	{
+		import util.prettyprint;
+		printMembers!(typeof(this), sink)(this);
 	}
 }
 

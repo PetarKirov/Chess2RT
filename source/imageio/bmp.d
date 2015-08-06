@@ -1,9 +1,11 @@
 ﻿module imageio.bmp;
 
 import std.algorithm : among;
+import std.conv : to;
 import std.exception : enforce;
 import std.math : lrint;
-import imageio.exception, imageio.image, imageio.buffer, imageio.meta;
+import imageio.exception, imageio.image, imageio.buffer,
+	imageio.meta : TemplateSwitchOn, PrepareHeadFor;
 
 /// Extracts an Image!C from a BMP file stream.
 Image!ColorType loadBmp(ColorType)(UntypedBuffer file_stream) pure
@@ -97,7 +99,7 @@ private Image!C loadImpl(C, Ver V)
 
 			foreach (x; 0 .. header.width)
 			{
-				result[x, y] = C(row[x].as!uint);
+				result[x, y] = C(row[x].to!uint);
 			}
 		}
 	}
@@ -131,24 +133,28 @@ private Image!C loadImpl(C, Ver V)
 
 void saveBmp(C)(in Image!C img, ref UntypedBuffer file_stream) pure
 {
+	import std.bitmanip : nativeToLittleEndian;
+
 	enum ver = Ver.V1;
-	auto fileSize = 0;
+	enum bpp = 24;
+	uint fileSize = (BmpFileHeader.sizeof + DIBHeader!(ver).sizeof +
+		bpp / 8 * img.width * img.height).to!uint;
+
 	auto fileHeader = BmpFileHeader(
 		FileSignature.Win, fileSize, 0, 0,
 		BmpFileHeader.sizeof + ver);
 
 	auto dibHeader = DIBHeader!ver(
 		ver,
-		cast(int)img.width, cast(int)img.height,
-		1, 24,
+		img.width.to!int, img.height.to!int,
+		1, bpp,
 		Compression.BI_RGB,
-		cast(uint)(fileSize - (BmpFileHeader.sizeof + ver)),
+		(fileSize - (BmpFileHeader.sizeof + ver)).to!uint,
 		72.dpiToPPM,
 		72.dpiToPPM,
 		0, 0);
 						
-	file_stream = UntypedBuffer(fileHeader.sizeof + dibHeader.sizeof +
-		dibHeader.bpp / 8 * img.width * img.height);
+	file_stream = UntypedBuffer(fileSize);
 	
 	file_stream.writeStruct(fileHeader);
 	file_stream.writeStruct(dibHeader);
@@ -161,11 +167,11 @@ void saveBmp(C)(in Image!C img, ref UntypedBuffer file_stream) pure
 		
 		foreach (x; 0 .. img.width)
 		{
-			auto pixel = cast(uint)row[x]; //RGB32
-			row_converted[x] = (cast(ubyte*)&pixel)[0 .. 3];
+			auto pixel = row[x].to!uint;
+			row_converted[x] = nativeToLittleEndian(pixel)[0 .. 3];
 		}
 		
-		file_stream.writeStruct(row_converted);
+		file_stream.write(row_converted);
 	}
 }
 
