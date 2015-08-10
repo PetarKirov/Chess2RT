@@ -131,6 +131,12 @@ const:
 		return mixin("Color(r " ~ op ~ " f, g " ~ op ~ " f, b " ~ op ~ " f)");
 	}
 
+	Color opBinaryRight(string op)(float f)
+		if (op == "*")
+	{
+		return mixin("Color(r " ~ op ~ " f, g " ~ op ~ " f, b " ~ op ~ " f)");
+	}
+
 	/// get the intensity of the color (direct)
 	float intensity()
 	{
@@ -152,6 +158,17 @@ const:
 		uint ib = convertTo8bit_sRGB_Cached(b);
 		return (ib << blueShift) |
 			(ig << greenShift) |
+				(ir << redShift);
+	}
+
+	uint toRGB32Raw(uint redShift = 16, uint greenShift = 8, uint blueShift = 0)
+	{
+		auto ir = r.roundToByte;
+		auto ig = g.roundToByte;
+		auto ib = b.roundToByte;
+
+		return (ib << blueShift) |
+			  (ig << greenShift) |
 				(ir << redShift);
 	}
 	
@@ -201,10 +218,10 @@ private pure nothrow @safe @nogc
 		return cast(ubyte)floor(x * 255.0f);
 	}
 	
-	immutable ubyte[4097] SRGB_CompressCache;
-	immutable float[4097] SRGB_DeCompressCache;
+	shared immutable ubyte[4097] SRGB_CompressCache;
+	shared immutable float[4097] SRGB_DeCompressCache;
 
-	static this()
+	shared static this()
 	{
 		foreach (i; 0 .. 4097)
 			SRGB_CompressCache[i] = convertTo8bit_sRGB(i / 4096f);
@@ -220,4 +237,8 @@ struct NamedColors
 	enum Color red = Color(1f, 0f, 0f);
 	enum Color green = Color(0f, 1f, 0f);
 	enum Color blue = Color(0f, 0f, 1f);
+
+	enum Color pink = Color(255, 87, 165);
+	enum Color purple = Color(188, 94, 235);
+	enum Color yellow = Color(255, 255, 0);
 }

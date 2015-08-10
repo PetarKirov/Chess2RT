@@ -4,7 +4,10 @@
 		"type"				: "GlobalSettings",
 		"frameWidth"		: 640,
 		"frameHeight"		: 480,
-		"ambientLightColor"	: [ 0.0, 0.0, 0.0 ]
+		"ambientLightColor"	: [ 0.0, 0.0, 0.0 ],
+		"AAEnabled"			: false,
+		"interactive"		: true,
+		"prepassEnabled"	: false
 	},
 	
 	"Camera" :

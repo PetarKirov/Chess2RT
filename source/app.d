@@ -16,6 +16,8 @@ void main(string[] args)
 	
 	runAppInScope(sceneFilePath);
 
+	runAppInScope(sceneFilePath);
+
 	debug printDiagnostics();
 
 	writeln("At the end.");
@@ -25,8 +27,8 @@ void runAppInScope(string filePath)
 {
 	import std.variant : Variant;
 
-	//auto app = scoped!GuiDemo(800, 600, "Test GUI");
-	auto app = scoped!RTDemo();
+	auto app = scoped!(GuiDemo!uint)(800, 600, "Test GUI");
+	//auto app = scoped!RTDemo();
 
 	bool normalQuit = app.run(Variant(filePath));
 

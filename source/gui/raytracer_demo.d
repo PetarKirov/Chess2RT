@@ -37,6 +37,8 @@ string getNewImageFileName()
 	return format("output/img_%s.bmp", time);
 }
 
+import gui.guidemo, imageio.image;;
+
 class RTDemo : GuiBase!Color
 {
 	Scene scene;
@@ -49,7 +51,10 @@ class RTDemo : GuiBase!Color
 	this(Logger log = sharedLog)
 	{
 		super(log);
+		//super(800, 600, "asd");
 		logger.log("At RTDemo.ctor");
+
+		//init2("".Variant);
 	}
 
 	~this()
@@ -94,20 +99,20 @@ class RTDemo : GuiBase!Color
 
 		isRendering = true;
 
-		spawn((shared RTDemo this_s)
-			{
-				auto this_ = cast(RTDemo)this_s;					
-				this_.scene.beginFrame();
-				this_.renderer.renderRT();
-				this_s.isRendering = false;
-				this_s.needsRendering = false;
-			}, cast(shared RTDemo)this,);
+		auto async_render = (shared RTDemo this_s)
+		{
+			auto this_ = cast(RTDemo)this_s;
+			this_.scene.beginFrame();
+			this_.renderer.renderRT();
+			this_s.isRendering = false;
+			this_s.needsRendering = false;
+		};
+
+		spawn(async_render, (cast(shared)this));
 	}
 
 	override bool handleInput()
 	{
-		import core.atomic : atomicOp;
-		import std.parallelism : task, taskPool;
 		import derelict.sdl2.types;
 
 		if (scene.settings.interactive)
@@ -133,7 +138,8 @@ class RTDemo : GuiBase!Color
 		if (!exists("output"))
 			mkdir("output");
 
-		auto bitmap = const Bitmap(this.screen);
+		//auto bitmap = const Bitmap(this.screen);
+		auto bitmap = const Bitmap(this.screen.convertTo!Color);
 		bitmap.saveImage(getNewImageFileName());
 	}
 
