@@ -4,6 +4,13 @@ import std.array;
 import util.enumutils;
 import std.typecons, std.traits, std.typetuple;
 
+mixin template ObservableProperty(T, string propertyName,
+	string setter, string init_value)
+{
+	mixin (property_impl!(T, propertyName, Access.ReadWrite,
+			setter, init_value));
+}
+
 enum Access
 {
 	None = 0b00,
@@ -19,7 +26,8 @@ mixin template property(T, string propertyName,
 	mixin (property_impl!(T, propertyName, access));
 }
 
-template property_impl(T, string propertyName, Access access)
+template property_impl(T, string propertyName, Access access,
+	string setter = "", string init_value = "T.init")
 {
 	enum property_impl = field ~ 
 		(access.hasFlags(Access.ReadOnly)? readFunc : "") ~
@@ -28,9 +36,10 @@ template property_impl(T, string propertyName, Access access)
 	enum typeStr = T.stringof;
 
 	enum field = q{
-		private T _propertyName;
+		private T _propertyName = init_value;
 	}.replaceFirst("T", typeStr)
-	 .replace("propertyName", propertyName);;
+	 .replace("propertyName", propertyName)
+	 .replace("init_value", init_value);
 
 	enum readFunc = q{
 		@property
@@ -46,9 +55,11 @@ template property_impl(T, string propertyName, Access access)
 		void propertyName(T newVal)
 		{
 			_propertyName = newVal;
+			setter;
 		}
 	}.replaceFirst("T", typeStr)
-	 .replace("propertyName", propertyName);
+	 .replace("propertyName", propertyName)
+	 .replace("setter", setter);
 }
 
 private:

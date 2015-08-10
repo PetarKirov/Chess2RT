@@ -9,9 +9,8 @@ What works
 + CSG combinations of supported geometry  objects (including CSG objects).
 + Procedural textures.
 + Lambert and Phong shading.
-+ Loading scenes from .sdl or .json files. You can see sample scene files in _data/_.
-+ Interactive camera movement (←↑→↓ for movement, Shift+←↓→↓ for mouse look,
-Ctrl+←→ for rotation and Ctrl+↑↓ for up and down moving).
++ Loading scenes from `.sdl` or `.json` files. You can find sample scene files in `data/`.
++ Interactive camera movement (`←`, `↑`, `→`, `↓` for movement, `Shift + ←`, `Shift + ↓`, `Shift + →`, `Shift + ↓` for mouse look, `Ctrl + ←`, `Ctrl + →` for rotation and `Ctrl + ↑`, `Ctrl + ↓` for up and down moving).
 
 Performance statistics
 ----------------------
@@ -19,30 +18,31 @@ Available [here](https://github.com/ZombineDev/Chess2RT/blob/master/perf-results
 
 Build Instructions
 ------------------
-You need:
-+ D compiler with frontend >= **v2.067** (e.g. [DMD][1])
-+ [dub][2] package manager >= **v0.9.23**
-+ [SDL 2][3] binaries >= **v2.0.0** (SDL 2.0.3 is included for windows)
-
-1. Install what's needed (if you haven't yet).
-
+1. Install what's needed (if you haven't yet):
+    + [D][1] compiler with frontend >= **v2.067** (e.g. [DMD][2])
+    + [dub][3] package manager >= **v0.9.23**
+    + [SDL 2][4] binaries >= **v2.0.0** (SDL 2.0.3 DLLs are included for windows)
 2. Git clone:
-```git clone https://github.com/ZombineDev/Chess2RT.git```
+    ```
+    git clone https://github.com/ZombineDev/Chess2RT.git
+    ```
 
 3. Run DUB:
-
-```
-cd Chess2RT
-dub
-```
+    ```
+    cd ./Chess2RT
+    dub
+    ```
 
 Scene files
 -----------
 Scene files are written in [SDLang][5] or JSON and are usually put in the `data/` folder.
 To render a specific scene you can either:
 + call the app from the command-line like this:
-```chess2rt --file=data/scene1.sdl```
-+ place the path to scene you wish to load in *data/default_scene.path* and call chess2rt without arguments.
+    ```
+    ./Chess2RT/bin/<OS>/chess2rt --file=data/scene1.sdl
+    ```
+
++ place the path to scene you wish to load in `data/default_scene.path` and call chess2rt without arguments.
 
 Acknowledgement
 ---------------
@@ -50,13 +50,14 @@ I developed this project for the 3D Graphics and Raytracing course at fmi.uni-so
 Most of the code in `./source/rt/` is based on https://github.com/anrieff/trinity/.
 
 This project uses:
-+ [SDL 2][3] (SDL 2.0.3 binaries for Windows x86 and x86_64
++ [SDL 2][4] (SDL 2.0.3 binaries for Windows x86 and x86_64
   are included in `lib/`)
-+ [GFM][4] (package on http://code.dlang.org)
++ [GFM][6] (package on http://code.dlang.org)
 + [SDLang-D][5] (package on http://code.dlang.org)
 
-[1]: http://dlang.org/download.html
-[2]: http://code.dlang.org/download
-[3]: http://www.libsdl.org/download-2.0.php
-[4]: https://github.com/d-gamedev-team/gfm
+[1]: http://dlang.org/
+[2]: http://dlang.org/download
+[3]: http://code.dlang.org/download
+[4]: http://www.libsdl.org/download-2.0.php
 [5]: https://github.com/Abscissa/SDLang-D
+[6]: https://github.com/d-gamedev-team/gfm

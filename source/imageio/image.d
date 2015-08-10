@@ -1,5 +1,20 @@
 module imageio.image;
 
+Image!To convertTo(To, From)(Image!From from)
+{
+	import std.conv : to;
+
+	auto w = from.width, h = from.height;
+
+	auto result = Image!To(w, h);
+
+	foreach (y; 0 .. h)
+		foreach (x; 0 .. w)
+			result[x, y] = from[x, y].to!To;
+
+	return result;
+}
+
 struct Image(C)
 {
 	size_t width;

@@ -25,5 +25,8 @@ template PrepareTailFor(alias Templ, TailArgs...)
 
 template PrepareHeadFor(alias Templ, HeadArgs...)
 {
-	alias PrepareHeadFor(TailArgs...) = Templ!(HeadArgs, TailArgs);
+	alias PrepareHeadFor(TailArgs...) =	 Templ!(HeadArgs, TailArgs);
 }
+
+/// Used to disambiguate a type where an expression is expected
+alias Type(T...) = T[0];

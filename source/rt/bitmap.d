@@ -71,7 +71,7 @@ struct Bitmap
 
 		switch (file_ext)
 		{
-			case ".bmp": this.data = loadBmp!Color(file_stream); break;
+			case ".bmp": this.data = loadBmpImage!Color(file_stream); break;
 			case ".exr": this.data = loadExr!Color(file_stream); break;
 			default: throw new UnknownImageTypeException();
 		}
