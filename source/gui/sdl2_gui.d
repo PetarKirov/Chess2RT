@@ -1,4 +1,4 @@
-﻿module gui.sdl2gui;
+module gui.sdl2gui;
 
 import gfm.sdl2, std.experimental.logger;
 import std.conv : to;
@@ -14,7 +14,7 @@ struct SDL2Gui
 	mixin property!(SDL2Renderer, "renderer", Access.ReadOnly);
 	mixin property!(SDL2Surface, "surface", Access.ReadOnly);
 	mixin property!(SDL2Texture, "texture", Access.ReadOnly);
-	mixin property!(Logger, "log", Access.ReadOnly);	
+	mixin property!(Logger, "log", Access.ReadOnly);
 
 	this(uint width, uint height, string title, Logger log)
 	{
@@ -50,7 +50,7 @@ struct SDL2Gui
 	void draw(SRC)(auto ref SRC image)
 	{
 		uint* pixels = cast(uint*)surface.pixels;
-		
+
 		int rs = surface.pixelFormat.Rshift;
 		int gs = surface.pixelFormat.Gshift;
 		int bs = surface.pixelFormat.Bshift;
@@ -68,15 +68,15 @@ struct SDL2Gui
 	private void close()
 	{
 		log.log("Attempting to close SDL2 resources.");
-		texture.close();
-		surface.close();
-		renderer.close();
-		window.close();
-		sdl2.close();
+		texture.destroy();
+		surface.destroy();
+		renderer.destroy();
+		window.destroy();
+		sdl2.destroy();
 	}
 
 	~this()
-	{	
+	{
 		log.log("At ~SDL2Gui()");
 		this.close();
 	}
@@ -85,16 +85,16 @@ struct SDL2Gui
 void testGUIMain()
 {
 	import std.algorithm, std.range, std.math;
-	
+
 	uint w = 640, h = 480;
 
 	auto gui = SDL2Gui(w, h, "Pulsing circle", sharedLog);
-	
+
 	double radius = 50.0;
-	
+
 	double cx = w / 2;
 	double cy = h / 2;
-	
+
 	double vx = 1;
 	double vy = 1;
 
@@ -113,22 +113,22 @@ void testGUIMain()
 				return 0xFF0000;
 		}
 	}
-	
+
 	gui.draw(ProcImage());
-	
+
 	double time = 0;
 	while(!gui.sdl2.keyboard().isPressed(SDLK_ESCAPE))
 	{
 		gui.sdl2.processEvents();
-		
+
 		gui.draw(ProcImage());
-		
+
 		auto sinTick = (sin(time) * 0.5 + 0.5);
 		radius = 50 * sinTick;
-		
+
 		if (cx + radius > w || cx - radius < w) vx = -vx;
 		if (cy + radius > h || cy - radius < h) vy = -vy;
-		
+
 		time += 0.10;
 		cx += vx;
 		cy += vy;

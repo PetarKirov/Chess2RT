@@ -11,12 +11,11 @@ void main(string[] args)
 	version(unittest) exit(0);
 
 	string sceneFilePath = "";
-	
-	getopt(args, "file", &sceneFilePath);
-	
-	runAppInScope(sceneFilePath);
 
-	runAppInScope(sceneFilePath);
+	getopt(args, "file", &sceneFilePath);
+
+	foreach (_; 0 .. 10)
+		runAppInScope(sceneFilePath);
 
 	debug printDiagnostics();
 
@@ -27,8 +26,8 @@ void runAppInScope(string filePath)
 {
 	import std.variant : Variant;
 
-	auto app = scoped!(GuiDemo!uint)(800, 600, "Test GUI");
-	//auto app = scoped!RTDemo();
+	// auto app = scoped!(GuiDemo!uint)(800, 600, "Test GUI");
+	auto app = scoped!RTDemo();
 
 	bool normalQuit = app.run(Variant(filePath));
 
