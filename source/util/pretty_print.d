@@ -1,14 +1,14 @@
-﻿/*
+/*
  * Mixin strings for pretty printing
  * Place this in your base class void toString(sink) function:
- * 
+ *
  * ----
  * import util.prettyprint;
  * printBaseMembers!(typeof(this), sink)(this);
  * ----
  *
  * Place this in your derived classes' void toString(sink) function:
- * 
+ *
  * ----
  * import util.prettyprint;
  * printMembers!(typeof(this), sink)(this);
@@ -35,7 +35,7 @@ void printBaseMembers(T, alias sink, string ws = "\n")(const T thiz)
 void printMembers(T, alias sink, string ws = "\n")(const T thiz)
 {
 	import std.traits : Unqual, BaseClassesTuple;
-	
+
 	sink(T.stringof);
 
 	sink(whitespace);
@@ -49,14 +49,14 @@ void printMembers(T, alias sink, string ws = "\n")(const T thiz)
 	pragma (msg, T, " ", BaseOfT);
 
 	typeof(sink) inner_sink = msg => (sink(nest_ws), sink(msg));
-	
+
 	static if(!is(BaseOfT == Object) && !hasMemberAttr!(thiz, BaseOfT, "toString", DontPrint))
 	{
 		callBaseMethod!("toString")(thiz, inner_sink);
 		sink(",");
 		sink(whitespace);
 	}
-	
+
 	printCore!(T, inner_sink, whitespace)(thiz);
 
 	sink(whitespace);
@@ -76,7 +76,7 @@ enum DontPrint;
 template hasAttribute(alias Sym, Attr)
 {
 	enum bool hasAttribute = find_out();
-	
+
 	static bool find_out()
 	{
 		foreach(a; __traits(getAttributes, Sym))
@@ -85,13 +85,15 @@ template hasAttribute(alias Sym, Attr)
 				return true;
 		}
 		return false;
-	}    
+	}
 }
 
-enum hasIdxMemberAttr(T, size_t memberIdx, Attr) = 
-	hasAttribute!(T.tupleof[memberIdx], Attr);
+import std.traits : hasUDA;
 
-enum hasMemberAttr(alias Sym, T, string MemberName, Attr) = hasAttribute!(mixin(`Sym.` ~ T.stringof ~ `.` ~ MemberName), Attr);
+enum hasIdxMemberAttr(T, size_t memberIdx, Attr) =
+	hasUDA!(T.tupleof[memberIdx], Attr);
+
+enum hasMemberAttr(alias Sym, T, string MemberName, Attr) = hasUDA!(mixin(`Sym.` ~ T.stringof ~ `.` ~ MemberName), Attr);
 
 void printCore  (T, alias sink, string ws = "\n")(const T thiz)
 {
@@ -104,14 +106,14 @@ void printCore  (T, alias sink, string ws = "\n")(const T thiz)
 	buf.clear();
 
 	enum printable(size_t memberIdx) = !hasIdxMemberAttr!(T, memberIdx, DontPrint);
-	
+
 	bool anyMemberPrinted = false;
-	
+
 	foreach(i, memberName; FieldNameTuple!T)
 	{
 		static if (!printable!i)
 			continue;
-		
+
 		if (i > 0 && anyMemberPrinted)
 		{
 			buf.put(",");
@@ -119,12 +121,12 @@ void printCore  (T, alias sink, string ws = "\n")(const T thiz)
 			sink(buf.data);
 			buf.clear();
 		}
-		
+
 		anyMemberPrinted = true;
-		
+
 		buf.put(memberName);
 		buf.put(": ");
-		
+
 		// Workarounds the bug that calling to!string on null Rebindable
 		// results in segfault
 		static if (__traits(compiles, thiz.tupleof[i] is null))
