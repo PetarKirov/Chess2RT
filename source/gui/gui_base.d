@@ -1,4 +1,4 @@
-﻿module gui.guibase;
+module gui.guibase;
 
 import std.experimental.logger : Logger, sharedLog;
 import std.variant : Variant;
@@ -6,71 +6,71 @@ import gui.appsceleton, gui.sdl2gui;
 import imageio.bmp : Image;
 
 /// Base class based on SDL2 for GUI.
-/// 
+///
 /// Params:
-///		C =	The type of the pixel color.
+///     C = The type of the pixel color.
 abstract class GuiBase(C) : AppSceleton
 {
-	protected
-	{
-		SDL2Gui gui;
-		Image!C screen;
-		Logger logger;
-	}
+    protected
+    {
+        SDL2Gui gui;
+        Image!C screen;
+        Logger logger;
+    }
 
-	this(Logger customLogger)
-	{
-		this.logger = customLogger;
-	}
+    this(Logger customLogger)
+    {
+        this.logger = customLogger;
+    }
 
-	this(uint width, uint height, string windowTitle)
-	{
-		this(sharedLog);
-		this.init(InitSettings(width, height, windowTitle).Variant);
-	}
-	
-	~this()
-	{
-		logger.log("At ~GuiBase()");
-	}
+    this(uint width, uint height, string windowTitle)
+    {
+        this(sharedLog);
+        this.init(InitSettings(width, height, windowTitle).Variant);
+    }
 
-	static struct InitSettings
-	{
-		uint width, height;
-		string windowTitle;
-	}
+    ~this()
+    {
+        logger.log("At ~GuiBase()");
+    }
 
-	override void init(Variant init_params)
-	{
-		if (init_params.peek!InitSettings is null)
-			return;
+    static struct InitSettings
+    {
+        uint width, height;
+        string windowTitle;
+    }
 
-		auto params = init_params.get!InitSettings;
+    override void init(Variant init_params)
+    {
+        if (init_params.peek!InitSettings is null)
+            return;
 
-		gui.init(params.width, params.height, params.windowTitle, logger);
+        auto params = init_params.get!InitSettings;
 
-		screen.alloc(params.width, params.height);
-	}
+        gui.init(params.width, params.height, params.windowTitle, logger);
 
-	override bool handleInput()
-	{
-		import gfm.sdl2 : SDLK_ESCAPE;
-		
-		return !gui.sdl2.keyboard().isPressed(SDLK_ESCAPE) &&
-			!gui.sdl2.wasQuitRequested();
-	}
-	
-	override void update()
-	{
-		gui.sdl2.processEvents();
-	}
-	
-	override void render()
-	{
-	}
-	
-	final override void display()
-	{
-		gui.draw(screen);
-	}
+        screen.alloc(params.width, params.height);
+    }
+
+    override bool handleInput()
+    {
+        import gfm.sdl2 : SDLK_ESCAPE;
+
+        return !gui.sdl2.keyboard().isPressed(SDLK_ESCAPE) &&
+            !gui.sdl2.wasQuitRequested();
+    }
+
+    override void update()
+    {
+        gui.sdl2.processEvents();
+    }
+
+    override void render()
+    {
+    }
+
+    final override void display()
+    {
+        gui.draw(screen);
+    }
 }

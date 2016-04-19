@@ -8,42 +8,42 @@ import std.typecons : scoped;
 
 void main(string[] args)
 {
-	version(unittest) exit(0);
+    version(unittest) exit(0);
 
-	string sceneFilePath = "";
+    string sceneFilePath = "";
 
-	getopt(args, "file", &sceneFilePath);
+    getopt(args, "file", &sceneFilePath);
 
-	foreach (_; 0 .. 10)
-		runAppInScope(sceneFilePath);
+    foreach (_; 0 .. 10)
+        runAppInScope(sceneFilePath);
 
-	debug printDiagnostics();
+    debug printDiagnostics();
 
-	writeln("At the end.");
+    writeln("At the end.");
 }
 
 void runAppInScope(string filePath)
 {
-	import std.variant : Variant;
+    import std.variant : Variant;
 
-	// auto app = scoped!(GuiDemo!uint)(800, 600, "Test GUI");
-	auto app = scoped!RTDemo();
+    // auto app = scoped!(GuiDemo!uint)(800, 600, "Test GUI");
+    auto app = scoped!RTDemo();
 
-	bool normalQuit = app.run(Variant(filePath));
+    bool normalQuit = app.run(Variant(filePath));
 
-	if (normalQuit)
-		writeln("User requested shutdown and the application is closing normally.");
-	else
-		writeln("Something bad happened during shutdown!");
+    if (normalQuit)
+        writeln("User requested shutdown and the application is closing normally.");
+    else
+        writeln("Something bad happened during shutdown!");
 
-	writeln("Close to the end...");
+    writeln("Close to the end...");
 }
 
 void printDiagnostics()
 {
-	import rt.shader;
+    import rt.shader;
 
-	//writeln(Lambert.shadeFunc.callsCount);
-	//writeln(Lambert.spawnRayFunc.callsCount);
-	//writeln(Lambert.evalFunc.callsCount);
+    //writeln(Lambert.shadeFunc.callsCount);
+    //writeln(Lambert.spawnRayFunc.callsCount);
+    //writeln(Lambert.evalFunc.callsCount);
 }

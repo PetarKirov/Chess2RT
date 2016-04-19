@@ -1,40 +1,40 @@
-﻿module gui.appsceleton;
+module gui.appsceleton;
 
 import std.variant : Variant;
 
 abstract class AppSceleton
 {
-	/// Main application loop
-	/// Retruns:
-	///		true if the application is closing normally.
-	bool run(Variant init_params = null)
-	{
-		init(init_params);
-		
-		while(handleInput())
-		{
-			update();
-			render();
-			display();
-		}
+    /// Main application loop
+    /// Retruns:
+    ///     true if the application is closing normally.
+    bool run(Variant init_params = null)
+    {
+        init(init_params);
 
-		return true;
-	}
+        while(handleInput())
+        {
+            update();
+            render();
+            display();
+        }
 
-	/// Initializes the application's resources.
-	void init(Variant init_params);
+        return true;
+    }
 
-	/// Handles the input.
-	/// Returns:
-	///		false - if the app should be closed and true - otherwise.
-	bool handleInput();
+    /// Initializes the application's resources.
+    void init(Variant init_params);
 
-	/// Updates the application state after handling input.
-	void update();
+    /// Handles the input.
+    /// Returns:
+    ///     false - if the app should be closed and true - otherwise.
+    bool handleInput();
 
-	/// Renders the next frame into an image.
-	void render();
+    /// Updates the application state after handling input.
+    void update();
 
-	/// Displays the rendered image.
-	void display();
+    /// Renders the next frame into an image.
+    void render();
+
+    /// Displays the rendered image.
+    void display();
 }
