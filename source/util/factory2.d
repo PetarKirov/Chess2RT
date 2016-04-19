@@ -4,44 +4,44 @@ import std.algorithm : endsWith;
 
 T makeInstanceOf(T)(string derivedClassName) if (is(T == class))
 {
-	string suffix = "." ~ derivedClassName;
+    string suffix = "." ~ derivedClassName;
 
-	foreach (m; ModuleInfo)
-	{
-		assert(m);
+    foreach (m; ModuleInfo)
+    {
+        assert(m);
         foreach (c; m.localClasses)
         {
             if (c.name.endsWith(suffix))
-			{
-				assert(c.isDerivedFrom(T.classinfo));
-				return cast(T)c.create();
-			}
+            {
+                assert(c.isDerivedFrom(T.classinfo));
+                return cast(T)c.create();
+            }
         }
-	}
+    }
 
-	return null;
+    return null;
 }
 
 ClassInfo[] getBaseClasses(ClassInfo c) pure @safe nothrow
 {
-	ClassInfo[] result;
+    ClassInfo[] result;
 
-	while (c)
-	{
-		result ~= c;
-		c = c.base;
-	}
+    while (c)
+    {
+        result ~= c;
+        c = c.base;
+    }
 
-	return result;
+    return result;
 }
 
 bool isDerivedFrom(ClassInfo type_, const ClassInfo from) pure @safe nothrow @nogc
 {
-	while (type_)
-	{
-		if (type_.name == from.name) return true;
-		type_ = type_.base;
-	}
+    while (type_)
+    {
+        if (type_.name == from.name) return true;
+        type_ = type_.base;
+    }
 
-	return false;
+    return false;
 }

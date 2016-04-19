@@ -1,7 +1,7 @@
 ## Systems
 1. HP G62 laptop with AMD Athlon II P340 (dual core) CPU, 4GB RAM
-  1. Ubuntu 13.10 x64
-  2. Windows 8.1 x64
+    1. Ubuntu 13.10 x64
+    2. Windows 8.1 x64
 
 ## Versions
 - [v0.1.0][1]
