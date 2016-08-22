@@ -3,7 +3,7 @@ module imageio.buffer;
 import std.format : format;
 import std.range.primitives;
 import std.traits : isScalarType, hasElaborateDestructor,
-    hasElaborateCopyConstructor, hasElaborateAssign, hasIndirections;
+    hasElaborateCopyConstructor, hasElaborateAssign, hasIndirections, isMutable;
 
 enum Endianness
 {
@@ -37,6 +37,7 @@ enum isPOD(T) = !hasElaborateDestructor!T && !hasElaborateAssign!T &&
     !hasElaborateDestructor!T && !hasIndirections!T;
 
 alias UntypedBuffer = Buffer!void;
+alias ConstBuffer = Buffer!(const void);
 
 struct Buffer(T)
 {
@@ -83,10 +84,19 @@ struct Buffer(T)
         return this;
     }
 
-    //template untyped()
-    static if (is(typeof(this) == UntypedBuffer))
+    auto constOf() const
     {
-        this(void[] data_to_wrap)
+        auto result = Buffer!(const T).init;
+        result.data = this.data;
+        result.start = this.start;
+        result.count = this.count;
+        return result;
+    }
+
+    //template untyped()
+    static if (is(T : const(void)))
+    {
+        this(T[] data_to_wrap)
         {
             this.data = data_to_wrap;
             this.start = 0;
@@ -137,6 +147,7 @@ struct Buffer(T)
             return start_ptr[0 .. count];
         }
 
+        static if (isMutable!T)
         void writeStruct(U)(ref const U to_write)
             if (is(U == struct) && isPOD!U)
         {
@@ -157,6 +168,7 @@ struct Buffer(T)
         this.count -= size;
     }
 
+    static if (isMutable!T)
     void write(T[] to_write)
     {
         size_t end = start + count;
@@ -172,10 +184,12 @@ struct Buffer(T)
         count += write_length;
     }
 
+    static if (isMutable!T)
     void write(T[] to_write...)
     {
         this.write(to_write);
     }
+
 }
 
 const(void[]) skipStruct(T)(const(void)[] bytes)
