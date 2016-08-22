@@ -14,8 +14,7 @@ void main(string[] args)
 
     getopt(args, "file", &sceneFilePath);
 
-    foreach (_; 0 .. 10)
-        runAppInScope(sceneFilePath);
+    runAppInScope(sceneFilePath);
 
     debug printDiagnostics();
 

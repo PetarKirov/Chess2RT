@@ -1,7 +1,7 @@
 module util.random;
 
-import std.c.stdlib : rand, srand, RAND_MAX;
-import std.c.time : time;
+import core.stdc.stdlib : rand, srand, RAND_MAX;
+import core.stdc.time : time;
 import std.traits : CommonType;
 
 static this()

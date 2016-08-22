@@ -1,6 +1,6 @@
 module rt.bitmap;
 
-import std.math, std.string, std.path, std.file : read;
+import std.math, std.string, std.path;
 import std.stdio : writefln;
 import util.prop;
 import rt.color, imageio.bmp, imageio.image;
@@ -66,6 +66,8 @@ struct Bitmap
     /// The format is detected from extension.
     void loadImage(string filename)
     {
+        import std.file : read;
+
         auto file_ext = filename.extension.toLower;
         auto file_stream = UntypedBuffer(filename.absolutePath.buildNormalizedPath.read);
 
@@ -81,6 +83,8 @@ struct Bitmap
     /// The format is detected from extension.
     void saveImage(string filename) inout
     {
+        static import std.file;
+
         auto file_ext = filename.extension.toLower;
         auto file_path = filename.absolutePath.buildNormalizedPath;
         UntypedBuffer file_stream;
