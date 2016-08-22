@@ -1,4 +1,4 @@
-module imageio.meta;
+module util.meta;
 
 mixin template TemplateSwitchOn(Enum, alias functionToCall)
     if (is(Enum == enum))
