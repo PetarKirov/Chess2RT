@@ -1,46 +1,47 @@
 module util.array;
 
-//Extremely ugly hack to workaround purity
-
-T[] pure_malloc(T)(size_t count) @nogc nothrow pure
-{
-    import std.c.stdlib : malloc;
-    alias M = void* function(size_t) @nogc nothrow pure;
-
-    void* mem = (cast(M)&malloc)(T.sizeof * count);
-
-    assert (mem);
-
-    return (cast(T*)mem)[0 .. count];
-}
-
-void pure_free(void* ptr) @nogc nothrow pure
-{
-    import std.c.stdlib : free;
-    alias F = void function(void*) @nogc nothrow pure;
-
-    (cast(F)&free)(ptr);
-}
-
 struct MyArray(T)
 {
-@trusted pure:
     private T[] storage;
     private size_t elements_count;
 
     enum defaultInitialCapacity = 16;
 
-    this(size_t initialCapacity) @nogc
+    private void freeMem()
     {
-        this.reserve(initialCapacity);
+        import std.experimental.allocator.mallocator;
+
+        Mallocator.instance.deallocate(cast(void[])this.storage);
+
+        this.storage = null;
+        this.elements_count = 0;
     }
 
-    ~this() @nogc
+    private void reserve(size_t new_capacity)
     {
-        this.free();
+        import std.experimental.allocator;
+        import std.experimental.allocator.mallocator;
+
+        if (!this.storage.ptr || !this.storage.length)
+            this.storage = cast(T[])Mallocator.instance.allocate(new_capacity * T.sizeof);
+        else
+            Mallocator.instance.expandArray(this.storage, new_capacity - this.storage.length);
     }
 
-    inout(T[]) opIndex() @nogc inout
+    @trusted @nogc pure nothrow:
+
+    this(size_t initialCapacity)
+    {
+        auto reserveMem = assumePureNothrowNogc(&this.reserve);
+        reserveMem(initialCapacity);
+    }
+
+    ~this()
+    {
+        assumePureNothrowNogc(&this.freeMem)();
+    }
+
+    inout(T[]) opIndex() inout
     {
         return storage[0 .. elements_count];
     }
@@ -50,35 +51,22 @@ struct MyArray(T)
         return this.elements_count;
     }
 
-    void opOpAssign(string op)(T value) @nogc
+    void opOpAssign(string op)(in T value)
         if (op == "~")
     {
+        auto reserveMem = assumePureNothrowNogc(&this.reserve);
+
         if (elements_count >= storage.length)
-            reserve(storage.length > 0 ? storage.length * 2 : defaultInitialCapacity);
+            reserveMem(storage.length > 0 ? storage.length * 2 : defaultInitialCapacity);
 
         storage[elements_count++] = value;
     }
-
-    void reserve(size_t new_capacity) @nogc
-    {
-        T[] new_storage = pure_malloc!T(new_capacity);
-        new_storage[0 .. storage.length] = this.storage[];
-        pure_free(this.storage.ptr);
-        this.storage = new_storage;
-    }
-
-    void free() @nogc
-    {
-        pure_free(this.storage.ptr);
-        this.storage = null;
-        this.elements_count = 0;
-    }
 }
 
+@safe @nogc pure nothrow
 unittest
 {
-    MyArray!int arr;
-    arr.reserve(8);
+    auto arr = MyArray!int(8);
 
     assert(arr.storage);
     assert(arr.storage.ptr);
@@ -120,4 +108,17 @@ void sort(T)(T[] arr) pure nothrow @nogc @safe
         }
         inc = (inc == 2) ? 1 : cast(int)(inc * 5.0 / 11);
     }
+}
+
+//Extremely ugly hack to workaround purity
+
+auto assumePureNothrowNogc(T)(T t) @nogc nothrow pure @system
+{
+    import std.traits;
+
+    static assert (isFunctionPointer!T || isDelegate!T);
+
+    enum attrs = functionAttributes!T | FunctionAttribute.pure_ | FunctionAttribute.nogc | FunctionAttribute.nothrow_;
+
+    return cast(SetFunctionAttributes!(T, functionLinkage!T, attrs)) t;
 }
