@@ -19,8 +19,8 @@ Available [here](https://github.com/ZombineDev/Chess2RT/blob/master/perf-results
 Build Instructions
 ------------------
 1. Install what's needed (if you haven't yet):
-    + [D][1] compiler with frontend >= **v2.067** (e.g. [DMD][2])
-    + [dub][3] package manager >= **v0.9.23**
+    + [D][1] compiler with frontend >= **v2.071.1** (e.g. [DMD][2])
+    + [dub][3] package manager >= **v1.0.0**
     + [SDL 2][4] binaries >= **v2.0.0** (SDL 2.0.3 DLLs are included for windows)
 2. Git clone:
     ```
