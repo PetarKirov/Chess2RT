@@ -69,7 +69,7 @@ struct Bitmap
         import std.file : read;
 
         auto file_ext = filename.extension.toLower;
-        auto file_stream = UntypedBuffer(filename.absolutePath.buildNormalizedPath.read);
+        auto file_stream = filename.absolutePath.buildNormalizedPath.read;
 
         switch (file_ext)
         {
@@ -167,7 +167,7 @@ struct Bitmap
 
 private:
 
-Image!ColorType loadExr(ColorType)(UntypedBuffer file_stream) pure
+Image!ColorType loadExr(ColorType)(in void[] file_stream) pure
 {
     throw new NotImplementedException();
 }

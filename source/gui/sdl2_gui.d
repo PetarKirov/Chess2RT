@@ -2,7 +2,7 @@ module gui.sdl2gui;
 
 import gfm.sdl2, std.experimental.logger;
 import std.conv : to;
-import imageio.image, util.prop;
+import util.prop;
 
 //Default SDL2 GUI
 struct SDL2Gui

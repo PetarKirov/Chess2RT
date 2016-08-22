@@ -28,21 +28,21 @@ DIBHeader!(Ver.V5) toV5Header(Ver V)(DIBHeader!V oldHeader)
     return result;
 }
 
-Image!ColorType loadBmpImage(ColorType)(UntypedBuffer file_stream) pure
+Image!ColorType loadBmpImage(ColorType)(in void[] image_bytes) pure
 {
-    return loadBmp!(ColorType, LoadHeaderOnly.no)(file_stream).pixels;
+    return loadBmp!(ColorType, LoadHeaderOnly.no)(image_bytes.ConstBuffer).pixels;
 }
 
-Image!ColorType loadBmpHeader(ColorType)(UntypedBuffer file_stream) pure
+Image!ColorType loadBmpHeader(ColorType)(in void[] image_bytes) pure
 {
-    return loadBmp!(ColorType, LoadHeaderOnly.yes)(file_stream);
+    return loadBmp!(ColorType, LoadHeaderOnly.yes)(image_bytes.ConstBuffer);
 }
 
 alias LoadHeaderOnly  = Flag!"loadHeaderOnly";
 
 /// Extracts an Image!C from a BMP file stream.
 BMPImage!ColorType loadBmp(ColorType, Flag!"loadHeaderOnly" headerOnly)
-    (UntypedBuffer file_stream) pure
+    (ConstBuffer file_stream) pure
 {
     alias loadBmpImplT = PrepareHeadFor!(loadBmpImpl, ColorType, headerOnly);
     mixin TemplateSwitchOn!(Ver, loadBmpImplT) TemplateSwitch;
@@ -58,7 +58,7 @@ BMPImage!ColorType loadBmp(ColorType, Flag!"loadHeaderOnly" headerOnly)
 }
 
 private BMPImage!ColorType loadBmpImpl(ColorType, Flag!"loadHeaderOnly" headerOnly, Ver V)
-    (ref UntypedBuffer file_stream, BmpFileHeader file_header) pure
+    (ref ConstBuffer file_stream, BmpFileHeader file_header) pure
 {
     import std.format : format;
 
@@ -482,7 +482,8 @@ unittest
 
     testImageRawData.write(arr);
 
-    const BMPImage!uint info = loadBmp!(uint, LoadHeaderOnly.no)(testImageRawData);
+    const BMPImage!uint info = testImageRawData.constOf
+        .loadBmp!(uint, LoadHeaderOnly.no);
 
     assert (info.file_header.signature == "BM");
     assert (info.file_header.fileSize == 70);
@@ -570,7 +571,8 @@ unittest
 
     testImageRawData.write(arr);
 
-    const BMPImage!uint info = loadBmp!(uint, LoadHeaderOnly.no)(testImageRawData);
+    const BMPImage!uint info = testImageRawData.constOf
+        .loadBmp!(uint, LoadHeaderOnly.no);
 
     assert (info.file_header.signature == "BM");
     assert (info.file_header.fileSize == 154);

@@ -2,7 +2,7 @@ module gui.guidemo;
 
 import std.math;
 import gui.sdl2gui, gui.guibase;
-import imageio.image;
+import imageio.image : Image;
 import util.prop;
 import std.stdio : writeln, writefln;
 
@@ -151,10 +151,10 @@ void drawCircle(Image!uint screen, float diameterToWidthRatio = 0.5)
 
 Image!ARGB getImage(string imgPath = "data/texture/zaphod.bmp")
 {
-    import imageio.bmp, imageio.buffer : UntypedBuffer;
+    import imageio.bmp;
     import std.file : read;
 
-    return imgPath.read().UntypedBuffer.loadBmpImage!ARGB;
+    return imgPath.read().loadBmpImage!ARGB;
 }
 
 void cropCopyTo(Img1, Img2)(Img1 source, Img2 dest)
