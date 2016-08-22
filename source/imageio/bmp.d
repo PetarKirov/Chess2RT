@@ -6,7 +6,7 @@ import std.exception : enforce;
 import std.math : lrint;
 import std.typecons : Flag;
 import imageio.exception, imageio.image, imageio.buffer,
-    imageio.meta : TemplateSwitchOn, PrepareHeadFor, Type;
+    util.meta : TemplateSwitchOn, PrepareHeadFor, Type;
 
 struct BMPImage(ColorType = void)
 {
