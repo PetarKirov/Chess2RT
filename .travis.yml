@@ -1,5 +1,6 @@
 language: d
-sudo: false
+sudo: required
+dist: trusty
 
 addons:
   apt:
@@ -7,11 +8,6 @@ addons:
       - libsdl2-dev
 
 matrix:
-  allow_failures:
-    - d: ldc-0.16.1
   include:
-    - d: ldc-0.16.1
-    - d: dmd-2.069.0-rc2
-    - d: dmd-2.068.2
-    - d: dmd-2.068.1
-    - d: dmd-2.068.0
+    - d: ldc-1.1.0-alpha1
+    - d: dmd-2.071.1

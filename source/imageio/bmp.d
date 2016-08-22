@@ -60,6 +60,8 @@ BMPImage!ColorType loadBmp(ColorType, Flag!"loadHeaderOnly" headerOnly)
 private BMPImage!ColorType loadBmpImpl(ColorType, Flag!"loadHeaderOnly" headerOnly, Ver V)
     (ref UntypedBuffer file_stream, BmpFileHeader file_header) pure
 {
+    import std.format : format;
+
     // ========= Read Header ============
 
     // The Device Independant Bitmap (DIB) header is after the BmpFileHeader,

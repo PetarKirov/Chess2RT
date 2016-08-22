@@ -1,6 +1,6 @@
 module rt.ray;
 
-import rt.importedtypes : Vector;
+public import rt.importedtypes : Vector;
 
 /// Flags that mark a ray in some way, so the behaviour of the raytracer can be altered.
 enum RayFlags
@@ -42,7 +42,7 @@ struct Ray
 
     @property bool isDebug() const pure nothrow @safe @nogc
     {
-        bool result = this.flags & RayFlags.Debug;
+        bool result = (this.flags & RayFlags.Debug) != 0;
 
         uint a = flags;
         return result;
@@ -63,6 +63,7 @@ struct Ray
 
 Ray project(Ray v, int a, int b, int c) pure nothrow @safe @nogc
 {
+    static import rt.importedtypes;
     v.orig = rt.importedtypes.project(v.orig, a, b, c);
     v.dir = rt.importedtypes.project(v.dir, a, b, c);
     return v;

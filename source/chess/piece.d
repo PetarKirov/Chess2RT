@@ -90,7 +90,7 @@ void test()
                     __traits(getMember, PieceColor, color),
                     __traits(getMember, ArmyType, army));
 
-                auto e = std.conv.toImpl!PieceEnum(p);
+                auto e = p.to!PieceEnum;
 
                 writef("%08b %s", *cast(byte*)&p, e);
 

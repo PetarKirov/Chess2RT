@@ -7,12 +7,9 @@
 	"targetPath": "bin/",
 
 	"dependencies": {
-		"derelict-util": ">=2.0.3",
-		"derelict-sdl2": ">=1.9.6",
-		"logger": ">=2.66.0",
-		"gfm:sdl2": ">=3.0.6",
-		"gfm:math": ">=3.0.6",
-		"sdlang-d": ">=0.9.2"
+		"gfm:sdl2": ">=6.1.2",
+		"gfm:math": ">=6.1.2",
+		"sdlang-d": ">=0.9.5"
 	},
 
 	"buildTypes": {
@@ -45,9 +42,5 @@
 			"platforms": ["linux-x86_64"],
 			"targetPath": "bin/Linux64"
 		}
-	],
-
-	"subConfigurations": {
-		"sdlang-d": "library"
-	}
+	]
 }
