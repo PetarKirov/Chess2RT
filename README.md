@@ -1,4 +1,4 @@
-Chess2RT [![Build Status](https://travis-ci.org/ZombineDev/Chess2RT.svg?branch=master)](https://travis-ci.org/ZombineDev/Chess2RT)
+Chess2RT [![Build Status](https://img.shields.io/travis/ZombineDev/Chess2RT/master.svg?label=Travis+CI)](https://travis-ci.org/ZombineDev/Chess2RT) [![Build status](https://ci.appveyor.com/api/projects/status/e7bvb8us3o01p3gc?svg=true)](https://ci.appveyor.com/project/ZombineDev/chess2rt/branch/master)
 ========
 A raytracer renderer, written in D, which will eventually be used for a
 3d rendered chess game (and/or a variation of it).
@@ -43,6 +43,18 @@ To render a specific scene you can either:
     ```
 
 + place the path to scene you wish to load in `data/default_scene.path` and call chess2rt without arguments.
+
+Compatibility
+-------------
+
+|           | Linux | Windows |
+|-----------|-------|---------|
+| DMD 64 | [![Build Status](https://travis-ci.org/ZombineDev/Chess2RT.svg?branch=master)](https://travis-ci.org/ZombineDev/Chess2RT) | [![Build status](https://ci.appveyor.com/api/projects/status/e7bvb8us3o01p3gc?svg=true)](https://ci.appveyor.com/project/ZombineDev/chess2rt/branch/master) |
+| DMD 32 | [![Build Status](https://travis-ci.org/ZombineDev/Chess2RT.svg?branch=master)](https://travis-ci.org/ZombineDev/Chess2RT) | [![Build status](https://ci.appveyor.com/api/projects/status/e7bvb8us3o01p3gc?svg=true)](https://ci.appveyor.com/project/ZombineDev/chess2rt/branch/master) |
+| LDC 64 | [![Build Status](https://travis-ci.org/ZombineDev/Chess2RT.svg?branch=master)](https://travis-ci.org/ZombineDev/Chess2RT) | [![Build status](https://ci.appveyor.com/api/projects/status/e7bvb8us3o01p3gc?svg=true)](https://ci.appveyor.com/project/ZombineDev/chess2rt/branch/master) |
+
+- DMD (reference D compiler) >= `2.071.1`
+- LDC (LLVM D Compiler) >= `1.1.0-beta2`.
 
 Acknowledgement
 ---------------
