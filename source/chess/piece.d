@@ -1,6 +1,7 @@
 module chess.piece;
 
 import std.bitmanip, std.conv;
+import chess.board;
 
 enum PieceType
 {
@@ -36,12 +37,12 @@ enum ArmyType
 
 struct Piece
 {
-    this(PieceType type, PieceColor color, ArmyType army)
-    {
-        this.pieceType = type;
-        this.color = color;
-        this.armyType = army;
-    }
+	this(PieceType type, PieceColor color, ArmyType army)
+	{
+		this.pieceType = type;
+		this.color = color;
+		this.armyType = army;
+	}
 
     this(PieceEnum e)
     {
@@ -55,6 +56,12 @@ struct Piece
     {
         this(toPieceEnum(c));
     }
+
+	bool canHit(BoardPosition pos)
+	{
+		//TODO
+		return false;
+	}
 
     mixin(bitfields!(
         PieceType,  "pieceType",    3,
