@@ -47,7 +47,7 @@ class Renderer
         this.needsAA.alloc(outputImage.w, outputImage.h);
     }
 
-    void renderRT() @nogc
+    void renderRT() //@nogc
     {
         MyArray!box2i buckets;
 
@@ -83,7 +83,10 @@ class Renderer
                 return;
 
         // 2) Second pass - shoot _one_ ray per pixel:
-        foreach (b; buckets[])
+        import std.parallelism : TaskPool, taskPool;
+        auto threadCount = scene.settings.threadCount;
+        auto workers = threadCount? new TaskPool(threadCount) : taskPool();
+        foreach (b; workers.parallel(buckets[]))
         {
             foreach (y; b.min.y .. b.max.y)
                 foreach (x; b.min.x .. b.max.x)
