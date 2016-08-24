@@ -29,7 +29,35 @@ package struct TraceResult
     }
 }
 
-class Renderer
+void renderSceneAsync(Scene scene, Image!Color output, shared(bool)* isRendering)
+{
+    import std.concurrency : spawn;
+    import core.atomic : atomicStore;
+
+    scene.beginFrame();
+    spawn((shared Scene s, shared Image!Color o, shared(bool)* isWorking)
+    {
+        auto renderer = Renderer(cast()s, cast()o);
+        renderer.renderRT();
+        (*isWorking).atomicStore(false);
+    },
+    cast(shared)scene, cast(shared)output, isRendering);
+}
+
+auto renderPixel(Scene scene, Image!Color output, int x, int y)
+{
+    import std.typecons : tuple;
+
+    scene.beginFrame();
+
+    auto renderer = Renderer(scene, output);
+    auto color = renderer.renderPixelNoAA(x, y);
+    auto result = renderer.lastTracingResult;
+
+    return tuple(color, result);
+}
+
+struct Renderer
 {
     private
     {

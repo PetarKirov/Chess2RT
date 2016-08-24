@@ -1,7 +1,8 @@
 module gui.rtdemo;
 
-import core.atomic : atomicOp;
+import core.atomic : atomicLoad, atomicStore;
 import std.stdio : writefln;
+import std.format : format;
 import std.datetime : benchmark, Clock;
 import std.experimental.logger : Logger, sharedLog;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
@@ -41,12 +42,12 @@ import gui.guidemo, imageio.image;;
 
 class RTDemo : GuiBase!Color
 {
+    enum windowTitleFormat = r"Raytracing: `%s` ... ¯\_(ツ)_/¯";
+
     Scene scene;
-    Renderer renderer;
-    shared bool needsRendering;
+    string sceneFilePath;
+    bool needsRendering;
     shared bool isRendering;
-    shared byte[] tasksCount = new shared byte[2];
-    Tid renderThread;
 
     this(Logger log = sharedLog)
     {
@@ -64,7 +65,7 @@ class RTDemo : GuiBase!Color
 
     override void init(Variant init_settings)
     {
-        auto sceneFilePath = init_settings.get!string == "" ?
+        this.sceneFilePath = init_settings.get!string == "" ?
             getPathToDefaultScene() :
             init_settings.get!string;
 
@@ -76,14 +77,13 @@ class RTDemo : GuiBase!Color
 
         gui.init(scene.settings.frameWidth,
                  scene.settings.frameHeight,
-                 "Raytracing: '" ~ sceneFilePath ~ r"'... ¯\_(ツ)_/¯",
+                 windowTitleFormat.format(sceneFilePath),
                  logger);
 
         //Set the screen size according to the settings in the scene file
         screen.alloc(scene.settings.frameWidth,
                     scene.settings.frameHeight);
 
-        this.renderer = new Renderer(scene, screen);
         this.needsRendering = true;
 
         logger.logf("%s", scene);
@@ -91,39 +91,34 @@ class RTDemo : GuiBase!Color
 
     override void render()
     {
-        //No need for re-rendering - nothing changes in the main loop.
-        if (!needsRendering || isRendering)
+        if (!needsRendering || atomicLoad(isRendering))
             return;
 
         logger.log("Rendering!!!");
 
-        isRendering = true;
+        isRendering.atomicStore(true);
 
-        auto async_render = (shared RTDemo this_s)
-        {
-            auto this_ = cast(RTDemo)this_s;
-            this_.scene.beginFrame();
-            this_.renderer.renderRT();
-            this_s.isRendering = false;
-            this_s.needsRendering = false;
-        };
+        renderSceneAsync(this.scene, this.screen, &this.isRendering);
 
-        spawn(async_render, (cast(shared)this));
+        needsRendering = false;
     }
 
     override bool handleInput()
     {
         import derelict.sdl2.types;
 
+        // Sync w.r.t. rendering (changes state)
         if (scene.settings.interactive)
             move();
 
         auto mouse = gui.sdl2.mouse();
         auto kbd = gui.sdl2.keyboard();
 
+        // Async w.r.t. rendering
         if (mouse.isButtonPressed(SDL_BUTTON_LMASK))
             printMouse(mouse.x, mouse.y);
 
+        // Async w.r.t. rendering too
         if (kbd.isPressed(SDLK_F12))
             takeScreenshot();
 
@@ -145,9 +140,10 @@ class RTDemo : GuiBase!Color
 
     private void printMouse(int x, int y)
     {
-        auto color = renderer.renderPixelNoAA(x, y);
+        auto res = renderPixel(this.scene, this.screen, x, y);
+        auto color = res[0];
+        auto result = res[1];
 
-        auto result = renderer.lastTracingResult;
 
         writefln("Mouse click at: (%s %s)", x, y);
         writefln("  Raytrace[start = %s, dir = %s]", result.ray.orig, result.ray.dir);
@@ -172,10 +168,10 @@ class RTDemo : GuiBase!Color
 
     private void move()
     {
-        // Ignore input events while rendering because we are already rendering.
+        // Ignore input events while rendering because we can't modify the scene.
         // Perhaps we can save the last input event and handle it
         // after we finish rendering.
-        if (needsRendering)
+        if (atomicLoad(isRendering))
             return;
 
         import derelict.sdl2.types;
