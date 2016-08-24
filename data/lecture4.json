@@ -9,7 +9,7 @@
 		"interactive"		: true,
 		"prepassEnabled"	: false
 	},
-	
+
 	"Camera" :
 	{
 		"type"		: "Camera",
@@ -20,7 +20,7 @@
 		"roll"		: 0.0,
 		"fov"		: 90.0
 	},
-	
+
 	"Lights" :
 	[
 		{
@@ -30,7 +30,7 @@
 			"color"		: [ 1.0, 1.0, 1.0 ],
 			"power"		: 50000
 		}
-	],	
+	],
 
 	"Geometries" :
 	[
@@ -40,7 +40,7 @@
 			"y"		: 2
 		}
 	],
-	
+
 	"Textures" :
 	[
 		{
@@ -51,7 +51,7 @@
 			"size"		: 5
 		}
 	],
-	
+
 	"Shaders" :
 	[
 		{
@@ -60,8 +60,8 @@
 			"texture"	: "checker"
 		}
 	],
-	
-	"Nodes" : 
+
+	"Nodes" :
 	[
 		{
 			"name"		: "floor",

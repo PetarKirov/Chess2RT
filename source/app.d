@@ -1,6 +1,6 @@
 module app;
 
-import gui.rtdemo, gui.guidemo;
+import gui.rtdemo, gui.guidemo, gui.opengl_demo;
 import core.stdc.stdlib : exit;
 import std.getopt : getopt;
 import std.stdio : writeln;
@@ -14,8 +14,7 @@ void main(string[] args)
 
 	getopt(args, "file", &sceneFilePath);
 
-	foreach (_; 0 .. 10)
-		runAppInScope(sceneFilePath);
+	runAppInScope(sceneFilePath);
 
 	debug printDiagnostics();
 
@@ -26,8 +25,9 @@ void runAppInScope(string filePath)
 {
 	import std.variant : Variant;
 
-	// auto app = scoped!(GuiDemo!uint)(800, 600, "Test GUI");
-	auto app = scoped!RTDemo();
+	auto app = scoped!(OpenGLDemo)(800, 600, "Test OpenGL");
+	//auto app = scoped!(GuiDemo!uint)(800, 600, "Test GUI");
+	//auto app = scoped!RTDemo();
 
 	bool normalQuit = app.run(Variant(filePath));
 

@@ -1,4 +1,4 @@
-﻿/*
+/*
 	lecture 5 includes:
 	- 1 plane with a texture [floor.bmp]
 	- 1 sphere with a texture [world.bmp]
@@ -72,7 +72,7 @@ Scene {
 			left		"cube"
 			right		"sphere"
 		}
-		
+
 		// Balls geometry:
 
 		Sphere {
@@ -99,7 +99,7 @@ Scene {
 	}
 
 	Shaders {
-		
+
 
 		Lambert {
 			name		"floor_shader"
@@ -110,7 +110,7 @@ Scene {
 			name		"globe_shader"
 			texture		"world"
 		}
-		
+
 		Phong {
 			name		"csg_shader"
 			color		0.5 0.5 0
@@ -122,7 +122,7 @@ Scene {
 			color		0.0 0.0 0.6
 			exponent	80
 		}
-		
+
 	}
 
 	Nodes {
@@ -141,7 +141,7 @@ Scene {
 			geometry	"globe_ball"
 			shader		"globe_shader"
 		}
-		
+
 		// CSG object:
 
 		Node {
@@ -170,6 +170,6 @@ Scene {
 			shader		"ball_shader"
 			translate	100 15 156
 		}
-		
+
 	}
 }

@@ -36,6 +36,12 @@ class Renderer
 		const Scene scene;
 		Image!Color outputImage;
 		Image!bool needsAA;
+		shared bool shutdownPending;
+	}
+
+	void notifyAboutShutdown()
+	{
+		this.shutdownPending = true;
 	}
 
 	TraceResult lastTracingResult;
@@ -47,8 +53,10 @@ class Renderer
 		this.needsAA.alloc(outputImage.w, outputImage.h);
 	}
 
-	void renderRT() @nogc
+	void renderRT()// @nogc
 	{
+		import std.parallelism;
+
 		MyArray!box2i buckets;
 
 		uint W = scene.settings.frameWidth;
@@ -63,6 +71,8 @@ class Renderer
 		if (scene.settings.prepassEnabled)
 			foreach(r; buckets[])
 			{
+				if (shutdownPending) return;
+
 				for (int dy = 0; dy < r.height; dy += 16)
 				{
 					int ey = min(r.height, dy + 16);
@@ -84,8 +94,10 @@ class Renderer
 			return;
 
 		// 2) Second pass - shoot _one_ ray per pixel:
-		foreach (b; buckets[])
+		foreach (b; buckets[].parallel)
 		{
+			if (shutdownPending) return;
+
 			foreach (y; b.min.y .. b.max.y)
 				foreach (x; b.min.x .. b.max.x)
 					renderPixelNoAA(x, y);
@@ -99,6 +111,7 @@ class Renderer
 			return;
 
 		foreach (y; 0 .. H) {
+			if (shutdownPending) return;
 			foreach (x; 0 .. W)
 			{
 				Color[5] neighs;
@@ -129,9 +142,13 @@ class Renderer
 		}
 
 		foreach (b; buckets[])
+		{
+			if (shutdownPending) return;
+
 			foreach (y; b.min.y .. b.max.y)
 				foreach (x; b.min.x .. b.max.x)
 					renderPixelAA(x, y);
+		}
 	}
 	
 private:

@@ -1,6 +1,6 @@
 ﻿module gui.guibase;
 
-import std.experimental.logger : Logger, sharedLog;
+import std.experimental.logger : log;
 import std.variant : Variant;
 import gui.appsceleton, gui.sdl2gui;
 import imageio.bmp : Image;
@@ -15,23 +15,17 @@ abstract class GuiBase(C) : AppSceleton
 	{
 		SDL2Gui gui;
 		Image!C screen;
-		Logger logger;
+		Variant init_args;
 	}
 
-	this(Logger customLogger)
+	this(Variant init_settings)
 	{
-		this.logger = customLogger;
-	}
-
-	this(uint width, uint height, string windowTitle)
-	{
-		this(sharedLog);
-		this.init(InitSettings(width, height, windowTitle).Variant);
+		this.init_args = init_settings;
 	}
 	
 	~this()
 	{
-		logger.log("At ~GuiBase()");
+		log("At ~GuiBase()");
 	}
 
 	static struct InitSettings
@@ -40,16 +34,21 @@ abstract class GuiBase(C) : AppSceleton
 		string windowTitle;
 	}
 
-	override void init(Variant init_params)
+	override void acquireResources()
 	{
-		if (init_params.peek!InitSettings is null)
+		if (init_args.peek!InitSettings is null)
 			return;
 
-		auto params = init_params.get!InitSettings;
+		auto params = init_args.get!InitSettings;
 
-		gui.init(params.width, params.height, params.windowTitle, logger);
+		gui.acquire(params.width, params.height, params.windowTitle);
 
 		screen.alloc(params.width, params.height);
+	}
+
+	override void releaseResources()
+	{
+		gui.release();
 	}
 
 	override bool handleInput()

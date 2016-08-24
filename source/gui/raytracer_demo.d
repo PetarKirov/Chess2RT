@@ -1,9 +1,10 @@
 ﻿module gui.rtdemo;
 
 import core.atomic : atomicOp;
+import std.range.primitives;
 import std.stdio : writefln;
 import std.datetime : benchmark, Clock;
-import std.experimental.logger : Logger, sharedLog;
+import std.experimental.logger : log, logf;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
 
 import std.concurrency;
@@ -45,39 +46,35 @@ class RTDemo : GuiBase!Color
 	Renderer renderer;
 	shared bool needsRendering;
 	shared bool isRendering;
-	shared byte[] tasksCount = new shared byte[2];
 	Tid renderThread;
 
-	this(Logger log = sharedLog)
+	this(Variant init_settings = Variant(null))
 	{
-		super(log);
-		//super(800, 600, "asd");
-		logger.log("At RTDemo.ctor");
-
-		//init2("".Variant);
+		super(init_settings);
+		log("At RTDemo.ctor");
 	}
 
 	~this()
 	{
-		logger.log("At RTDemo.dtor");
+		log("At RTDemo.dtor");
 	}
 
-	override void init(Variant init_settings)
+	override void acquireResources()
 	{
-		auto sceneFilePath = init_settings.get!string == "" ?
-			getPathToDefaultScene() :
-			init_settings.get!string;
+		auto sceneFilePath = init_args.peek!string &&
+			!init_args.get!string.empty?
+			init_args.get!string : 
+			getPathToDefaultScene();
 
-		logger.log("Loading scene: " ~ sceneFilePath);
+		log("Loading scene: " ~ sceneFilePath);
 
 		scene = parseSceneFromFile(sceneFilePath);
 
-		logger.log("Scene parsed successfully.");
+		log("Scene parsed successfully.");
 
-		gui.init(scene.settings.frameWidth,
+		gui.acquire(scene.settings.frameWidth,
 				 scene.settings.frameHeight,
-				 "Raytracing: '" ~ sceneFilePath ~ r"'... ¯\_(ツ)_/¯",
-				 logger);
+				 "Raytracing: '" ~ sceneFilePath ~ r"'... ¯\_(ツ)_/¯");
 
 		//Set the screen size according to the settings in the scene file
 		screen.alloc(scene.settings.frameWidth,
@@ -86,7 +83,13 @@ class RTDemo : GuiBase!Color
 		this.renderer = new Renderer(scene, screen);
 		this.needsRendering = true;
 		
-		logger.logf("%s", scene);
+		logf("%s", scene);
+	}
+
+	override void releaseResources()
+	{
+		this.renderer.notifyAboutShutdown();
+		this.gui.release();
 	}
 
 	override void render()
@@ -95,7 +98,7 @@ class RTDemo : GuiBase!Color
 		if (!needsRendering || isRendering)
 			return;
 
-		logger.log("Rendering!!!");
+		log("Rendering!!!");
 
 		isRendering = true;
 
@@ -126,6 +129,12 @@ class RTDemo : GuiBase!Color
 
 		if (kbd.isPressed(SDLK_F12))
 			takeScreenshot();
+
+		if (kbd.isPressed(SDLK_r))
+		{
+			releaseResources();
+			acquireResources();
+		}
 
 		return super.handleInput;
 	}
@@ -182,7 +191,7 @@ class RTDemo : GuiBase!Color
 
 		enum dMove = 32, dRotate = 4;
 
-		auto controls = 
+		auto keyCombos = 
 		[
 			Controls ([SDLK_RIGHT, SDLK_LCTRL], 0, 0, 0, 0, dRotate),
 			Controls ([SDLK_RIGHT, SDLK_LSHIFT], 0, 0, 0, -dRotate),
@@ -201,7 +210,23 @@ class RTDemo : GuiBase!Color
 			Controls ([SDLK_UP], 0, 0, dMove),
 		];
 
-		move_impl(controls);
+		import std.algorithm, std.range;
+
+		auto active = (Controls c) =>
+			c.keyCodes.all!(key => gui.sdl2.keyboard.isPressed(key));
+
+		keyCombos.find!(keyCombo => active(keyCombo))
+			.take(1)
+			.each!((Controls c)
+			{
+				scene.camera.move(c.dx, c.dy, c.dz);
+				scene.camera.rotate(c.dYaw, c.dRoll, c.dPitch);
+				
+				writefln("Camera movement: (x: %s y: %s z: %s) (yaw: %s roll: %s pitch: %s)",
+					c.dx, c.dy, c.dz, c.dYaw, c.dRoll, c.dPitch);
+				
+				needsRendering = true;
+			});
 	}
 
 	/// Encapsulates a camera control keys binding.
@@ -230,39 +255,5 @@ class RTDemo : GuiBase!Color
 			this.dRoll = dRoll;
 			this.dPitch = dPitch;
 		}
-	}
-
-	/// Moves and/or rotates the camera according to the
-	/// first control settings that match.
-	/// Params:
-	/// 	controls = array of control settings to check
-	private void move_impl(Controls[] controls)
-	{
-		foreach (c; controls)
-		{
-			if (areKeysPressed(c.keyCodes))
-			{
-				scene.camera.move(c.dx, c.dy, c.dz);
-				scene.camera.rotate(c.dYaw, c.dRoll, c.dPitch);
-
-				writefln("Camera movement: (x: %s y: %s z: %s) (yaw: %s roll: %s pitch: %s)",
-						 c.dx, c.dy, c.dz, c.dYaw, c.dRoll, c.dPitch);
-
-				needsRendering = true;
-				break;
-			}
-		}
-	}
-
-	/// Checks if all of the specified SDL2 keys are pressed.
-	private bool areKeysPressed(int[] keyCodes)
-	{
-		auto kbd = gui.sdl2.keyboard();
-
-		foreach (key; keyCodes)
-			if (!kbd.isPressed(key))
-				return false;
-
-		return true;
 	}
 }

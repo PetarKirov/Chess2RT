@@ -28,7 +28,7 @@ Scene parseSceneFromFile(string filename)
 	}
 	catch (FileException fEx)
 	{
-		throw new SceneNotFoundException();
+		throw new SceneNotFoundException("Scene file not found: \"" ~ filename.absolutePath ~ "\"!");
 	}
 	catch (JSONException jsonEx)
 	{

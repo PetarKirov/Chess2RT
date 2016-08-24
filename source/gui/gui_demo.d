@@ -21,7 +21,7 @@ class GuiDemo(T) : GuiBase!T
 
 	this(uint width, uint height, string windowTitle)
 	{
-		super(width, height, windowTitle);
+		super(Variant(super.InitSettings(width, height, windowTitle)));
 	}
 
 	override void render()
@@ -149,12 +149,12 @@ void drawCircle(Image!uint screen, float diameterToWidthRatio = 0.5)
 	}
 }
 
-Image!ARGB getImage(string imgPath = "data/texture/zaphod.bmp")
+Image!C getImage(C = ARGB)(string imgPath = "data/texture/zaphod.bmp")
 {
 	import imageio.bmp, imageio.buffer : UntypedBuffer;
 	import std.file : read;
 	
-	return imgPath.read().UntypedBuffer.loadBmpImage!ARGB;
+	return imgPath.read().UntypedBuffer.loadBmpImage!C;
 }
 
 void cropCopyTo(Img1, Img2)(Img1 source, Img2 dest)
@@ -164,7 +164,7 @@ void cropCopyTo(Img1, Img2)(Img1 source, Img2 dest)
 			if (x < source.w && y < source.h)
 				dest[x, y] = cast(typeof(dest[0, 0]))source[x, y];
 			else
-				dest[x, y] = 0;
+		dest[x, y] = typeof(dest[0, 0]).init;
 }
 
 void scaleCopyTo(Img1, Img2)(Img1 source, Img2 dest)

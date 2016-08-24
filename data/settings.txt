@@ -1,0 +1,12 @@
+﻿levelSeed 0
+cellCount 256
+cellMinimumRadius 0.005
+cellMaximumRadius 0.02
+cellMaximumVelocity 0.3
+playerCellInitialRadius 0.01
+exitOnSimulationFinished 1
+playerCellCount 1
+arenaCenter 0.0 0.0
+arenaRadius 1.0
+tickLength 0.005
+displayResolution 640

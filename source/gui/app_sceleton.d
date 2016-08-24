@@ -9,7 +9,7 @@ abstract class AppSceleton
 	///		true if the application is closing normally.
 	bool run(Variant init_params = null)
 	{
-		init(init_params);
+		acquireResources();
 		
 		while(handleInput())
 		{
@@ -22,7 +22,9 @@ abstract class AppSceleton
 	}
 
 	/// Initializes the application's resources.
-	void init(Variant init_params);
+	void acquireResources();
+
+	void releaseResources();
 
 	/// Handles the input.
 	/// Returns:
