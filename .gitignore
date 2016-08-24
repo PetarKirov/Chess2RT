@@ -19,6 +19,9 @@ bin/
 *.exe_cv
 *.pdb
 
+# VIM
+*.swp
+
 # DUB
 .dub/
 dub.selections.json
