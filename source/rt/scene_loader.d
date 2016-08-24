@@ -193,11 +193,9 @@ private:
         obj.deserialize(root, this);
 
         static if (NamedEntities.canBeStored!T)
-            if (root.isSpecified("name"))
+            if (auto name = root.getName)
             {
-                string name = root.getChild("name").getString;
-                enforce(name !in scene.namedEntities.getArray!T(),
-                        new EntityWithDuplicateName(name));
+                enforce!EntityWithDuplicateName(name !in scene.namedEntities.getArray!T(), name);
                 scene.namedEntities.getArray!T()[name] = obj;
             }
 
@@ -223,6 +221,8 @@ interface SceneDscNode
     /// Note: Only available for top-level objects/tags
     string getType() const @trusted;
 
+    string getName() const @trusted;
+
     bool isSpecified(string propertyName) const @trusted;
 
     SceneDscNode getChild(string propertyName) const @trusted;
@@ -247,6 +247,11 @@ class JsonValueWrapper : SceneDscNode
     override string getType() const @trusted
     {
         return json["type"].str;
+    }
+
+    override string getName() const @trusted
+    {
+        return isSpecified("name")? json["name"].str : null;
     }
 
     override bool isSpecified(string propertyName) const @trusted
@@ -332,6 +337,18 @@ class SdlValueWrapper : SceneDscNode
     override string getType() const @trusted
     {
         return (cast(SDLTag)tag).name;
+    }
+
+    override string getName() const @trusted
+    {
+        if (tag.values.length && tag.values[0].convertsTo!string)
+            return getString;
+
+        else if (isSpecified("name"))
+            return getChild("name").getString;
+
+        else
+            return null;
     }
 
     override bool isSpecified(string propertyName) const @trusted

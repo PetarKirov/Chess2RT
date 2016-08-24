@@ -40,8 +40,7 @@ Scene {
 
         // Plane:
 
-        Plane {
-            name 		"floor"
+        Plane "floor" {
             y			-0.01
         }
 

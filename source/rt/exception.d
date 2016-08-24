@@ -48,11 +48,9 @@ class EntityWithDuplicateName : InvalidSceneException
 {
     @safe pure
     this(string entityName,
-         string msg = null,
-         Throwable next = null,
          string file = __FILE__, size_t line = __LINE__)
     {
-        msg = msg? msg : format("An entity named %s is already present!", entityName);
+        msg = format("An entity named %s is already present!", entityName);
         super(msg, next, file, line);
     }
 }
