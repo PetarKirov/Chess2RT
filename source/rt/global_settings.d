@@ -12,7 +12,7 @@ class GlobalSettings : Deserializable
 
     // Multithreading:
     uint bucketSize = 48;               // Image sub-rectange (square) width.
-    size_t threadCount = 1;             // [Not implemented] Number of rendering threads; default (or 0) - autodetect.
+    uint threadCount = 0;               // Number of rendering threads; default (or 0) - autodetect.
 
     // Rendering:
     bool prepassEnabled = true;         // Quick low-resolution preview rendering.
