@@ -34,6 +34,13 @@ void clip(ref box2i box, int maxX, int maxY) pure nothrow @safe @nogc
     box.max.y = min(box.max.y, maxY);
 }
 
+public import std.math : isFinite;
+
+bool isFiniteVec(in ref Vector v) pure nothrow @safe @nogc
+{
+    return v[0].isFinite && v[1].isFinite && v[2].isFinite;
+}
+
 Vector project(const Vector v, int a, int b, int c) pure nothrow @safe @nogc
 {
     Vector result;

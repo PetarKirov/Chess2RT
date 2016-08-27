@@ -30,21 +30,48 @@ struct SDL2Gui
                                 SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS);
         _window.setTitle(title);
         _renderer = new SDL2Renderer(window, SDL_RENDERER_SOFTWARE);
-        _surface = new SDL2Surface(sdl2, width, height, 32,
-                                  0x00FF0000,
-                                  0x0000FF00,
-                                  0x000000FF,
-                                  0xFF000000);
 
-        _texture = new SDL2Texture(renderer,
-                                  SDL_PIXELFORMAT_ARGB8888,
-                                  SDL_TEXTUREACCESS_STREAMING,
-                                  surface.width, surface.height);
-        this.width = width;
-        this.height = height;
+        setSize(width, height);
 
         renderer.setColor(0, 0, 0, 255);
         renderer.clear();
+    }
+
+    void setSize(uint width, uint height)
+    {
+        if (this.width == width && this.height == height)
+        {
+            log.log("Window size didn't change!");
+            return;
+        }
+
+        log.logf("Changing window size from (%s, %s) to (%s, %s)",
+                this.width, this.height,
+                width, height);
+
+        if (this._surface) this._surface.destroy();
+        if (this._texture) this._texture.destroy();
+
+        this._window.setSize(width, height);
+
+        this._surface = new SDL2Surface(sdl2, width, height, 32,
+            0x00FF0000,
+            0x0000FF00,
+            0x000000FF,
+            0xFF000000);
+
+        this._texture = new SDL2Texture(renderer,
+            SDL_PIXELFORMAT_ARGB8888,
+            SDL_TEXTUREACCESS_STREAMING,
+            surface.width, surface.height);
+
+        this.width = width;
+        this.height = height;
+    }
+
+    void setTitle(string title)
+    {
+        this._window.setTitle(title);
     }
 
     void draw(SRC)(auto ref SRC image)
