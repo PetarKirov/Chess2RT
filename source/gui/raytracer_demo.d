@@ -1,13 +1,11 @@
 module gui.rtdemo;
 
-import core.atomic : atomicLoad, atomicStore;
+import core.atomic : atomicLoad, atomicStore, cas;
 import std.stdio : writefln;
 import std.format : format;
 import std.datetime : benchmark, Clock;
 import std.experimental.logger : Logger, sharedLog;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
-
-import std.concurrency;
 
 /// Returns a path to the default scene
 /// read from the file "data/default_scene.path"
@@ -52,10 +50,8 @@ class RTDemo : GuiBase!Color
     this(Logger log = sharedLog)
     {
         super(log);
-        //super(800, 600, "asd");
-        logger.log("At RTDemo.ctor");
 
-        //init2("".Variant);
+        logger.log("At RTDemo.ctor");
     }
 
     ~this()
@@ -69,24 +65,26 @@ class RTDemo : GuiBase!Color
             getPathToDefaultScene() :
             init_settings.get!string;
 
-        logger.log("Loading scene: " ~ sceneFilePath);
-
-        scene = parseSceneFromFile(sceneFilePath);
-
-        logger.log("Scene parsed successfully.");
-
-        gui.init(scene.settings.frameWidth,
-                 scene.settings.frameHeight,
-                 windowTitleFormat.format(sceneFilePath),
-                 logger);
-
-        //Set the screen size according to the settings in the scene file
-        screen.alloc(scene.settings.frameWidth,
-                    scene.settings.frameHeight);
-
-        this.needsRendering = true;
+        resetScene(true);
 
         logger.logf("%s", scene);
+    }
+
+    override void update()
+    {
+        gui.sdl2.processEvents();
+
+        /*
+         * Block the UI event loop if there's nothing going on,
+         * in order to avoid needless polling. Otherwise, keep
+         * updating the screen.
+         */
+        if (!atomicLoad(this.isRendering) && !needsRendering)
+        {
+            import derelict.sdl2.sdl : SDL_Event;
+            SDL_Event event;
+            gui.sdl2.waitEvent(&event);
+        }
     }
 
     override void render()
@@ -98,9 +96,49 @@ class RTDemo : GuiBase!Color
 
         isRendering.atomicStore(true);
 
-        renderSceneAsync(this.scene, this.screen, &this.isRendering);
-
+        /*
+         * Ok to set to false here (and not when the rendering
+         * thread finishes, because there's no danger of reentrancy
+         * since we're synchronizing on the `isRendering` var too.
+         */
         needsRendering = false;
+
+        renderSceneAsync(this.scene, this.screen, &this.isRendering);
+    }
+
+    void resetScene(bool newWindow = false)
+    {
+        if (!cas(&(this.isRendering), false, true))
+            return;
+
+        logger.log("Loading scene: " ~ sceneFilePath);
+
+        this.scene = parseSceneFromFile(sceneFilePath);
+
+        logger.log("Scene parsed successfully.");
+
+        this.needsRendering = true;
+
+        if (newWindow)
+        {
+            gui.init(scene.settings.frameWidth,
+                 scene.settings.frameHeight,
+                 windowTitleFormat.format(sceneFilePath),
+                 logger);
+        }
+        else
+        {
+            this.gui.setTitle(windowTitleFormat.format(sceneFilePath));
+            this.gui.setSize(scene.settings.frameWidth, scene.settings.frameHeight);
+        }
+
+        //Set the screen size according to the settings in the scene file
+        screen.alloc(scene.settings.frameWidth,
+                    scene.settings.frameHeight);
+
+        logger.log("Window reset successfully!");
+
+        this.isRendering.atomicStore(false);
     }
 
     override bool handleInput()
@@ -119,8 +157,12 @@ class RTDemo : GuiBase!Color
             printMouse(mouse.x, mouse.y);
 
         // Async w.r.t. rendering too
-        if (kbd.isPressed(SDLK_F12))
+        if (kbd.testAndRelease(SDLK_F12))
             takeScreenshot();
+
+        // Async w.r.t. rendering too^2
+        if (kbd.testAndRelease(SDLK_r))
+            resetScene();
 
         return super.handleInput;
     }
@@ -238,6 +280,7 @@ class RTDemo : GuiBase!Color
         {
             if (areKeysPressed(c.keyCodes))
             {
+                this.scene.beginFrame(); // ensure the camera is initialized
                 scene.camera.move(c.dx, c.dy, c.dz);
                 scene.camera.rotate(c.dYaw, c.dRoll, c.dPitch);
 
