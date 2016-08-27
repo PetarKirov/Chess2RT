@@ -42,8 +42,42 @@ class Camera : Deserializable
     size_t numSamples = 25;
     double stereoSeparation = 0.0;
 
+    private
+    {
+        // these internal vectors describe three of the ends of the imaginary
+        // ray shooting screen
+        Vector upLeft, upRight, downLeft;
+        Vector frontDir, rightDir, upDir;
+    }
+
+    private void state_invariant() const @safe @nogc pure nothrow
+    {
+        assert (frameWidth > 0 && frameHeight > 0, "Error: `frameWidth` and `frameHeight` should be > 0");
+        assert (aspect.isFinite);
+        assert (pos.isFiniteVec);
+        assert (yaw.isFinite);
+        assert (pitch.isFinite);
+        assert (roll.isFinite);
+        assert (fov.isFinite);
+        assert (focalPlaneDist.isFinite);
+        assert (fNumber.isFinite);
+        assert (discMultiplier.isFinite);
+        assert (stereoSeparation.isFinite);
+        assert (upLeft.isFiniteVec);
+        assert (upRight.isFiniteVec);
+        assert (downLeft.isFiniteVec);
+        assert (rightDir.isFiniteVec);
+        assert (upDir.isFiniteVec);
+        assert (frontDir.isFiniteVec);
+    }
+
     /// Must be called before each frame. Computes the corner variables, needed for getScreenRay()
     void beginFrame() @safe @nogc
+    out
+    {
+        state_invariant();
+    }
+    body
     {
         double x = -aspect;
         double y = +1;
@@ -83,8 +117,21 @@ class Camera : Deserializable
     /// generates a screen ray through a pixel (x, y - screen coordinates, not necessarily integer).
     /// if the camera parameter is present - offset the rays' start to the left or to the right,
     /// for use in stereoscopic rendering
+    const @nogc @safe // not pure because of uniform(..) in unitDiscSample(..)
     Ray getScreenRay(double x, double y,
-                                     Stereo3DOffset offset = Stereo3DOffset.None) const @nogc @safe // not pure because of uniform(..) in unitDiscSample(..)
+        Stereo3DOffset offset = Stereo3DOffset.None)
+    in
+    {
+        assert (x.isFinite);
+        assert (y.isFinite);
+        state_invariant();
+    }
+    out (result)
+    {
+        assert (result.orig.isFiniteVec);
+        assert (result.dir.isFiniteVec);
+    }
+    body
     {
         Ray result; // A, B -     C = A + (B - A) * x
         result.orig = this.pos;
@@ -129,11 +176,29 @@ class Camera : Deserializable
     ///     dx = left/right movement
     ///     dy = up/down movement
     ///     dz = forward/backword movement
-    void move(double dx, double dy, double dz)
+    void move(double Δx, double Δy, double Δz)
+    in
     {
-        pos += dx * rightDir;
-        pos += dy * upDir;
-        pos += dz * frontDir;
+        enum errMsgArgs = "Error: `Camera.move` called with non-finite floating point args!";
+
+        assert (Δx.isFinite, errMsgArgs);
+        assert (Δy.isFinite, errMsgArgs);
+        assert (Δz.isFinite, errMsgArgs);
+
+        enum errMsg = "Error: `Camera.move` called on an uninitialized camera. " ~
+            "`beginFrame` must be called first.";
+
+        assert (rightDir.isFiniteVec, errMsg);
+        assert (upDir.isFiniteVec, errMsg);
+        assert (frontDir.isFiniteVec, errMsg);
+
+        state_invariant();
+    }
+    body
+    {
+        pos += Δx * rightDir;
+        pos += Δy * upDir;
+        pos += Δz * frontDir;
     }
 
     /// Rotates the camera.
@@ -141,11 +206,22 @@ class Camera : Deserializable
     ///     dYaw = left/right rotation [0..360]
     ///     dRoll = roll rotation [-180..180]
     ///     dPitch = up/down rotation [-90..90]
-    void rotate(double dYaw, double dRoll, double dPitch)
+    void rotate(double ΔYaw, double ΔRoll, double ΔPitch)
+    in
     {
-        yaw += dYaw;
-        roll += dRoll;
-        pitch += dPitch;
+        enum errMsg = "Error: `Camera.rotate` called with non-finite floating point args!";
+
+        assert (ΔYaw.isFinite, errMsg);
+        assert (ΔRoll.isFinite, errMsg);
+        assert (ΔPitch.isFinite, errMsg);
+
+        state_invariant();
+    }
+    body
+    {
+        yaw += ΔYaw;
+        roll += ΔRoll;
+        pitch += ΔPitch;
 
         pitch = clamp(pitch, -90, 90);
     }
@@ -170,13 +246,6 @@ class Camera : Deserializable
         context.set(this.stereoSeparation, val, "stereoSeparation");
         discMultiplier = 10.0 / fNumber;
     }
-
-private:
-    // these internal vectors describe three of the ends of the imaginary
-    // ray shooting screen
-    Vector upLeft, upRight, downLeft;
-
-    Vector frontDir, rightDir, upDir;
 }
 
 void unitDiscSample(ref double x, ref double y) @safe @nogc // not pure because of uniform(..)
