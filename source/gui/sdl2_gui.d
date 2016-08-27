@@ -47,6 +47,26 @@ struct SDL2Gui
         renderer.clear();
     }
 
+    void setSize(uint width, uint height)
+    {
+        if (this.width == width && this.height == height)
+        {
+            log.log("Window size didn't change!");
+            return;
+        }
+
+        log.logf("Changing window size from (%s, %s) to (%s, %s)",
+                this.width, this.height,
+                width, height);
+
+        this._window.setSize(width, height);
+    }
+
+    void setTitle(string title)
+    {
+        this._window.setTitle(title);
+    }
+
     void draw(SRC)(auto ref SRC image)
     {
         uint* pixels = cast(uint*)surface.pixels;
