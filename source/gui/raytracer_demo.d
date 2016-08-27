@@ -66,8 +66,6 @@ class RTDemo : GuiBase!Color
             init_settings.get!string;
 
         resetScene(true);
-
-        logger.logf("%s", scene);
     }
 
     override void update()
@@ -92,7 +90,7 @@ class RTDemo : GuiBase!Color
         if (!needsRendering || atomicLoad(isRendering))
             return;
 
-        logger.log("Rendering!!!");
+        logger.log("Spawning render thread...");
 
         isRendering.atomicStore(true);
 
@@ -111,11 +109,13 @@ class RTDemo : GuiBase!Color
         if (!cas(&(this.isRendering), false, true))
             return;
 
-        logger.log("Loading scene: " ~ sceneFilePath);
+        logger.logf("Resetting state. New app instance: %s.", newWindow);
+
+        logger.logf("Loading scene: %s...", sceneFilePath);
 
         this.scene = parseSceneFromFile(sceneFilePath);
 
-        logger.log("Scene parsed successfully.");
+        logger.logf("Scene parsed successfully:\n%s", this.scene);
 
         this.needsRendering = true;
 
@@ -136,7 +136,7 @@ class RTDemo : GuiBase!Color
         screen.alloc(scene.settings.frameWidth,
                     scene.settings.frameHeight);
 
-        logger.log("Window reset successfully!");
+        logger.log("State successfully reset.");
 
         this.isRendering.atomicStore(false);
     }
