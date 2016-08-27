@@ -13,151 +13,260 @@ struct BoardPosition
 		this.x = x;
 		this.y = y;
 	}
+	bool isValid()
+	{
+		return x < 8 && y < 8;
+	}
+}
+
+struct LastMove
+{
+	BoardPosition pos1;
+	Piece* pieceAtPos1;
+	BoardPosition pos2;
+	Piece* pieceAtPos2;
 }
 
 struct PlayerSettings
 {
 	BoardPosition kingPosition;
-	RedBlackTree!(Piece*) pieces;
-	BoardPosition[] lostPieces;
 }
 
-struct Board
+class Board
 {
     private
     {
-        Piece[64] board;
-        uint movesCounter;
-		bool isWhitesTurn = true;
+        Piece*[8][8] board;
+		PieceColor activePlayer = PieceColor.White;
 		PlayerSettings[2] playersSettings;
+		LastMove lastMove;
     }
 
+	this()
+	{
+		char[64] s = "rnbqkbnr" ~
+			"pppppppp" ~
+			"........" ~
+			"........" ~
+			"........" ~
+			"........" ~
+			"PPPPPPPP" ~
+			"RNBQKBNR";
+		this(s);
+	}
 	this(char[64] asciiRepresentation)
     {
-        foreach(i, c; asciiRepresentation)
-            board[i] = Piece(c);
+		//foreach(i, c; asciiRepresentation)
+		//    this[i/8,i%8] = generatePiece(c, &this);
     }
 
-	inout(Piece) opIndex(BoardPosition pos) inout
+	ref Piece* opIndex(BoardPosition pos)
 	{
-		return board[(8 - pos.x) * 8 + pos.y];
+		return board[pos.x][pos.y];
 	}
 
-    inout(Piece) opIndex(Col c, Row r) inout
+    ref Piece* opIndex(uint r, uint c)
     {
-        return board[(8 - r) * 8 + c];
-    }
-
-    inout(Piece) opIndex(const(char)[2] c) inout
-    {
-        return this[
-            cast(Col)(c[0] - 'a'),
-            cast(Row)(c[1] - '0' )
-        ];
+        return board[r][c];
     }
 
 	bool isCheck()
 	{
-		PlayerSettings* opponentSettings = &playersSettings[isWhitesTurn ? 1 : 0];
-		PlayerSettings* playerSettings = &playersSettings[isWhitesTurn ? 1 : 0];
-		foreach (piece; opponentSettings.pieces)
+		BoardPosition activeKing = (activePlayer == PieceColor.White) ? playersSettings[0].kingPosition : playersSettings[1].kingPosition;
+		for(uint i=0; i<8; ++i)
 		{
-			if(piece.canHit(playerSettings.kingPosition))
-				return true;
+			for(uint j=0; j<8; ++j)
+			{
+				Piece* currentPiece = board[i][j];
+				if(currentPiece && currentPiece.canHit(activeKing))
+				{
+					return true;
+				}
+			}
 		}
 		return false;
 	}
 
 	bool isMate()
 	{
-		//TODO
 		return false;
 	}
 
-	bool isWhiteTurn()
+	PieceColor getActivePlayer()
 	{
-		return isWhitesTurn;
+		return activePlayer;
 	}
-
-	Piece moveSimple(BoardPosition pos1, BoardPosition pos2)
+	private:
+	void simpleMove(BoardPosition pos1, BoardPosition pos2)
 	{
-		Piece pieceAtPos2 = board[(8 - pos2.x) * 8 + pos2.y];
-		this[pos2] = this[pos1];
-		this[pos1] = Piece('.');
-		return pieceAtPos2;
+		Piece* piece1 = this[pos1];
+		Piece* piece2 = this[pos2];
+
+		this[pos1] = null;
+		this[pos2] = piece1;
+		updateLastMove(pos1, piece1, pos2, piece2);
+	}
+	private:
+	void updateLastMove(BoardPosition pos1, Piece* pieceAtPos1, 
+						BoardPosition pos2, Piece* pieceAtPos2)
+	{
+		this.lastMove.pos1 = pos1;
+		this.lastMove.pieceAtPos1 = pieceAtPos1;
+		this.lastMove.pos2 = pos2;
+		this.lastMove.pieceAtPos2 = pieceAtPos2;
+	}
+	private:
+	void undoLastMove()
+	{
+		this[lastMove.pos1] = lastMove.pieceAtPos2;
+		this[lastMove.pos2] = lastMove.pieceAtPos1;
 	}
 	bool move(BoardPosition pos1, BoardPosition pos2)
 	{
-		if(!this[pos1].canHit(pos2))
+		if(!this[pos1] || !this[pos1].canHit(pos2))
+		{
 			return false;
-		Piece pieceAtPos2 = moveSimple(pos1, pos2);
+		}
+
+		simpleMove(pos1, pos2);
 
 		if(isCheck())
 		{
-			// restoring original
-			moveSimple(pos2, pos1);
-			this[pos2] = pieceAtPos2;
+			//illegal move, undo
+			undoLastMove();
 			return false;
 		}
+
+		//update all figures
 		return true;
 	}
 
     void toString(scope void delegate(const(char)[]) sink) const
     {
-        foreach (row; 0 .. 8)
-        {
-            if (row != 0) sink("\n");
-
-            sink(board[row * 8 .. row * 8 + 8]
-                .map!((piece) => toCharA(cast(PieceEnum)piece))
-                .array);
-
-        }
     }
-}
+	/************************************************************/
+	//return value indicates whether to continue or not
+	private
+	{
+		bool appendPosition(BoardPosition[] arr, BoardPosition pos, PieceColor color)
+		{
+			Piece* current = this[pos];
+			if(current == null)
+			{
+				arr ~= pos;
+				return true;
+			}
+			if(current.color != color)
+				arr ~= pos;
+			return false;
+		}
+		BoardPosition[] getLeftHorizontal(PieceColor color, BoardPosition pos)
+		{
+			BoardPosition[] result;
+			result.reserve(7);
+			for(int x = pos.x - 1; x >= 0; --x)
+			{
+				if(appendPosition(result, BoardPosition(x, pos.y), color))
+					continue;
+				break;
+			}
+			return result;
+		}
 
-enum Row
-{
-    r1,
-    r2,
-    r3,
-    r4,
-    r5,
-    r6,
-    r7,
-    r8
-}
+		BoardPosition[] getRightHorizontal(PieceColor color, BoardPosition pos)
+		{
+			BoardPosition[] result;
+			result.reserve(7);
+			for(int x = pos.x + 1; x < 8; ++x)
+			{
+				if(appendPosition(result, BoardPosition(x, pos.y), color))
+					continue;
+				break;
+			}
+			return result;
+		}
 
-enum Col
-{
-    a,
-    b,
-    c,
-    d,
-    e,
-    f,
-    g,
-    h
-}
+		BoardPosition[] getUpVertical(PieceColor color, BoardPosition pos)
+		{
+			BoardPosition[] result;
+			result.reserve(7);
+			for(int y = pos.y - 1; y >= 0; --y)
+			{
+				if(appendPosition(result, BoardPosition(pos.x, y), color))
+					continue;
+				break;
+			}
+			return result;
+		}
 
+		BoardPosition[] getDownVertical(PieceColor color, BoardPosition pos)
+		{
+			BoardPosition[] result;
+			result.reserve(7);
+			for(int y = pos.y + 1; y < 8; ++y)
+			{
+				if(appendPosition(result, BoardPosition(pos.x, y), color))
+					continue;
+				break;
+			}
+			return result;
+		}
+
+		BoardPosition[] getUpRightDiagonal(PieceColor color, BoardPosition pos)
+		{
+			BoardPosition[] result;
+			result.reserve(7);
+			for(int x = pos.x - 1, y = pos.y + 1; x >=0 && y < 8 ; --x, ++y)
+			{
+				if(appendPosition(result, BoardPosition(x, y), color))
+					continue;
+				break;
+			}
+			return result;
+		}
+
+		BoardPosition[] getUpLeftDiagonal(PieceColor color, BoardPosition pos)
+		{
+			BoardPosition[] result;
+			result.reserve(7);
+			for(int x = pos.x - 1, y = pos.y - 1; x >=0 && y >= 0 ; --x, --y)
+			{
+				if(appendPosition(result, BoardPosition(x, y), color))
+					continue;
+				break;
+			}
+			return result;
+		}
+
+		BoardPosition[] getDownRightDiagonal(PieceColor color, BoardPosition pos)
+		{
+			BoardPosition[] result;
+			result.reserve(7);
+			for(int x = pos.x + 1, y = pos.y - 1; x < 8 && y >= 0; ++x, --y)
+			{
+				if(appendPosition(result, BoardPosition(x, y), color))
+					continue;
+				break;
+			}
+			return result;
+		}
+
+		BoardPosition[] getDownLeftDiagonal(PieceColor color, BoardPosition pos)
+		{
+			BoardPosition[] result;
+			result.reserve(7);
+			for(int x = pos.x + 1, y = pos.y + 1; x < 8 && y < 8 ; ++x, ++y)
+			{
+				if(appendPosition(result, BoardPosition(x, y), color))
+					continue;
+				break;
+			}
+			return result;
+		}
+	}
+}
 
 void test()
 {
-    char[64] s = "rnbqkbnr" ~
-                 "pppppppp" ~
-                 "........" ~
-                 "........" ~
-                 "........" ~
-                 "........" ~
-                 "PPPPPPPP" ~
-                 "RNBQKBNR";
-
-    Board b = Board(s);
-
-    import std.stdio;
-    writeln(b);
-
-    writeln(b["a1"]);
-    writeln(b["b2"]);
-    writeln(b["d8"]);
+    //Board b = Board();
 }
