@@ -1,12 +1,11 @@
 module gui.rtdemo;
 
-import core.atomic : atomicOp;
+import core.atomic : atomicLoad, atomicStore, cas;
 import std.stdio : writefln;
+import std.format : format;
 import std.datetime : benchmark, Clock;
 import std.experimental.logger : Logger, sharedLog;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
-
-import std.concurrency;
 
 /// Returns a path to the default scene
 /// read from the file "data/default_scene.path"
@@ -41,20 +40,18 @@ import gui.guidemo, imageio.image;;
 
 class RTDemo : GuiBase!Color
 {
+    enum windowTitleFormat = r"Raytracing: `%s` ... ¯\_(ツ)_/¯";
+
     Scene scene;
-    Renderer renderer;
-    shared bool needsRendering;
+    string sceneFilePath;
+    bool needsRendering;
     shared bool isRendering;
-    shared byte[] tasksCount = new shared byte[2];
-    Tid renderThread;
 
     this(Logger log = sharedLog)
     {
         super(log);
-        //super(800, 600, "asd");
-        logger.log("At RTDemo.ctor");
 
-        //init2("".Variant);
+        logger.log("At RTDemo.ctor");
     }
 
     ~this()
@@ -64,68 +61,108 @@ class RTDemo : GuiBase!Color
 
     override void init(Variant init_settings)
     {
-        auto sceneFilePath = init_settings.get!string == "" ?
+        this.sceneFilePath = init_settings.get!string == "" ?
             getPathToDefaultScene() :
             init_settings.get!string;
 
-        logger.log("Loading scene: " ~ sceneFilePath);
+        resetScene(true);
+    }
 
-        scene = parseSceneFromFile(sceneFilePath);
+    override void update()
+    {
+        gui.sdl2.processEvents();
 
-        logger.log("Scene parsed successfully.");
+        /*
+         * Block the UI event loop if there's nothing going on,
+         * in order to avoid needless polling. Otherwise, keep
+         * updating the screen.
+         */
+        if (!atomicLoad(this.isRendering) && !needsRendering)
+        {
+            import derelict.sdl2.sdl : SDL_Event;
+            SDL_Event event;
+            gui.sdl2.waitEvent(&event);
+        }
+    }
 
-        gui.init(scene.settings.frameWidth,
+    override void render()
+    {
+        if (!needsRendering || atomicLoad(isRendering))
+            return;
+
+        logger.log("Spawning render thread...");
+
+        isRendering.atomicStore(true);
+
+        /*
+         * Ok to set to false here (and not when the rendering
+         * thread finishes, because there's no danger of reentrancy
+         * since we're synchronizing on the `isRendering` var too.
+         */
+        needsRendering = false;
+
+        renderSceneAsync(this.scene, this.screen, &this.isRendering);
+    }
+
+    void resetScene(bool newWindow = false)
+    {
+        if (!cas(&(this.isRendering), false, true))
+            return;
+
+        logger.logf("Resetting state. New app instance: %s.", newWindow);
+
+        logger.logf("Loading scene: %s...", sceneFilePath);
+
+        this.scene = parseSceneFromFile(sceneFilePath);
+
+        logger.logf("Scene parsed successfully:\n%s", this.scene);
+
+        this.needsRendering = true;
+
+        if (newWindow)
+        {
+            gui.init(scene.settings.frameWidth,
                  scene.settings.frameHeight,
-                 "Raytracing: '" ~ sceneFilePath ~ r"'... ¯\_(ツ)_/¯",
+                 windowTitleFormat.format(sceneFilePath),
                  logger);
+        }
+        else
+        {
+            this.gui.setTitle(windowTitleFormat.format(sceneFilePath));
+            this.gui.setSize(scene.settings.frameWidth, scene.settings.frameHeight);
+        }
 
         //Set the screen size according to the settings in the scene file
         screen.alloc(scene.settings.frameWidth,
                     scene.settings.frameHeight);
 
-        this.renderer = new Renderer(scene, screen);
-        this.needsRendering = true;
+        logger.log("State successfully reset.");
 
-        logger.logf("%s", scene);
-    }
-
-    override void render()
-    {
-        //No need for re-rendering - nothing changes in the main loop.
-        if (!needsRendering || isRendering)
-            return;
-
-        logger.log("Rendering!!!");
-
-        isRendering = true;
-
-        auto async_render = (shared RTDemo this_s)
-        {
-            auto this_ = cast(RTDemo)this_s;
-            this_.scene.beginFrame();
-            this_.renderer.renderRT();
-            this_s.isRendering = false;
-            this_s.needsRendering = false;
-        };
-
-        spawn(async_render, (cast(shared)this));
+        this.isRendering.atomicStore(false);
     }
 
     override bool handleInput()
     {
         import derelict.sdl2.types;
 
+        // Sync w.r.t. rendering (changes state)
         if (scene.settings.interactive)
             move();
 
         auto mouse = gui.sdl2.mouse();
         auto kbd = gui.sdl2.keyboard();
 
+        // Async w.r.t. rendering
         if (mouse.isButtonPressed(SDL_BUTTON_LMASK))
             printMouse(mouse.x, mouse.y);
 
-        if (kbd.isPressed(SDLK_F12))
+        // Async w.r.t. rendering too
+        if (kbd.testAndRelease(SDLK_F12))
             takeScreenshot();
+
+        // Async w.r.t. rendering too^2
+        if (kbd.testAndRelease(SDLK_r))
+            resetScene();
 
         return super.handleInput;
     }
@@ -145,9 +182,10 @@ class RTDemo : GuiBase!Color
 
     private void printMouse(int x, int y)
     {
-        auto color = renderer.renderPixelNoAA(x, y);
+        auto res = renderPixel(this.scene, this.screen, x, y);
+        auto color = res[0];
+        auto result = res[1];
 
-        auto result = renderer.lastTracingResult;
 
         writefln("Mouse click at: (%s %s)", x, y);
         writefln("  Raytrace[start = %s, dir = %s]", result.ray.orig, result.ray.dir);
@@ -172,10 +210,10 @@ class RTDemo : GuiBase!Color
 
     private void move()
     {
-        // Ignore input events while rendering because we are already rendering.
+        // Ignore input events while rendering because we can't modify the scene.
         // Perhaps we can save the last input event and handle it
         // after we finish rendering.
-        if (needsRendering)
+        if (atomicLoad(isRendering))
             return;
 
         import derelict.sdl2.types;
@@ -242,6 +280,7 @@ class RTDemo : GuiBase!Color
         {
             if (areKeysPressed(c.keyCodes))
             {
+                this.scene.beginFrame(); // ensure the camera is initialized
                 scene.camera.move(c.dx, c.dy, c.dz);
                 scene.camera.rotate(c.dYaw, c.dRoll, c.dPitch);
 
