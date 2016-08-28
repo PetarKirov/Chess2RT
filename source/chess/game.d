@@ -65,15 +65,19 @@ class Board
 	void reset(char[64] asciiRepresentation)
 	{
 		foreach(i, c; asciiRepresentation)
-		    this[i/8,i%8] = generatePiece(c, this, BoardPosition(i/8, i%8));
+		{
+			int row = cast(int)(i/8);
+			int col = cast(int)(i%8);
+		    this[row,col] = generatePiece(c, this, BoardPosition(row, col));
+		}
 		updatePieces();
 	}
-	ref Piece opIndex(BoardPosition pos)
+	ref inout(Piece) opIndex(BoardPosition pos) inout
 	{
 		return board[pos.x][pos.y];
 	}
 
-    ref Piece opIndex(uint r, uint c)
+    ref inout(Piece) opIndex(int r, int c) inout
     {
         return board[r][c];
     }
