@@ -140,10 +140,40 @@ class Board
 							"........" ~
 							"........" ~
 							"........" ~
-							"........" ~
+							".....N.." ~
 							"q......." ~
 							"r......K");
+		assert(!b.isMate());
+
+		b = new Board("........" ~
+					  "........" ~
+					  "........" ~
+					  "........" ~
+				      "........" ~
+					  "........" ~
+					  "q......." ~
+					  "r......K");
 		assert(b.isMate());
+
+		b = new Board("........" ~
+					  "........" ~
+					  "........" ~
+					  "...b...." ~
+				      "........" ~
+					  "........" ~
+					  ".......N" ~
+					  "r......K");
+		assert(b.isMate());
+		
+		b = new Board("........" ~
+					  "........" ~
+					  "........" ~
+					  "...b...." ~
+				      "........" ~
+					  "........" ~
+					  "........" ~
+					  "r......K");
+		assert(!b.isMate());
 	}
 
 	PieceColor getActivePlayer()
@@ -186,6 +216,7 @@ class Board
 							"....P.P." ~
 							"........" ~
 							"........");
+		b.activePlayer = PieceColor.Black;
 		assert(b.move(BoardPosition(1,0), BoardPosition(3,0)));
 		assert(b[3,0] && b[3,0].getType() == PieceEnum.Pawn && b[3,0].position == BoardPosition(3,0));
 
@@ -279,7 +310,7 @@ private:
 		// check if hitting piece can be blocked
 		BoardPosition pos1 = hittingPiece.position;
 		BoardPosition pos2 = targetPiece.position;
-		PieceColor oppositeColor = (activePlayer == PieceColor.White) ? PieceColor.Black : PieceColor.White;
+		PieceColor oppositeColor = hittingPiece.color;
 		return canBlockStraightLine(friendlyPieces, getDownVertical(oppositeColor, pos1), pos2) ||
 			canBlockStraightLine(friendlyPieces, getUpVertical(oppositeColor, pos1), pos2) ||
 			canBlockStraightLine(friendlyPieces, getRightHorizontal(oppositeColor, pos1), pos2) ||
