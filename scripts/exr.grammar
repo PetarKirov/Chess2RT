@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ufwb version="1.17">
+    <grammar name="EXR grammar" start="id:1" author="zombinedev" fileextension="exr">
+        <description>Grammar for EXR files</description>
+        <structure name="EXR file" id="1" encoding="ISO_8859-1:1987" endian="little" signed="no">
+            <number name="magic" id="2" type="integer" length="4"/>
+            <number name="version" id="3" type="integer" length="4"/>
+            <structure name="Header" id="4">
+                <structure name="Attr1_channels" id="5">
+                    <string name="name" id="6" type="zero-terminated"/>
+                    <string name="type" id="7" type="zero-terminated"/>
+                    <number name="size" id="8" type="integer" length="4"/>
+                    <structure name="ChannelList" id="9" length="73">
+                        <structure name="Channel" id="10" repeatmax="4">
+                            <string name="name" id="11" type="zero-terminated"/>
+                            <number name="pixel_type" id="12" type="integer" length="4"/>
+                            <number name="pLinear" id="13" type="integer" length="1"/>
+                            <number name="reserved" id="14" type="integer" length="3"/>
+                            <number name="xSampling" id="15" type="integer" length="4"/>
+                            <number name="ySampling" id="16" type="integer" length="4"/>
+                        </structure>
+                        <number name="Null byte" id="18" type="integer" length="1"/>
+                    </structure>
+                </structure>
+                <structure name="Attr2_compression" id="21">
+                    <string name="name" id="22" type="zero-terminated"/>
+                    <string name="type" id="23" type="zero-terminated"/>
+                    <number name="size" id="24" type="integer" length="4"/>
+                    <number name="value-compressiom" id="25" type="integer" length="1"/>
+                </structure>
+                <structure name="Attr3_dataWindow" id="27">
+                    <string name="name" id="28" type="zero-terminated"/>
+                    <string name="type" id="29" type="zero-terminated"/>
+                    <number name="size" id="30" type="integer" length="4"/>
+                    <structure name="value-box2i" id="31">
+                        <number name="min_x" id="32" type="integer" length="4"/>
+                        <number name="min_y" id="33" type="integer" length="4"/>
+                        <number name="max_x" id="34" type="integer" length="4"/>
+                        <number name="max_y" id="35" type="integer" length="4"/>
+                    </structure>
+                </structure>
+                <structure name="Attr4_displayWindow" id="38">
+                    <string name="name" id="39" type="zero-terminated"/>
+                    <string name="type" id="40" type="zero-terminated"/>
+                    <number name="size" id="41" type="integer" length="4"/>
+                    <structure name="value-display-window-box2i" id="82">
+                        <number name="min_x" id="84" type="integer" length="4"/>
+                        <number name="min_y" id="85" type="integer" length="4"/>
+                        <number name="max_x" id="86" type="integer" length="4"/>
+                        <number name="max_y" id="87" type="integer" length="4"/>
+                    </structure>
+                </structure>
+                <structure name="Attr5_lineOrder" id="44">
+                    <string name="name" id="45" type="zero-terminated"/>
+                    <string name="type" id="46" type="zero-terminated"/>
+                    <number name="size" id="47" type="integer" length="4"/>
+                    <number name="value-line_order" id="48" type="integer" length="1"/>
+                </structure>
+                <structure name="Attr6_pixelAspectRatio" id="50">
+                    <string name="name" id="51" type="zero-terminated"/>
+                    <string name="type" id="52" type="zero-terminated"/>
+                    <number name="size" id="53" type="integer" length="4"/>
+                    <number name="value-aspect-ratio-float" id="54" type="float" length="32" lengthunit="bit"/>
+                </structure>
+                <structure name="Attr7_screenWindowCenter" id="56">
+                    <string name="name" id="57" type="zero-terminated"/>
+                    <string name="type" id="58" type="zero-terminated"/>
+                    <number name="size" id="59" type="integer" length="4"/>
+                    <structure name="value-center-v2f" id="60">
+                        <number name="x" id="61" type="float" length="32" lengthunit="bit"/>
+                        <number name="y" id="62" type="float" length="32" lengthunit="bit"/>
+                    </structure>
+                </structure>
+                <structure name="Attr8_screenWindowWidth" id="65">
+                    <string name="name" id="66" type="zero-terminated"/>
+                    <string name="type" id="67" type="zero-terminated"/>
+                    <number name="size" id="68" type="integer" length="4"/>
+                    <number name="value-window-width-float" id="69" type="float" length="32" lengthunit="bit"/>
+                </structure>
+                <number name="Null_byte" id="71" type="integer" length="1"/>
+            </structure>
+            <structure name="ScanLineOffsets" id="73">
+                <number name="offsets" id="74" repeatmax="8" type="integer" length="8"/>
+            </structure>
+            <structure name="Pixels" id="76">
+                <structure name="ScanLine 0" id="77">
+                    <number name="Y coord" id="78" type="integer" length="4"/>
+                    <number name="pixel data size" id="88" type="integer" length="4"/>
+                    <structure name="pixel data" id="89" length="18956"/>
+                </structure>
+                <structure name="ScanLine 1" id="91">
+                    <number name="Y coord" id="105" type="integer" length="4"/>
+                    <number name="pixel data size" id="106" type="integer" length="4"/>
+                    <structure name="pixel data" id="107" length="19496"/>
+                </structure>
+                <structure name="ScanLine 2" id="93">
+                    <number name="Y coord" id="109" type="integer" length="4"/>
+                    <number name="pixel data size" id="110" type="integer" length="4"/>
+                    <structure name="pixel data" id="121" length="19411"/>
+                </structure>
+                <structure name="ScanLine 3" id="95">
+                    <number name="Y coord" id="111" type="integer" length="4"/>
+                    <number name="pixel data size" id="116" type="integer" length="4"/>
+                    <structure name="pixel data" id="123" length="21378"/>
+                </structure>
+                <structure name="ScanLine 4" id="97">
+                    <number name="Y coord" id="112" type="integer" length="4"/>
+                    <number name="pixel data size" id="117" type="integer" length="4"/>
+                    <structure name="pixel data" id="125" length="23913"/>
+                </structure>
+                <structure name="ScanLine 5" id="99">
+                    <number name="Y coord" id="113" type="integer" length="4"/>
+                    <number name="pixel data size" id="118" type="integer" length="4"/>
+                    <structure name="pixel data" id="127" length="24856"/>
+                </structure>
+                <structure name="ScanLine 6" id="101">
+                    <number name="Y coord" id="114" type="integer" length="4"/>
+                    <number name="pixel data size" id="119" type="integer" length="4"/>
+                    <structure name="pixel data" id="129" length="23994"/>
+                </structure>
+                <structure name="ScanLine 7" id="103">
+                    <number name="Y coord" id="115" type="integer" length="4"/>
+                    <number name="pixel data size" id="120" type="integer" length="4"/>
+                    <structure name="pixel data" id="131" length="23855"/>
+                </structure>
+            </structure>
+        </structure>
+    </grammar>
+</ufwb>
