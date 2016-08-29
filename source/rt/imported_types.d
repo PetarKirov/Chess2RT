@@ -41,6 +41,25 @@ bool isFiniteVec(in ref Vector v) pure nothrow @safe @nogc
     return v[0].isFinite && v[1].isFinite && v[2].isFinite;
 }
 
+int maxDimension(in ref Vector v) pure nothrow @safe @nogc
+{
+    int maxDim = 0;
+
+    with (v)
+    {
+        double maxVal = fabs(x);
+        if (fabs(y) > maxVal)
+        {
+            maxDim = 1;
+            maxVal = fabs(y);
+        }
+        if (fabs(z) > maxVal)
+            maxDim = 2;
+    }
+
+    return maxDim;
+}
+
 Vector project(const Vector v, int a, int b, int c) pure nothrow @safe @nogc
 {
     Vector result;

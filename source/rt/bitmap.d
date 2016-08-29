@@ -167,9 +167,13 @@ struct Bitmap
 
 private:
 
-Image!ColorType loadExr(ColorType)(in void[] file_stream) pure
+Image!ColorType loadExr(ColorType)(in void[] file_stream) //pure
 {
-    throw new NotImplementedException();
+    import imageio.exr;
+
+    const ExrFile exr = imageio.exr.loadExr(cast(const ubyte[])file_stream);
+
+    return typeof(return).init;
 }
 
 void saveExr(C)(in Image!C img, ref UntypedBuffer file_stream) pure

@@ -4,10 +4,11 @@ import sdlang : SDLangEx = ParseException, parseSource, SDLValue = Value, SDLTag
 import std.json : JSONException, parseJSON, JSONValue, JSONType;
 import std.file, std.path, std.string;
 import std.typecons : Tuple, tuple;
-import std.conv, std.traits, std.range, std.exception, std.variant;
+import std.conv, std.traits, std.algorithm, std.range, std.exception, std.variant;
 
 import rt.exception, rt.scene, rt.importedtypes, rt.color;
 import util.factory2;
+import core.meta : DerivedFrom, TypesToStrings;
 
 /// Classes that support deserializing from scene
 /// files should implement this interface.
@@ -115,12 +116,23 @@ final class SceneLoadContext
         // Construct default if nothing specified.
         // Built-in types and struct are automatically initialized,
         // so we only need to instanciate classes.
-        if (!val.isSpecified(propertyName))
+
+        static if (is(T == class))
         {
-            static if (is(T == class))
+            auto r = only(TypesToStrings!(DerivedFrom!T)).array
+                .find!(str => val.isSpecified(str));
+
+            if (r.empty)
+            {
                 property = new T();
-            return false;
+                return false;
+            }
+
+            propertyName = r.front;
         }
+
+        if (!val.isSpecified(propertyName))
+            return false;
 
         // Next - get the corresponding value (built-in, array or object)
         auto subValue = val.getChild(propertyName);

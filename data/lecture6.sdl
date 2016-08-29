@@ -1,0 +1,172 @@
+//
+// An example scene, which represents the same scenery as what the initializeScene()
+// function used to create around just before lecture6
+// Namely:
+//  1) A shiny floor, made of a woody Lambert shader and a mirror layer on top
+//  2) A glass ball
+//  3) A shiny ball using a glossy shader
+//  4) Three small phong-lit balls, using red, yellow and green colors
+
+Scene {
+    Name "lecture6"
+
+    GlobalSettings {
+        frameWidth          640
+        frameHeight         480
+        ambientLight        0.5, 0.5, 0.5
+    }
+
+    Camera camera {
+        pos                 45 120 -300
+        aspect              1.33333
+        yaw                 5
+        pitch               -5
+        roll                0
+        fov                 60
+    }
+
+    CubemapEnvironment {
+        folder "env/envmap_miramar"
+    }
+
+    Lights {
+        PointLight "l1" {
+            pos             -90 1200 -750
+            color           1 1 1
+            power           1200000
+        }
+
+    }
+
+    Geometries {
+        // 1)
+        Plane "floor" {
+            y               -0.01
+            limit           200
+        }
+
+        // 2)
+        Sphere "crystal_sphere" {
+            center          -60 36 10
+            R               36
+        }
+
+        // 3) and 4)
+        Sphere S {
+        }
+    }
+
+    Textures {
+        // 1)
+        BitmapTexture wood_tex {
+            file            "texture/wood.bmp"
+            scaling         0.0025
+        }
+
+    }
+
+
+    Shaders {
+        // 1)
+        Lambert "floor_diffuse" {
+            texture         "wood_tex"
+        }
+
+        Reflection          "mirror" {
+
+        }
+
+        Fresnel "mirror_fresnel" {
+            ior             1.33
+        }
+
+        Layered "floor_shader" {
+            layer           "floor_diffuse" 1 1 1
+            layer           "mirror"        1 1 1 "mirror_fresnel"
+        }
+
+        // 2)
+        Reflection "glass_refl" {
+        }
+
+        Refraction "glass_refr" {
+            ior             1.6
+        }
+
+        Fresnel "glass_fresnel" {
+            ior             1.6
+        }
+
+        Layered "glass" {
+            layer           "glass_refr" 1 1 1
+            layer           "glass_refl" 1 1 1 "glass_fresnel"
+        }
+
+        // 3)
+        Reflection glossy {
+            color (0.9, 1.0, 0.9)
+            glossiness  0.97
+            numSamples  25
+        }
+
+        // 4)
+        Phong "p1" {
+            color           0.95 0.05 0.05
+            exponent        32
+        }
+
+        Phong "p2" {
+            color           0.95 0.95 0.10
+            exponent        32
+        }
+
+        Phong "p3" {
+            color           0.05 0.95, 0.05
+            exponent        32
+        }
+    }
+
+    Nodes {
+        // 1)
+        Node "floor" {
+            geometry        "floor"
+            shader          "floor_shader"
+        }
+
+        // 2)
+        Node "crystal_sphere" {
+            geometry        "crystal_sphere"
+            shader          "glass"
+        }
+
+        // 3)
+        Node "sphere" {
+            geometry        "S"
+            shader          "glossy"
+            translate       100 50 60
+            scale            50 50 50
+        }
+
+        // 4)
+        Node "small_sphere_red" {
+            geometry        "S"
+            shader          "p1"
+            scale           15 15 15
+            translate       10 15  0
+        }
+
+        Node "small_sphere_yellow" {
+            geometry        "S"
+            shader          "p2"
+            scale           15 15 15
+            translate       42 15  0
+        }
+
+        Node "small_sphere_green" {
+            geometry        "S"
+            shader          "p3"
+            scale           15 15 15
+            translate       74 15  0
+        }
+    }
+}
