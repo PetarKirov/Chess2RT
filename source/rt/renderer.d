@@ -312,17 +312,10 @@ struct Renderer
             );
     }
 
-    public Color raytrace(const Ray ray) @nogc @safe
-    {
-        return trace(ray, TraceType.Ray);
-    }
+    alias raytrace = trace!(TraceType.Ray);
+    alias pathtrace = trace!(TraceType.Path);
 
-    public Color pathtrace(const Ray ray, const Color pathMultiplier) @nogc @safe
-    {
-        return trace(ray, TraceType.Path);
-    }
-
-    Color trace(const Ray ray, TraceType traceType) @nogc @safe
+    Color trace(TraceType traceType)(const Ray ray, const Color pathMultiplier = Color(1, 1, 1)) @nogc @safe
     {
         TraceResult result;
         result.ray = ray;
@@ -346,15 +339,12 @@ struct Renderer
             }
 
         debug if (result.ray.isDebug)
-                this.lastTracingResult = result;
+            this.lastTracingResult = result;
 
-        final switch(traceType)
-        {
-            case TraceType.Ray:
-                return raytrace_impl(result);
-            case TraceType.Path:
-                return pathtrace_impl(result, Color(1, 1, 1));
-        }
+        static if (traceType == TraceType.Ray)
+            return raytrace_impl(result);
+        else
+            return pathtrace_impl(result, pathMultiplier);
     }
 
     /// traces a ray in the scene and returns the visible light that comes from that direction
