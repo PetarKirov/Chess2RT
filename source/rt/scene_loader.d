@@ -368,7 +368,7 @@ class SdlValueWrapper : SceneDscNode
         return propertyName in (cast(SDLTag)tag).tags;
     }
 
-    override SceneDscNode getChild( string propertyName) const @trusted
+    override SceneDscNode getChild(string propertyName) const @trusted
     {
         return new SdlValueWrapper((cast(SDLTag)tag).tags[propertyName][0]);
     }

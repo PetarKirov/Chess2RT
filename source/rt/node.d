@@ -78,8 +78,8 @@ class Node : Intersectable, Deserializable
         this.shader = context.named.shaders[shad];
         // bumpmap is optional
         this.bumpmap = bump in context.named.textures ?
-        context.named.textures[bump] :
-        null;
+            context.named.textures[bump] :
+            null;
 
         Vector v;
 

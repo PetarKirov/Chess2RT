@@ -11,7 +11,8 @@ struct IntersectionData
     /// the normal of the geometry at the intersection point
     Vector normal;
 
-    /// before intersect(): the max dist to look for intersection; after intersect() - the distance found
+    /// before intersect(): the max dist to look for intersection;
+    /// after intersect() - the distance found
     double dist;
 
     /// 2D UV coordinates for texturing, etc.
@@ -36,34 +37,44 @@ struct IntersectionData
 
     int opCmp(ref const IntersectionData rhs) const pure nothrow @nogc @safe
     {
-        return dist < rhs.dist?
-               -1 :
-               rhs.dist < dist? 1 : 0;
+        auto a = this.dist, b = rhs.dist;
+        return a < b ? -1 : (a > b);
     }
 }
 
 const interface Intersectable
 {
     /**
-     *  @brief Intersect a geometry with a ray.
-     *  Returns true if an intersection is found, and it was closer than the current value of data.dist.
+     *  Intersect a geometry with a ray.
      *
-     *  @param ray - the ray to be traced
-     *  @param data - in the event an intersection is found, this is filled with info about the intersection point.
-     *  NOTE: the intersect() function MUST NOT touch any member of data, before it can prove the intersection
-     *        point will be closer to the current value of data.dist!
-     *  Note that this also means that if you want to find any intersection, you must initialize data.dist before
-     *  calling intersect. E.g., if you don't care about distance to intersection, initialize data.dist with 1e99
+     *  Params:
+     *      ray = the ray to be traced
+     *      data = in the event an intersection is found, it
+     *      is filled with info about the intersection point.
      *
-     * @retval true if an intersection is found. The `data' struct should be filled in.
-     * @retval false if no intersection exists, or it is further than the current data.dist. In this case,
-     *         the `data' struct should remain unchanged.
+     *  Returns:
+     *      true if an intersection is found, and it was closer
+     *      than the current value of data.dist; otherwise
+     *
+     *      false if no intersection exists, or it is further than
+     *      the current data.dist. In this case, the `data` struct
+     *      should remain unchanged.
+     *
+     *  Note:
+     *      The `intersect`` function MUST NOT touch any member of data,
+     *      before it can prove the intersection point will be closer
+     *      to the current value of `data.dist`!
+     *      Also note that this means that if you want to find any
+     *      intersection, you must initialize `data.dist` before calling
+     *      `intersect`. E.g., if you don't care about distance to intersection,
+     *      initialize `data.dist` with `1e99`.
      */
     bool intersect(in Ray ray, ref IntersectionData info) @safe @nogc pure;
 
     /**
-    * Checks if the given point is "inside" the geometry, for whatever definition of
-    * 'inside' is appropriate for the object.
-    */
+     *  Returns:
+     *      true if the given point is "inside" the geometry, for whatever
+     *      definition of "inside" is appropriate for the object.
+     */
     bool isInside(in Vector p) @safe @nogc pure;
 }
