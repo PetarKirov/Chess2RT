@@ -29,7 +29,7 @@ Scene parseSceneFromFile(string filename)
     }
     catch (FileException fEx)
     {
-        throw new SceneNotFoundException();
+        throw new SceneNotFoundException(fEx.msg);
     }
     catch (JSONException jsonEx)
     {
@@ -391,6 +391,16 @@ class SdlValueWrapper : SceneDscNode
             result ~= subTag;
 
         return result;
+    }
+
+    SDLValue getValue(string name)
+    {
+        auto t = cast()tag;
+
+        if (name in t.attributes)
+            return t.attributes[name][0].value;
+        else
+            return SDLValue(null);
     }
 
 protected:

@@ -13,20 +13,29 @@ Scene {
     GlobalSettings {
         frameWidth          640
         frameHeight         480
-        ambientLight        0.5, 0.5, 0.5
+        dynamicAspectRatio  true
+        ambientLight        0.5 0.5 0.5
+        interactive         true
+        AAEnabled           false
+        interactive         true
+        prepassOnly         false
+        prepassEnabled      true
+        asyncRendering      true
+        threadCount         0
     }
 
-    Camera camera {
+    Camera "camera" {
         pos                 45 120 -300
         aspect              1.33333
         yaw                 5
         pitch               -5
         roll                0
         fov                 60
+
     }
 
     CubemapEnvironment {
-        folder "env/envmap_miramar"
+        folder "env/hw_glacier"
     }
 
     Lights {
@@ -47,22 +56,29 @@ Scene {
 
         // 2)
         Sphere "crystal_sphere" {
-            center          -60 36 10
             R               36
         }
 
         // 3) and 4)
-        Sphere S {
+        Sphere "S" {
         }
     }
 
     Textures {
         // 1)
-        BitmapTexture wood_tex {
+        BitmapTexture "wood_tex" {
             file            "texture/wood.bmp"
             scaling         0.0025
         }
 
+        Fresnel "mirror_fresnel" {
+            ior             1.33
+        }
+
+        // 2)
+        Fresnel "glass_fresnel" {
+            ior             1.6
+        }
     }
 
 
@@ -76,13 +92,9 @@ Scene {
 
         }
 
-        Fresnel "mirror_fresnel" {
-            ior             1.33
-        }
-
         Layered "floor_shader" {
-            layer           "floor_diffuse" 1 1 1
-            layer           "mirror"        1 1 1 "mirror_fresnel"
+            layer 1 1 1 shader="floor_diffuse"
+            layer 1 1 1 shader="mirror" texture="mirror_fresnel"
         }
 
         // 2)
@@ -93,20 +105,16 @@ Scene {
             ior             1.6
         }
 
-        Fresnel "glass_fresnel" {
-            ior             1.6
-        }
-
         Layered "glass" {
-            layer           "glass_refr" 1 1 1
-            layer           "glass_refl" 1 1 1 "glass_fresnel"
+            layer 1 1 1 shader="glass_refr"
+            layer 1 1 1 shader="glass_refl" texture="glass_fresnel"
         }
 
         // 3)
-        Reflection glossy {
-            color (0.9, 1.0, 0.9)
-            glossiness  0.97
-            numSamples  25
+        Reflection "glossy" {
+            color           0.9 1.0 0.9
+            //glossiness      0.97
+            numSamples      25
         }
 
         // 4)
@@ -121,7 +129,7 @@ Scene {
         }
 
         Phong "p3" {
-            color           0.05 0.95, 0.05
+            color           0.05 0.95 0.05
             exponent        32
         }
     }
@@ -137,6 +145,7 @@ Scene {
         Node "crystal_sphere" {
             geometry        "crystal_sphere"
             shader          "glass"
+            translate       -60 36 10
         }
 
         // 3)

@@ -8,12 +8,17 @@ T makeInstanceOf(T)(string derivedClassName) if (is(T == class))
 
     foreach (m; ModuleInfo)
     {
-        assert(m);
+        if (!m) continue;
         foreach (c; m.localClasses)
         {
             if (c.name.endsWith(suffix))
             {
-                assert(c.isDerivedFrom(T.classinfo));
+                import std.format : format;
+                assert(c.isDerivedFrom(T.classinfo),
+                    "%s is not derived from %s!".format(
+                        c.name, T.stringof
+                    )
+                );
                 return cast(T)c.create();
             }
         }

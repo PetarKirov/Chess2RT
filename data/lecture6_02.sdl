@@ -1,0 +1,113 @@
+
+//
+Scene {
+    Name "lecture6_01"
+
+    GlobalSettings {
+        frameWidth          640
+        frameHeight         480
+        ambientLight        1 1 1
+        interactive         true
+        AAEnabled			false
+        prepassOnly			false
+        prepassEnabled  	true
+    }
+
+    Camera "camera" {
+        pos                 10 195 -150
+        aspect              1.33333
+        yaw                 10
+        pitch               -10
+        roll                0
+        fov                 90
+    }
+
+    Lights {
+        PointLight "l1" {
+            pos             200 300 -550
+            color           1 1 1
+            power           1200000
+        }
+    }
+
+    Geometries {
+        Plane "floor" {
+            y               0
+            limit           20
+        }
+
+        Sphere "globe" {
+            R 50
+        }
+
+        Cube {
+            name		"cube"
+            side		100
+        }
+
+        Sphere {
+            name		"sphere"
+            R			70
+        }
+
+        CsgDiff {
+            name		"diff"
+            left		"cube"
+            right		"sphere"
+        }
+    }
+
+    Textures {
+        BitmapTexture "floor_tex" {
+            file            "floor.bmp"
+            scaling         0.0025
+        }
+
+        BitmapTexture "metal_tex" {
+            file            "metal2.bmp"
+            scaling         0.025
+        }
+
+        BitmapTexture "globe_tex" {
+            file            "world.bmp"
+        }
+    }
+
+    Shaders {
+        Lambert {
+            name		"floor_shader"
+            texture 	"floor_tex"
+        }
+
+        Lambert {
+            name		"cube_shader"
+            texture 	"metal_tex"
+        }
+
+        Phong {
+            name		"globe_shader"
+            texture		"globe_tex"
+        }
+    }
+
+    Nodes {
+        Node "floor" {
+            geometry        "floor"
+            shader          "floor_shader"
+        }
+
+        Node "cube" {
+            geometry        "diff"
+            shader          "cube_shader"
+            translate       50 50 0
+            scale           0.5f 0.5f 0.5f
+        }
+
+        Node "globe" {
+            geometry        "globe"
+            shader          "globe_shader"
+            translate       -50 100 -20
+            scale           0.5f 0.1f 0.5f
+        }
+    }
+}

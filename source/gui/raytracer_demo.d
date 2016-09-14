@@ -109,8 +109,12 @@ class RTDemo : GuiBase!Color
          */
         needsRendering = false;
 
-        renderSceneAsync(this.scene, this.screen,
-            this.isRendering.ptr, this.needsRendering.ptr);
+        if (this.scene.settings.asyncRendering)
+            renderSceneAsync(this.scene, this.screen,
+                this.isRendering.ptr, this.needsRendering.ptr);
+        else
+            renderSceneSync(this.scene, this.screen,
+                this.isRendering.ptr);
     }
 
     void updateToWindowSize()
@@ -235,13 +239,15 @@ class RTDemo : GuiBase!Color
 
 
         writefln("Mouse click at: (%s %s)", x, y);
-        writefln("  Raytrace[start = %s, dir = %s]", result.ray.orig, result.ray.dir);
+        writefln("  Raytrace [start = %s, dir = %s]", result.ray.orig, result.ray.dir);
 
         if (result.hitLight)
-            writefln("    Hit light with color: ", result.hitLightColor);
+            writefln("    Hit light with color: %s", result.hitLightColor);
 
         else if(!result.closestNode)
-            writefln("    Hit environment: ", scene.environment.getEnvironment(result.ray.dir));
+            writefln("    Hit environment %s\n      Color: %s",
+				typeid(scene.environment),
+				scene.environment.getEnvironment(result.ray.dir));
 
         else
         {
@@ -249,7 +255,7 @@ class RTDemo : GuiBase!Color
             writefln("      Color: %s", color);
             writefln("      Intersection point: %s", result.data.p);
             writefln("      Normal:             %s", result.data.normal);
-            writefln("      UV coods:           %s, %s", result.data.u, result.data.v);
+            writefln("      UV coods:           [%s, %s]", result.data.u, result.data.v);
         }
 
         writefln("Raytracing completed!\n");

@@ -23,7 +23,7 @@ interface IShader
 
 abstract class Shader : IShader, BRDF, Deserializable
 {
-    Color color;
+    Color color = Color(0, 0, 0);
 
     @DontPrint Rebindable!(const Scene) scene;
 
@@ -35,6 +35,19 @@ abstract class Shader : IShader, BRDF, Deserializable
     this(const Color color)
     {
         this.color = color;
+    }
+
+    Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc pure
+    {
+        return Color(1f, 0f, 0f);
+    }
+
+    void spawnRay(const IntersectionData x, const Ray w_in,
+        ref Ray w_out, ref Color colorEval, ref float pdf) const @safe @nogc
+    {
+        w_out.dir = Vector(1, 0, 0);
+        colorEval = Color(1, 0, 0);
+        pdf = -1;
     }
 
     void deserialize(const SceneDscNode val, SceneLoadContext context)
@@ -56,13 +69,7 @@ class Lambert : Shader
     /// A diffuse texture
     Rebindable!(const Texture) texture;
 
-    this() { this(Color(1, 1, 1)); }
-
-    this(const Color diffuseColor = Color(1, 1, 1), Texture texture = null)
-    {
-        super(diffuseColor);
-        this.texture = texture;
-    }
+    this() { }
 
     Color shade(const Ray ray, const IntersectionData data) const @safe @nogc pure
     {
@@ -72,7 +79,7 @@ class Lambert : Shader
         // fetch the material color. This is ether the solid color, or a color
         // from the texture, if it's set up.
         Color diffuseColor = texture ?
-            this.texture.getTexColor(ray, data.u, data.v, N) :
+            this.texture.getTexColor(data) :
             this.color;
 
         Color lightContrib = scene.settings.ambientLightColor;
@@ -104,25 +111,24 @@ class Lambert : Shader
         return diffuseColor * lightContrib;
     }
 
-    Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc pure
+    override Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc pure
     {
+        Color diffuse = texture ? texture.getTexColor(x) : color;
+
         Vector N = faceforward(w_in.dir, x.normal);
-        Color diffuseColor = this.color;
 
-        if (texture)
-            diffuseColor = texture.getTexColor(w_in, x.u, x.v, N);
-
-        return diffuseColor * (1 / PI) * max(0.0, dot(w_out.dir, N));
+        //      color      BRDF        Kajiya's cosine term
+        return diffuse * (1 / PI) * max(0.0, dot(w_out.dir, N));
     }
 
-    void spawnRay(const IntersectionData x, const Ray w_in,
+    override void spawnRay(const IntersectionData x, const Ray w_in,
                   ref Ray w_out, ref Color colorEval, ref float pdf) const @safe @nogc
     {
         Vector N = faceforward(w_in.dir, x.normal);
         Color diffuseColor = this.color;
 
         if (texture)
-            diffuseColor = texture.getTexColor(w_in, x.u, x.v, N);
+            diffuseColor = texture.getTexColor(x);
 
         w_out = w_in;
 
@@ -200,7 +206,7 @@ class Phong : Shader
         Vector N = faceforward(ray.dir, data.normal);
 
         Color diffuseColor = this.color;
-        if (texture) diffuseColor = texture.getTexColor(ray, data.u, data.v, N);
+        if (texture) diffuseColor = texture.getTexColor(data);
 
         Color lightContrib = scene.settings.ambientLightColor;
         auto specular = Color(0, 0, 0);
@@ -249,13 +255,13 @@ class Phong : Shader
         return diffuseColor * lightContrib + specular;
     }
 
-    void spawnRay(const IntersectionData x, const Ray w_in,
+    override void spawnRay(const IntersectionData x, const Ray w_in,
                   ref Ray w_out, ref Color colorEval, ref float pdf) const @safe @nogc pure
     {
         assert(0);
     }
 
-    Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc pure
+    override Color eval(const IntersectionData x, const Ray w_in, const Ray w_out) const @safe @nogc pure
     {
         assert(0);
     }
@@ -285,3 +291,170 @@ class Phong : Shader
         //printMembers!(typeof(this), sink)(this);
     }
 }
+
+class Refraction : Shader
+{
+	double ior = 1.33;
+	double multiplier = 0.99;
+
+    this() {}
+
+    static Vector refract(in Vector i, in Vector n, double ior) pure nothrow @nogc @safe
+    {
+        double NdotI = i.dot(n);
+        double k = 1 - (ior * ior) * (1 - NdotI * NdotI);
+        if (k < 0.0)        // Check for total inner reflection
+            return Vector(0, 0, 0);
+        return ior * i - (ior * NdotI + sqrt(k)) * n;
+    }
+
+    Color shade(const Ray ray, const IntersectionData info) const @safe @nogc pure
+	{
+        Vector refr;
+        if (dot(ray.dir, info.normal) < 0) {
+            // entering the geometry
+            refr = refract(ray.dir, info.normal, 1 / ior);
+        } else {
+            // leaving the geometry
+            refr = refract(ray.dir, -info.normal, ior);
+        }
+        if (refr.squaredLength() == 0) return Color(0, 0, 0);
+        Ray newRay = ray;
+        newRay.orig = info.ip - faceforward(ray.dir, info.normal) * 0.000001;
+        newRay.dir = refr;
+        newRay.depth++;
+        import rt.renderer : raytrace;
+        return raytrace(scene, newRay) * multiplier;
+	}
+
+    override void deserialize(const SceneDscNode val, SceneLoadContext context)
+	{
+        this.scene = context.scene;
+        context.set(multiplier, val, "multiplier");
+        context.set(ior, val, "ior");
+        ior = clamp(ior, 1e-6, 10);
+	}
+}
+
+class Reflection : Shader
+{
+    double multiplier = 0.99;
+	double glossiness = 1;
+    int numSamples = 32;
+
+    this() {}
+
+    override void deserialize(const SceneDscNode val, SceneLoadContext context)
+	{
+        this.scene = context.scene;
+        context.set(multiplier, val, "multiplier");
+        context.set(glossiness, val, "glossiness");
+        glossiness = clamp(glossiness, 0, 1);
+        context.set(numSamples, val, "numSamples");
+	}
+
+    Color shade(const Ray ray, const IntersectionData info) const @safe @nogc pure
+    {
+        import rt.renderer;
+        Vector n = faceforward(ray.dir, info.normal);
+
+        if (glossiness == 1)
+        {
+            Ray newRay = ray;
+            newRay.orig = info.ip + n * 0.000001;
+            newRay.dir = reflect(ray.dir, n);
+            newRay.depth++;
+
+            return  raytrace(scene, newRay) * multiplier;
+        }
+        /*
+        else
+        {
+            Random rnd = getRandomGen();
+            Color result;
+            int count = numSamples;
+            if (ray.depth > 0)
+            count = 2;
+            for (int i = 0; i < count; i++)
+            {
+                Vector a, b;
+                orthonormalSystem(n, a, b);
+                double x, y, scaling;
+
+                rnd.unitDiscSample(x, y);
+                //
+                scaling = tan((1 - glossiness) * PI/2);
+                x *= scaling;
+                y *= scaling;
+
+                Vector modifiedNormal = n + a * x + b * y;
+
+                Ray newRay = ray;
+                newRay.start = info.ip + n * 0.000001;
+                newRay.dir = reflect(ray.dir, modifiedNormal);
+                newRay.depth++;
+
+                result += raytrace(newRay) * multiplier;
+            }
+            return result / count;
+        }*/
+        assert (0);
+    }
+}
+
+class Layered : Shader
+{
+    Layer[32] layers;
+    uint numLayers;
+
+    this() {}
+
+	struct Layer
+	{
+		Shader shader;
+		Color blend = Color(0, 0, 0);
+		Texture texture;
+	}
+
+    Color shade(const Ray ray, const IntersectionData data) const @safe @nogc pure
+	{
+        Color result;
+        foreach (i; 0 .. numLayers)
+        {
+            const Color fromLayer = layers[i].shader.shade(ray, data);
+
+            const Color blendAmount = layers[i].texture?
+                layers[i].blend * layers[i].texture.getTexColor(data):
+                layers[i].blend;
+
+            result = blendAmount * fromLayer + (Color(1, 1, 1) - blendAmount) * result;
+        }
+        return result;
+	}
+
+    override void deserialize(const SceneDscNode val, SceneLoadContext context)
+	{
+        assert (val.getChildren.length <= layers.length);
+        foreach(idx, child; val.getChildren)
+        {
+            const colorValues = child.getValues;
+
+            auto c = Color(
+                colorValues[0].get!float,
+                colorValues[1].get!float,
+                colorValues[2].get!float
+            );
+
+            auto ch = cast(SdlValueWrapper)child;
+
+            auto pShader = ch.getValue("shader").peek!string;
+            auto pTexture = ch.getValue("texture").peek!string;
+
+            Shader s = pShader? context.named.shaders[*pShader]: null;
+            Texture t = pTexture? context.named.textures[*pTexture] : null;
+
+            this.layers[numLayers++] = Layer(s, c, t);
+        }
+	}
+}
+

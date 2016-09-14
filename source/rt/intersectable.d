@@ -5,8 +5,12 @@ import rt.importedtypes, rt.ray, rt.geometry;
 
 struct IntersectionData
 {
+    Ray ray;
+
     /// intersection point in the world-space
     Vector p;
+
+    alias ip = p;
 
     /// the normal of the geometry at the intersection point
     Vector normal;
