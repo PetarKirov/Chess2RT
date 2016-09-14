@@ -15,7 +15,7 @@ Scene {
         frameHeight         480
         fullscreen          false
         allowResize         false
-        ambientLightColor 	0.2 0.2 0.2
+        ambientLight        0.2 0.2 0.2
         AAEnabled			true
         interactive			true
         prepassOnly			false

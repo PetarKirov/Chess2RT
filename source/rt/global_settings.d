@@ -11,6 +11,7 @@ class GlobalSettings : Deserializable
     bool allowResize = false;           // Allow window resize when not in fullscreen mode
     bool dynamicAspectRatio;            // If the camera.aspectRatio should be update after window resize?
     bool interactive = false;           // Interactive mode?
+	bool asyncRendering = true;         // Display intermedieate result of rendering?
 
     // Multithreading:
     uint bucketSize = 48;               // Image sub-rectange (square) width.
@@ -52,6 +53,7 @@ class GlobalSettings : Deserializable
         context.set(this.allowResize, val, "allowResize");
         context.set(this.dynamicAspectRatio, val, "dynamicAspectRatio");
         context.set(this.interactive, val, "interactive");
+		context.set(this.asyncRendering, val, "asyncRendering");
 
         context.set(this.bucketSize, val, "bucketSize");
         context.set(this.threadCount, val, "threadCount");
@@ -65,7 +67,7 @@ class GlobalSettings : Deserializable
         context.set(this.maxTraceDepth, val, "maxTraceDepth");
         context.set(this.pathsPerPixel, val, "pathsPerPixel");
 
-        context.set(this.ambientLightColor, val, "ambientLightColor");
+        context.set(this.ambientLightColor, val, "ambientLight");
 
         context.set(this.debugEnabled, val, "debugEnabled");
     }

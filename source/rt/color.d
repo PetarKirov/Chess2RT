@@ -26,12 +26,22 @@ pure nothrow @safe @nogc
 /// Represents a color, using floating point components in [0..1]
 struct Color
 {
-    union
+    // The default value of float.nan makes the calculations
+    // very slow in the toRGB32() functions.
+    //float[3] components = [ 0f, 0f, 0f ];
+
+    float r = 0, g = 0, b = 0;
+
+    invariant
     {
-        // The default value of float.nan makes the calculations
-        // very slow in the toRGB32() functions.
-        float[3] components = [ 0f, 0f, 0f ];
-        struct { float r, g, b; }
+        import std.math : isFinite;
+
+        if (!__ctfe)
+        {
+            assert (r.isFinite);
+            assert (g.isFinite);
+            assert (b.isFinite);
+        }
     }
 
     void toString(scope void delegate(const(char)[]) sink) const
@@ -65,13 +75,13 @@ pure nothrow @safe @nogc:
         b = ((rgbColor >> 0) & 0xff) * divider;
     }
 
-    this(ubyte r_, ubyte g_, ubyte b_) //!< Construct a color from R8G8B8 value like "0xffce08"
-    {
-        enum divider = 1.0f / 255.0f;
-        r = r_ * divider;
-        g = g_ * divider;
-        b = b_ * divider;
-    }
+//    this(ubyte r_, ubyte g_, ubyte b_) //!< Construct a color from R8G8B8 value like "0xffce08"
+//    {
+//        enum divider = 1.0f / 255.0f;
+//        r = r_ * divider;
+//        g = g_ * divider;
+//        b = b_ * divider;
+//    }
 
     /// 0 = desaturate; 1 = don't change
     void adjustSaturation(float amount)
@@ -82,9 +92,9 @@ pure nothrow @safe @nogc:
         b = b * amount + mid * (1 - amount);
     }
 
-    ref inout(float) opIndex(int index) inout
+    inout(float) opIndex(int index) inout @trusted
     {
-        return components[index];
+        return *(cast(float*)(&this.r) + index);
     }
 
     /// Accumulates some color to the current

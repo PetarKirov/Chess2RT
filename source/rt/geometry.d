@@ -15,12 +15,10 @@ abstract class Geometry : Intersectable, Deserializable
 class Plane : Geometry
 {
     /// Y-intercept. The plane is parallel to XZ, the y-intercept is at this value
-    double y;
-    double limit;
+    double y = 0;
+	double limit = 1e99;
 
     this() { }
-
-    this(double _y = 0, double _limit = 1e99) { y = _y; limit = _limit; }
 
     bool isInside(in Vector p) const @safe @nogc pure
     {
@@ -61,6 +59,7 @@ class Plane : Geometry
     void deserialize(const SceneDscNode val, SceneLoadContext context)
     {
         context.set(this.y, val, "y");
+		context.set(this.limit, val, "limit");
     }
 
     override void toString(scope void delegate(const(char)[]) sink) const

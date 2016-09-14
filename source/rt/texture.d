@@ -5,7 +5,7 @@ import rt.bitmap;
 
 abstract class Texture : Deserializable
 {
-    Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc pure;
+    Color getTexColor(in ref IntersectionData info) const @safe @nogc pure;
 
     void modifyNormal(ref IntersectionData data) const @safe @nogc pure
     {
@@ -33,7 +33,7 @@ class Checker : Texture
         this.size = size;
     }
 
-    override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc pure
+    override Color getTexColor(in ref IntersectionData info) const @safe @nogc pure
     {
         /*
          * The checker texture works like that. Partition the whole 2D space
@@ -45,10 +45,10 @@ class Checker : Texture
         // example - u = 150, v = -230, size = 100
         // -> 1, -3
 
-        int x = cast(int)(floor(u / size));
-        int y = cast(int)(floor(v / size));
+        const x = cast(int)(floor(info.u / size));
+        const y = cast(int)(floor(info.v / size));
 
-        int white = (x + y) % 2;
+        const white = (x + y) % 2;
 
         return white ? color2 : color1;
     }
@@ -62,7 +62,7 @@ class Checker : Texture
 
     override void toString(scope void delegate(const(char)[]) sink) const
     {
-        import util.prettyprint;
+        import util.prettyprint : printMembers;
         //printMembers!(typeof(this), sink)(this);
     }
 }
@@ -74,13 +74,13 @@ class Procedure2 : Texture
 
     this() { }
 
-    override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc pure
+    override Color getTexColor(in ref IntersectionData info) const @safe @nogc pure
     {
         auto result = Color(0, 0, 0);
 
         foreach (i; 0 .. 3)
-            result += colorU[i] * sin(u * freqU[i]) +
-                colorV[i] * sin(v * freqV[i]);
+            result += colorU[i] * sin(info.u * freqU[i]) +
+                colorV[i] * sin(info.v * freqV[i]);
 
         return result;
     }
@@ -95,7 +95,7 @@ class Procedure2 : Texture
 
     override void toString(scope void delegate(const(char)[]) sink) const
     {
-        import util.prettyprint;
+        import util.prettyprint : printMembers;
         //printMembers!(typeof(this), sink)(this);
     }
 }
@@ -113,8 +113,9 @@ class BitmapTexture : Texture
         this.assumedGamma = assumedGamma;
     }
 
-    override Color getTexColor(in Ray ray, double u, double v, ref Vector normal) const @safe @nogc pure
+    override Color getTexColor(in ref IntersectionData info) const @safe @nogc pure
     {
+        double u = info.u, v = info.v;
         u *= scaling;
         v *= scaling;
         // u, v range in [0..1):
@@ -159,4 +160,42 @@ private:
     /// - if  == 2.2 (a special value) - sRGB decompression is done.
     /// - otherwise, gamma decompression with the given power is performed
     float assumedGamma = 2.2f;
+}
+
+class Fresnel : Texture
+{
+    double ior = 1.33;
+
+    static float fresnel(float NdotI, float ior) @safe @nogc pure nothrow
+    {
+        alias sqr = (x) => x * x;
+
+        // Schlick's approximation
+        const float f = sqr((1.0f - ior) / (1.0f + ior));
+        const float x = 1.0f - NdotI;
+        return f + (1.0f - f) * (x * x * x * x * x);
+    }
+
+    @safe @nogc pure nothrow
+    override Color getTexColor(in ref IntersectionData info) const
+    {
+        // fresnel() expects the IOR_WE_ARE_ENTERING : IOR_WE_ARE_EXITING, so
+        // in the case we're exiting the geometry, be sure to take the reciprocal
+        float eta = ior;
+        float NdotI = dot(info.normal, info.ray.dir);
+
+        if (NdotI > 0)
+            eta = 1.0f / eta;
+        else
+            NdotI = -NdotI;
+
+        const float fr = fresnel(NdotI, eta);
+        return Color(fr, fr, fr);
+    }
+
+    void deserialize(const SceneDscNode val, SceneLoadContext context)
+    {
+        context.set(ior, val, "ior");
+        ior = clamp(ior, 1e-6, 10);
+    }
 }

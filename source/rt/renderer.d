@@ -7,8 +7,12 @@ import rt.scene, rt.color, rt.importedtypes, rt.intersectable, rt.node, rt.camer
 
 package enum TraceType
 {
-    Ray,
-    Path
+    Ray     = 0b0000,
+    Path    = 0b0001,
+    GI      = Path,
+    DoF     = 0b0010,
+    Stereo  = 0b0100,
+    AA      = 0b1000
 }
 
 package struct TraceResult
@@ -43,6 +47,16 @@ void renderSceneAsync(
     );
 }
 
+void renderSceneSync(Scene scene, Image!Color output, shared(bool)* isRendering)
+{
+    import core.atomic : atomicStore;
+
+    scene.beginFrame();
+    auto renderer = Renderer(scene, output);
+    renderer.renderRT();
+    (*isRendering).atomicStore(false);
+}
+
 auto renderPixel(Scene scene, Image!Color output, int x, int y)
 {
     import std.typecons : tuple;
@@ -51,7 +65,7 @@ auto renderPixel(Scene scene, Image!Color output, int x, int y)
 
     auto renderer = Renderer(scene, output);
     auto color = renderer.renderPixelNoAA(x, y);
-    auto result = renderer.lastTracingResult;
+    auto result = lastTracingResult;
 
     return tuple(color, result);
 }
@@ -66,8 +80,6 @@ struct Renderer
         shared(bool)* isRendering;
         const shared(bool)* isStopRequested;
     }
-
-    TraceResult lastTracingResult;
 
     this(const Scene scene, Image!Color output,
          shared(bool)* isRendering = null,
@@ -101,6 +113,12 @@ struct Renderer
         uint W = scene.settings.frameWidth;
         uint H = scene.settings.frameHeight;
 
+        TraceType t;
+        t |= (scene.settings.GIEnabled? TraceType.GI : 0);
+        t |= (scene.settings.AAEnabled? TraceType.AA : 0);
+        t |= (scene.camera.dof? TraceType.DoF : 0);
+        t |= (scene.camera.stereoSeparation == 0? TraceType.Stereo : 0);
+
         getBucketsList(W, H, buckets);
 
         // We render the whole screen in three passes.
@@ -130,16 +148,28 @@ struct Renderer
             return end();
 
         // 2) Second pass - shoot _one_ ray per pixel:
-        import std.parallelism : TaskPool, taskPool;
         auto threadCount = scene.settings.threadCount;
+        import std.parallelism : TaskPool, taskPool;
         auto workers = threadCount? new TaskPool(threadCount) : taskPool();
-        foreach (b; workers.parallel(buckets[]))
+
+        if (threadCount != 1)
         {
-            // TODO: Maybe make an early exit if isStopReq returns true.
-            foreach (y; b.min.y .. b.max.y)
-                foreach (x; b.min.x .. b.max.x)
-                    renderPixelNoAA(x, y);
+            foreach (b; workers.parallel(buckets[]))
+                // TODO: Maybe make an early exit if isStopReq returns true.
+                foreach (y; b.min.y .. b.max.y)
+                    foreach (x; b.min.x .. b.max.x)
+                        renderPixelNoAA(x, y);
         }
+        else
+        {
+            foreach (b; buckets[])
+            {
+                foreach (y; b.min.y .. b.max.y)
+                    foreach (x; b.min.x .. b.max.x)
+                        renderPixelNoAA(x, y);
+            }
+        }
+
 
         // 3) Third pass - find pixels that need AA (which
         // are too different than their neighbours)
@@ -222,7 +252,7 @@ struct Renderer
     /// Gets the color for a single pixel, without antialiasing
     public Color renderPixelNoAA(int x, int y, int dx = 1, int dy = 1) @nogc @safe
     {
-        auto result = renderSample(x, y, dx, dy);
+        auto result = renderSample(scene, x, y, dx, dy);
         outputImage[x, y] = result;
         return result;
     }
@@ -244,211 +274,215 @@ struct Renderer
         Color accum = outputImage[x, y];
         foreach (sample; 1 .. 5)
         {
-            accum += renderSample(x + kernel[sample][0], y + kernel[sample][1]);
+            accum += renderSample(scene, x + kernel[sample][0], y + kernel[sample][1]);
         }
         outputImage[x, y] = accum / 5;
         return outputImage[x, y];
     }
 
-    // trace a ray through pixel coords (x, y).
-    Color renderSample(double x, double y, int dx = 1, int dy = 1) @nogc @safe
+}
+
+// trace a ray through pixel coords (x, y).
+Color renderSample(const Scene scene, double x, double y, int dx = 1, int dy = 1) @nogc @safe
+{
+    if (scene.camera.dof)
     {
-        if (scene.camera.dof)
-        {
-            return renderSampleDof(x, y, dx, dy);
-        }
-        else if (scene.settings.GIEnabled)
-        {
-            return renderSampleGI(x, y, dx, dy);
-        }
+        return renderSampleDof(scene, x, y, dx, dy);
+    }
+    else if (scene.settings.GIEnabled)
+    {
+        return renderSampleGI(scene, x, y, dx, dy);
+    }
+    else
+    {
+        return renderSampleDefault(scene, x, y, dx, dy);
+    }
+}
+
+Color renderSampleDof(const Scene scene, double x, double y, int dx = 1, int dy = 1) @nogc @safe
+{
+    auto average = Color(0, 0, 0);
+
+    for (int i = 0; i < scene.camera.numSamples; i++)
+    {
+        if (scene.camera.stereoSeparation == 0) // stereoscopic rendering?
+            average += raytrace(scene, scene.camera.getScreenRay(x + uniform(0.0, 1.0) * dx, y +uniform(0.0, 1.0) * dy));
         else
         {
-            return renderSampleDefault(x, y, dx, dy);
-        }
-    }
-
-    Color renderSampleDof(double x, double y, int dx = 1, int dy = 1) @nogc @safe
-    {
-        auto average = Color(0, 0, 0);
-
-        for (int i = 0; i < scene.camera.numSamples; i++)
-        {
-            if (scene.camera.stereoSeparation == 0) // stereoscopic rendering?
-                average += raytrace(scene.camera.getScreenRay(x + uniform(0.0, 1.0) * dx, y +uniform(0.0, 1.0) * dy));
-            else
-            {
-                average += combineStereo(
-                    raytrace(scene.camera.getScreenRay(x + uniform(0.0, 1.0) * dx, y + uniform(0.0, 1.0) * dy, Stereo3DOffset.Left)),
-                    raytrace(scene.camera.getScreenRay(x + uniform(0.0, 1.0) * dx, y + uniform(0.0, 1.0) * dy, Stereo3DOffset.Right))
-                );
-            }
-        }
-        return average / scene.camera.numSamples;
-    }
-
-    Color renderSampleGI(double x, double y, int dx = 1, int dy = 1) @nogc @safe
-    {
-        auto average = Color(0, 0, 0);
-
-        for (int i = 0; i < scene.settings.pathsPerPixel; i++)
-        {
-            average += pathtrace(
-                scene.camera.getScreenRay(x + uniform(0.0, 1.0) * dx, y + uniform(0.0, 1.0) * dy),
-                Color(1, 1, 1)
+            average += combineStereo(
+                raytrace(scene, scene.camera.getScreenRay(x + uniform(0.0, 1.0) * dx, y + uniform(0.0, 1.0) * dy, Stereo3DOffset.Left)),
+                raytrace(scene, scene.camera.getScreenRay(x + uniform(0.0, 1.0) * dx, y + uniform(0.0, 1.0) * dy, Stereo3DOffset.Right))
             );
         }
-        return average / scene.settings.pathsPerPixel;
     }
+    return average / scene.camera.numSamples;
+}
 
-    Color renderSampleDefault(double x, double y, int dx = 1, int dy = 1) @nogc @safe
+Color renderSampleGI(const Scene scene, double x, double y, int dx = 1, int dy = 1) @nogc @safe
+{
+    auto average = Color(0, 0, 0);
+
+    for (int i = 0; i < scene.settings.pathsPerPixel; i++)
     {
-        if (scene.camera.stereoSeparation == 0)
-            return raytrace(scene.camera.getScreenRay(x, y));
-        else
-            // trace one ray through the left camera and one ray through the right, then combine the results
-            return combineStereo(
-                raytrace(scene.camera.getScreenRay(x, y, Stereo3DOffset.Left)),
-                raytrace(scene.camera.getScreenRay(x, y, Stereo3DOffset.Right))
-            );
+        average += pathtrace(scene,
+            scene.camera.getScreenRay(x + uniform(0.0, 1.0) * dx, y + uniform(0.0, 1.0) * dy),
+            Color(1, 1, 1)
+        );
     }
+    return average / scene.settings.pathsPerPixel;
+}
 
-    alias raytrace = trace!(TraceType.Ray);
-    alias pathtrace = trace!(TraceType.Path);
+Color renderSampleDefault(const Scene scene, double x, double y, int dx = 1, int dy = 1) @nogc @safe
+{
+    if (scene.camera.stereoSeparation == 0)
+        return raytrace(scene, scene.camera.getScreenRay(x, y));
+    else
+        // trace one ray through the left camera and one ray through the right, then combine the results
+        return combineStereo(
+            raytrace(scene, scene.camera.getScreenRay(x, y, Stereo3DOffset.Left)),
+            raytrace(scene, scene.camera.getScreenRay(x, y, Stereo3DOffset.Right))
+        );
+}
 
-    Color trace(TraceType traceType)(const Ray ray, const Color pathMultiplier = Color(1, 1, 1)) @nogc @safe
+alias raytrace = trace!(TraceType.Ray);
+alias pathtrace = trace!(TraceType.Path);
+
+TraceResult lastTracingResult;
+
+Color trace(TraceType traceType)(const Scene scene, const Ray ray, const Color pathMultiplier = Color(1, 1, 1)) @nogc @safe
+{
+    TraceResult result;
+    result.ray = ray;
+    result.data.ray = ray;
+
+    if (ray.depth > scene.settings.maxTraceDepth)
+        return Color(0, 0, 0);
+
+    result.data.dist = 1e99;
+
+    // find closest intersection point:
+    foreach (node; scene.nodes)
+        if (node.intersect(ray, result.data))
+            result.closestNode = node;
+
+    // check if the closest intersection point is actually a light:
+    foreach (light; scene.lights)
+        if (light.intersect(ray, result.data))
+        {
+            result.hitLight = true;
+            result.hitLightColor = light.color();
+        }
+
+    debug if (result.ray.isDebug)
+        lastTracingResult = result;
+
+    static if (traceType == TraceType.Ray)
+        return raytrace_impl(scene, result);
+    else
+        return pathtrace_impl(scene, result, pathMultiplier);
+}
+
+/// traces a ray in the scene and returns the visible light that comes from that direction
+Color raytrace_impl(const Scene scene, TraceResult result) @nogc @safe pure
+{
+    if (result.hitLight)
+        return result.hitLightColor;
+
+    // no intersection? use the environment, if present:
+    if (!result.closestNode)
+        return scene.environment.getEnvironment(result.ray.dir);
+
+    // if the node we hit has a bump map, apply it here:
+    if (result.closestNode.bumpmap)
+        result.closestNode.bumpmap.modifyNormal(result.data);
+
+    // use the shader of the closest node to shade the intersection:
+    return result.closestNode.shader.shade(result.ray, result.data);
+}
+
+Color pathtrace_impl(const Scene scene, TraceResult result, const Color pathMultiplier) @nogc @safe
+{
+    if (result.hitLight)
     {
-        TraceResult result;
-        result.ray = ray;
-
-        if (ray.depth > scene.settings.maxTraceDepth)
+        /*
+            * if the ray actually hit a light, check if we need to pass this light back along the path.
+            * If the last surface along the path was a diffuse one (Lambert/Phong), we need to discard the
+            * light contribution, since for diffuse material we do explicit light sampling too, thus the
+            * light would be over-represented and the image a bit too bright. We may discard light checks
+            * for secondary rays altogether, but we would lose caustics and light reflections that way.
+            */
+        if (result.ray.flags & RayFlags.Diffuse)
             return Color(0, 0, 0);
-
-        result.data.dist = 1e99;
-
-        // find closest intersection point:
-        foreach (node; scene.nodes)
-            if (node.intersect(ray, result.data))
-                result.closestNode = node;
-
-        // check if the closest intersection point is actually a light:
-        foreach (light; scene.lights)
-            if (light.intersect(ray, result.data))
-            {
-                result.hitLight = true;
-                result.hitLightColor = light.color();
-            }
-
-        debug if (result.ray.isDebug)
-            this.lastTracingResult = result;
-
-        static if (traceType == TraceType.Ray)
-            return raytrace_impl(result);
         else
-            return pathtrace_impl(result, pathMultiplier);
+            return result.hitLightColor * pathMultiplier;
     }
 
-    /// traces a ray in the scene and returns the visible light that comes from that direction
-    Color raytrace_impl(TraceResult result) @nogc @safe pure
+    // no intersection? use the environment, if present:
+    if (!result.closestNode)
+        return scene.environment.getEnvironment(result.ray.dir) * pathMultiplier;
+
+    auto resultDirect = Color(0, 0, 0);
+
+    // We continue building the path in two ways:
+    // 1) (a.k.a. "direct illumination"): connect the current path end to a random light.
+    //    This approximates the direct lighting towards the intersection point.
+    if (scene.lights.length)
     {
-        if (result.hitLight)
-            return result.hitLightColor;
+        // choose a random light:
+        size_t lightIndex = uniform(0, scene.lights.length);
+        const Light light = scene.lights[lightIndex];
+        size_t numLightSamples = light.getNumSamples();
 
-        // no intersection? use the environment, if present:
-        if (!result.closestNode)
-            return scene.environment.getEnvironment(result.ray.dir);
+        // choose a random sample of that light:
+        size_t lightSampleIdx = uniform(0, numLightSamples);
 
-        // if the node we hit has a bump map, apply it here:
-        if (result.closestNode.bumpmap)
-            result.closestNode.bumpmap.modifyNormal(result.data);
+        // sample the light and see if it came out nonzero:
+        Vector pointOnLight;
+        Color lightColor;
+        light.getNthSample(lightSampleIdx, result.data.p, pointOnLight, lightColor);
 
-        // use the shader of the closest node to shade the intersection:
-        return result.closestNode.shader.shade(result.ray, result.data);
+        if (lightColor.intensity() > 0 && scene.testVisibility(result.data.p + result.data.normal * 1e-6, pointOnLight))
+        {
+            // w_out - the outgoing ray in the BRDF evaluation
+            Ray w_out;
+            w_out.orig = result.data.p + result.data.normal * 1e-6;
+            w_out.dir = pointOnLight - w_out.orig;
+            w_out.dir.normalize();
+            //
+            // calculate the light contribution in a manner, consistent with classic path tracing:
+            float solidAngle = light.solidAngle(w_out.orig); // solid angle of the light, as seen from x.
+            // evaluate the BRDF:
+            Color brdfAtPoint = result.closestNode.shader.eval(result.data, result.ray, w_out);
+
+            lightColor = light.color() * solidAngle / (2*PI);
+
+            // the probability to choose a particular light among all lights: 1/N
+            float pdfChooseLight = 1.0f / scene.lights.length;
+            // the probability to shoot a ray in a random direction: 1/2*pi
+            float pdfInLight = 1 / (2*PI);
+
+            // combined probability for that ray:
+            float pdf = pdfChooseLight * pdfInLight;
+
+            if (brdfAtPoint.intensity() > 0)
+                // Kajia's rendering equation, evaluated at a single incoming/outgoing directions pair:
+                /* Li */    /*BRDFs@path*/    /*BRDF*/   /*ray probability*/
+                resultDirect = lightColor * pathMultiplier * brdfAtPoint / pdf;
+        }
     }
 
-    Color pathtrace_impl(TraceResult result, const Color pathMultiplier) @nogc @safe
-    {
-        if (result.hitLight)
-        {
-            /*
-             * if the ray actually hit a light, check if we need to pass this light back along the path.
-             * If the last surface along the path was a diffuse one (Lambert/Phong), we need to discard the
-             * light contribution, since for diffuse material we do explicit light sampling too, thus the
-             * light would be over-represented and the image a bit too bright. We may discard light checks
-             * for secondary rays altogether, but we would lose caustics and light reflections that way.
-             */
-            if (result.ray.flags & RayFlags.Diffuse)
-                return Color(0, 0, 0);
-            else
-                return result.hitLightColor * pathMultiplier;
-        }
+    // 2) (a.k.a. "indirect illumination"): continue the path randomly, by asking the
+    //    BRDF to choose a continuation direction
+    Ray w_out;
+    Color brdfEval; // brdf at the chosen direction
+    float pdf; // the probability to choose that specific newRay
+    // sample the BRDF:
+    result.closestNode.shader.spawnRay(result.data, result.ray, w_out, brdfEval, pdf);
 
-        // no intersection? use the environment, if present:
-        if (!result.closestNode)
-            return scene.environment.getEnvironment(result.ray.dir) * pathMultiplier;
+    if (pdf < 0) return Color(1, 0, 0);  // bogus BRDF; mark in red
+    if (pdf == 0) return Color(0, 0, 0);  // terminate the path, as required
+    Color resultGi;
+    resultGi = pathtrace(scene, w_out, pathMultiplier * brdfEval / pdf); // continue the path normally; accumulate the new term to the BRDF product
 
-        auto resultDirect = Color(0, 0, 0);
-
-        // We continue building the path in two ways:
-        // 1) (a.k.a. "direct illumination"): connect the current path end to a random light.
-        //    This approximates the direct lighting towards the intersection point.
-        if (scene.lights.length)
-        {
-            // choose a random light:
-            size_t lightIndex = uniform(0, scene.lights.length);
-            const Light light = scene.lights[lightIndex];
-            size_t numLightSamples = light.getNumSamples();
-
-            // choose a random sample of that light:
-            size_t lightSampleIdx = uniform(0, numLightSamples);
-
-            // sample the light and see if it came out nonzero:
-            Vector pointOnLight;
-            Color lightColor;
-            light.getNthSample(lightSampleIdx, result.data.p, pointOnLight, lightColor);
-
-            if (lightColor.intensity() > 0 && scene.testVisibility(result.data.p + result.data.normal * 1e-6, pointOnLight))
-            {
-                // w_out - the outgoing ray in the BRDF evaluation
-                Ray w_out;
-                w_out.orig = result.data.p + result.data.normal * 1e-6;
-                w_out.dir = pointOnLight - w_out.orig;
-                w_out.dir.normalize();
-                //
-                // calculate the light contribution in a manner, consistent with classic path tracing:
-                float solidAngle = light.solidAngle(w_out.orig); // solid angle of the light, as seen from x.
-                // evaluate the BRDF:
-                Color brdfAtPoint = result.closestNode.shader.eval(result.data, result.ray, w_out);
-
-                lightColor = light.color() * solidAngle / (2*PI);
-
-                // the probability to choose a particular light among all lights: 1/N
-                float pdfChooseLight = 1.0f / scene.lights.length;
-                // the probability to shoot a ray in a random direction: 1/2*pi
-                float pdfInLight = 1 / (2*PI);
-
-                // combined probability for that ray:
-                float pdf = pdfChooseLight * pdfInLight;
-
-                if (brdfAtPoint.intensity() > 0)
-                    // Kajia's rendering equation, evaluated at a single incoming/outgoing directions pair:
-                    /* Li */    /*BRDFs@path*/    /*BRDF*/   /*ray probability*/
-                    resultDirect = lightColor * pathMultiplier * brdfAtPoint / pdf;
-            }
-        }
-
-        // 2) (a.k.a. "indirect illumination"): continue the path randomly, by asking the
-        //    BRDF to choose a continuation direction
-        Ray w_out;
-        Color brdfEval; // brdf at the chosen direction
-        float pdf; // the probability to choose that specific newRay
-        // sample the BRDF:
-        result.closestNode.shader.spawnRay(result.data, result.ray, w_out, brdfEval, pdf);
-
-        if (pdf < 0) return Color(1, 0, 0);  // bogus BRDF; mark in red
-        if (pdf == 0) return Color(0, 0, 0);  // terminate the path, as required
-        Color resultGi;
-        resultGi = pathtrace(w_out, pathMultiplier * brdfEval / pdf); // continue the path normally; accumulate the new term to the BRDF product
-
-        return resultDirect + resultGi;
-    }
+    return resultDirect + resultGi;
 }
