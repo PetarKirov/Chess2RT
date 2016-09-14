@@ -79,6 +79,7 @@ class RTDemo : GuiBase!Color
          */
         if (!atomicLoad(this.isRendering) && !needsRendering)
         {
+            gui.resizeEnabled = true;
             import derelict.sdl2.sdl : SDL_Event;
             SDL_Event event;
             gui.sdl2.waitEvent(&event);
@@ -94,6 +95,10 @@ class RTDemo : GuiBase!Color
 
         isRendering.atomicStore(true);
 
+        updateToWindowSize();
+
+        gui.resizeEnabled = false;
+
         /*
          * Ok to set to false here (and not when the rendering
          * thread finishes, because there's no danger of reentrancy
@@ -102,6 +107,19 @@ class RTDemo : GuiBase!Color
         needsRendering = false;
 
         renderSceneAsync(this.scene, this.screen, &this.isRendering);
+    }
+
+    void updateToWindowSize()
+    {
+        auto s = gui.getSize();
+        if (s.x == scene.settings.frameWidth && s.y == scene.settings.frameHeight)
+            return;
+
+        scene.settings.frameWidth = s.x;
+        scene.settings.frameHeight = s.y;
+        scene.camera.setFrameSize(s.x, s.y);
+        screen.alloc(s.x, s.y);
+        this.gui.setSize(s.x, s.y);
     }
 
     void resetScene(bool newWindow = false)
@@ -151,6 +169,9 @@ class RTDemo : GuiBase!Color
 
         auto mouse = gui.sdl2.mouse();
         auto kbd = gui.sdl2.keyboard();
+
+        if (kbd.testAndRelease(SDLK_RETURN))
+            this.needsRendering = true;
 
         // Async w.r.t. rendering
         if (mouse.isButtonPressed(SDL_BUTTON_LMASK))
