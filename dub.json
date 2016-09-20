@@ -7,8 +7,8 @@
 	"targetPath": "bin/",
 
 	"dependencies": {
-		"gfm:sdl2": ">=6.1.2",
-		"gfm:math": ">=6.1.2",
+		"gfm:sdl2": ">=6.1.3",
+		"gfm:math": ">=6.1.3",
 		"sdlang-d": ">=0.9.5"
 	},
 

@@ -17,6 +17,7 @@ Scene {
         AAEnabled			false
         interactive			true
         prepassOnly			false
+        dynamicAspectRatio  true
     }
 
     Camera {

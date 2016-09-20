@@ -226,12 +226,15 @@ class Camera : Deserializable
         pitch = clamp(pitch, -90, 90);
     }
 
+    void setFrameSize(uint width, uint height)
+    {
+        this.frameWidth = width;
+        this.frameHeight = height;
+        this.aspect = double(this.frameWidth) / this.frameHeight;
+    }
+
     void deserialize(const SceneDscNode val, SceneLoadContext context)
     {
-        this.frameWidth = context.scene.settings.frameWidth;
-        this.frameHeight = context.scene.settings.frameHeight;
-        this.aspect = cast(double)this.frameWidth / this.frameHeight;
-
         context.set(this.pos, val, "pos");
 
         context.set(this.yaw, val, "yaw");
@@ -245,6 +248,8 @@ class Camera : Deserializable
         context.set(this.numSamples, val, "numSamples");
         context.set(this.stereoSeparation, val, "stereoSeparation");
         discMultiplier = 10.0 / fNumber;
+
+        setFrameSize(context.scene.settings.frameWidth, context.scene.settings.frameHeight);
     }
 }
 

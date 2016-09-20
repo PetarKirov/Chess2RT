@@ -74,6 +74,42 @@ struct SDL2Gui
         this._window.setTitle(title);
     }
 
+    auto getSize()
+    {
+        return _window.getSize();
+    }
+
+    @property bool resizeEnabled()
+    {
+        auto min = _window.getMinimumSize(),
+             max = _window.getMaximumSize();
+
+        return max == SDL_Point(1920, 1200);
+    }
+
+    @property void resizeEnabled(bool enabled)
+    {
+        if (enabled == resizeEnabled())
+            return;
+
+        log.logf("Enabling resize: %s?, resize enabled: %s",
+            enabled, resizeEnabled());
+
+        log.logf("Min window size: %s, max window size: %s",
+            _window.getMinimumSize, _window.getMaximumSize);
+
+        if (enabled)
+        {
+            _window.setMinimumSize(20, 20);
+            _window.setMaximumSize(1920, 1200);
+        }
+        else
+        {
+            _window.setMinimumSize(this.width, this.height);
+            _window.setMaximumSize(this.width, this.height);
+        }
+    }
+
     void draw(SRC)(auto ref SRC image)
     {
         uint* pixels = cast(uint*)surface.pixels;
