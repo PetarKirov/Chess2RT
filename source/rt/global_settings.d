@@ -7,6 +7,7 @@ class GlobalSettings : Deserializable
     // General:
     uint frameWidth = 640;              // Frame size; will be adjusted
     uint frameHeight = 480;             // to bucket size.
+    bool changeAspectRationOnResize;    // If the camera.aspectRation should be update after window resize?
     bool fullscreen = false;            // [Not implemented] Fullscreen mode?
     bool interactive = false;           // Interactive mode?
 
@@ -46,6 +47,7 @@ class GlobalSettings : Deserializable
     {
         context.set(this.frameWidth, val, "frameWidth");
         context.set(this.frameHeight, val, "frameHeight");
+        context.set(this.changeAspectRationOnResize, val, "changeAspectRationOnResize");
         context.set(this.fullscreen, val, "fullscreen");
         context.set(this.interactive, val, "interactive");
 

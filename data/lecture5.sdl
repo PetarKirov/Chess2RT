@@ -17,6 +17,7 @@ Scene {
         AAEnabled			false
         interactive			true
         prepassOnly			false
+        changeAspectRationOnResize true
     }
 
     Camera {
