@@ -117,7 +117,10 @@ class RTDemo : GuiBase!Color
 
         scene.settings.frameWidth = s.x;
         scene.settings.frameHeight = s.y;
-        scene.camera.setFrameSize(s.x, s.y);
+
+        if (scene.settings.dynamicAspectRatio)
+            scene.camera.setFrameSize(s.x, s.y);
+
         screen.alloc(s.x, s.y);
         this.gui.setSize(s.x, s.y);
     }
