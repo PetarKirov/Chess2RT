@@ -3,6 +3,9 @@ Chess2RT [![Build Status](https://img.shields.io/travis/ZombineDev/Chess2RT/mast
 A raytracer renderer, written in D, which will eventually be used for a
 3d rendered chess game (and/or a variation of it).
 
+![chess2rt_screenshot_20_sept_2016](https://cloud.githubusercontent.com/assets/3475150/18662160/c4766b1c-7f21-11e6-938f-4ac8caa28e80.png)
+( Cubemap skybox courtesy of: http://www.custommapmakers.org/skyboxes.php )
+
 What works
 ----------
 + Simple geometry objects: spheres, cubes and a horizontal plane.
