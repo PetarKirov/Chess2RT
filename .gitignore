@@ -7,7 +7,7 @@ bin/
 *.lib
 *.exe
 *.o 
-*.obj
+./*.obj
 *.dll
 
 !lib/*/*.dll

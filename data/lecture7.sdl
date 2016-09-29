@@ -1,0 +1,179 @@
+//
+// An example scene, which represents the same scenery as what the initializeScene()
+// function used to create around just before lecture6
+// Namely:
+//  1) A shiny floor, made of a woody Lambert shader and a mirror layer on top
+//  2) A glass ball
+//  3) A shiny ball using a glossy shader
+//  4) Three small phong-lit balls, using red, yellow and green colors
+
+Scene {
+    Name "lecture6"
+
+    GlobalSettings {
+        frameWidth          640
+        frameHeight         480
+        dynamicAspectRatio  true
+        ambientLight        0.5 0.5 0.5
+        interactive         true
+        AAEnabled           false
+        interactive         true
+        prepassOnly         false
+        prepassEnabled      true
+        asyncRendering      true
+        threadCount         0
+    }
+
+    Camera "camera" {
+        pos                 45 120 -300
+        aspect              1.33333
+        yaw                 5
+        pitch               -5
+        roll                0
+        fov                 60
+
+    }
+
+    CubemapEnvironment {
+        folder "env/hw_glacier"
+    }
+
+    Lights {
+        PointLight "l1" {
+            pos             -90 1200 -750
+            color           1 1 1
+            power           1200000
+        }
+
+    }
+
+    Geometries {
+        // 1)
+        Plane "floor" {
+            y               -0.01
+            limit           200
+        }
+
+        // 2) and 3)
+        Sphere "S" {
+        }
+
+        Mesh "teapot" {
+            file "geom/teapot_lowres.obj"
+        }
+    }
+
+    Textures {
+        // 1)
+        BitmapTexture "wood_tex" {
+            file            "texture/wood.bmp"
+            scaling         0.01
+        }
+
+        Fresnel "mirror_fresnel" {
+            ior             1.33
+        }
+
+        // 2)
+        Fresnel "glass_fresnel" {
+            ior             1.6
+        }
+
+        // 4)
+        Checker "checker" {
+            color1 0.7  0.7   0.7
+            color2 0.75 0.15  0.15
+            size 0.1
+        }
+
+        BitmapTexture "lava_tex" {
+            file            "texture/lava.bmp"
+        }
+    }
+
+
+    Shaders {
+        // 1)
+        Lambert "floor_diffuse" {
+            texture         "wood_tex"
+        }
+
+        Reflection          "mirror" {
+
+        }
+
+        Layered "floor_shader" {
+            layer  1    1    1   shader="floor_diffuse"
+            layer 0.05 0.05 0.05 shader="mirror" texture="mirror_fresnel"
+        }
+
+        // 2)
+        Reflection "glossy" {
+            multiplier      0.95
+            //glossiness      0.97
+            numSamples      25
+        }
+
+        // 3)
+        Phong "p1" {
+            color           0.95 0.05 0.05
+            exponent        32
+        }
+
+        Phong "p2" {
+            color           0.95 0.95 0.10
+            exponent        32
+        }
+
+        Phong "p3" {
+            color           0.05 0.95 0.05
+            exponent        32
+        }
+
+        Lambert "soccer_ball_shader" {
+            texture "checker"
+        }
+
+        Lambert "lava_shader" {
+            texture "lava_tex"
+        }
+    }
+
+    Nodes {
+        // 1)
+        Node "floor" {
+            geometry        "floor"
+            shader          "floor_shader"
+        }
+
+        // 2)
+        Node "sphere" {
+            geometry        "S"
+            shader          "glossy"
+            translate       100 50 60
+            scale            50 50 50
+        }
+
+        // 3)
+        Node "small_sphere_red" {
+            geometry        "S"
+            shader          "p1"
+            scale           15 15 15
+            translate       10 15  0
+        }
+
+        Node "small_sphere_yellow" {
+            geometry        "S"
+            shader          "p2"
+            scale           15 15 15
+            translate       42 15  0
+        }
+
+        Node "small_sphere_green" {
+            geometry        "S"
+            shader          "lava_shader"
+            scale           15 15 15
+            translate       74 15  0
+        }
+    }
+}

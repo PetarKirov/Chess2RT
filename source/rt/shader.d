@@ -440,9 +440,9 @@ class Layered : Shader
             const colorValues = child.getValues;
 
             auto c = Color(
-                colorValues[0].get!float,
-                colorValues[1].get!float,
-                colorValues[2].get!float
+                colorValues[0].get!double,
+                colorValues[1].get!double,
+                colorValues[2].get!double
             );
 
             auto ch = cast(SdlValueWrapper)child;

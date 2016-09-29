@@ -10,7 +10,11 @@ import gfm.math.box;
 alias Vector = gfm.math.vector.vec3d;
 alias Matrix = gfm.math.matrix.mat3d;
 
-Vector mul(const Vector v, const Matrix m) pure nothrow @safe @nogc
+pure nothrow @safe @nogc:
+
+double signOf(double x) { return x > 0 ? +1 : -1; }
+
+Vector mul(const Vector v, const Matrix m)
 {
     return Vector(
         v.x * m.c[0][0] + v.y * m.c[1][0] + v.z * m.c[2][0],
