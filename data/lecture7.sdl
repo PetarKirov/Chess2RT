@@ -81,8 +81,8 @@ Scene {
 
         // 4)
         Checker "checker" {
-            color1 0.7  0.7   0.7
-            color2 0.75 0.15  0.15
+            color1 0.9  0.9   0.9
+            color2 0.35 0.15  0.65
             size 0.1
         }
 
@@ -130,6 +130,7 @@ Scene {
             exponent        32
         }
 
+        // 4)
         Lambert "soccer_ball_shader" {
             texture "checker"
         }
@@ -174,6 +175,14 @@ Scene {
             shader          "lava_shader"
             scale           15 15 15
             translate       74 15  0
+        }
+
+        // 4)
+        Node "teapot" {
+            geometry        "teapot"
+            shader          "soccer_ball_shader"
+            translate       -100 0 50
+            scale           70 70 70
         }
     }
 }
