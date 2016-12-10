@@ -244,7 +244,7 @@ struct BBox
 	 *  	left = output - this is where the left bbox is stored (lower coordinates)
 	 *  	output = this is where the right bbox is stored.
      */
-    void split(Axis axis, double where, ref BBox left, ref BBox right) const
+    void split(Axis axis, double where, out BBox left, out BBox right) const
     {
         left = this;
         right = this;
