@@ -3,6 +3,7 @@ module core.bbox;
 
 import rt.importedtypes : Vector, cross, dot, signOf;
 import rt.ray;
+import core.axis : Axis;
 
 import std.math;
 
@@ -66,10 +67,6 @@ struct RRay
 	}
 }
 
-enum Axis
-{
-	X, Y, Z, None
-}
 
 /**
  * Axis-aligned bounding box around some object

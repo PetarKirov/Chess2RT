@@ -1,13 +1,7 @@
 ///
 module core.kd_tree;
 
-enum Axis
-{
-    X,
-    Y,
-    Z,
-    None
-}
+import core.axis : Axis;
 
 struct KDTreeNode
 {

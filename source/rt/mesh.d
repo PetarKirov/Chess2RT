@@ -4,7 +4,7 @@ module core.mesh;
 import rt.geometry, rt.sceneloader;
 import rt.importedtypes, rt.ray, rt.intersectable;
 
-import core.bbox;
+import core.bbox, core.axis : Axis;
 
 import std.stdio : writeln;
 
