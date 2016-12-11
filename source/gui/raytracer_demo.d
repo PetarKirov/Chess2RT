@@ -52,7 +52,26 @@ string getNewImageFileName()
     return format("output/img_%s.bmp", time);
 }
 
-import gui.guidemo, imageio.image;;
+import gui.guidemo, imageio.image;
+
+struct Atomic(T)
+{
+    private shared T _val;
+
+    shared(T)* ptr() shared { return &_val; }
+
+    @property bool get() shared
+    {
+        return atomicLoad(this._val);
+    }
+
+    @property void get(bool newVal) shared
+    {
+        this._val.atomicStore(newVal);
+    }
+
+    alias get this;
+}
 
 class RTDemo : GuiBase!Color
 {
