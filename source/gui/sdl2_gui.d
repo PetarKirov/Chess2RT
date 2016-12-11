@@ -68,6 +68,17 @@ struct SDL2Gui
 
     void setSize(uint width, uint height, Ternary fullscreen)
     {
+        if (fullscreen == Ternary.yes)
+        {
+            this._window.setFullscreenSetting(SDL_WINDOW_FULLSCREEN);
+            SDL_SetRelativeMouseMode(true);
+        }
+        else
+        {
+            this._window.setFullscreenSetting(0);
+            SDL_SetRelativeMouseMode(false);
+        }
+
         if (this.width == width && this.height == height)
         {
             log.log("Window size didn't change!");
@@ -82,10 +93,6 @@ struct SDL2Gui
         if (this._texture) this._texture.destroy();
 
         this._window.setSize(width, height);
-
-        this._window.setFullscreenSetting(
-                fullscreen == Ternary.yes?
-                SDL_WINDOW_FULLSCREEN : 0);
 
         this._surface = new SDL2Surface(sdl2, width, height, 32,
             0x00FF0000,

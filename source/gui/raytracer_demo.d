@@ -277,30 +277,61 @@ class RTDemo : GuiBase!Color
         if (atomicLoad(isRendering))
             return;
 
-        import derelict.sdl2.types;
+        import std.algorithm : find;
+        import std.range.primitives;
 
-        enum dMove = 32, dRotate = 4;
+        import derelict.sdl2.types;
+        import derelict.sdl2.functions : SDL_GetRelativeMouseState;
+
+        enum dMove = 32, dRotate = 4, mouseSpeed = 0.2;
 
         auto controls =
         [
             Controls ([SDLK_RIGHT, SDLK_LCTRL], 0, 0, 0, 0, dRotate),
             Controls ([SDLK_RIGHT, SDLK_LSHIFT], 0, 0, 0, -dRotate),
             Controls ([SDLK_RIGHT], dMove),
+            Controls ([SDLK_d], dMove),
 
             Controls ([SDLK_LEFT, SDLK_LCTRL], 0, 0, 0, 0, -dRotate),
             Controls ([SDLK_LEFT, SDLK_LSHIFT], 0, 0, 0, dRotate),
             Controls ([SDLK_LEFT], -dMove),
+            Controls ([SDLK_a], -dMove),
 
             Controls ([SDLK_DOWN, SDLK_LCTRL], 0, -dMove),
             Controls ([SDLK_DOWN, SDLK_LSHIFT], 0, 0, 0, 0, 0, -dRotate),
             Controls ([SDLK_DOWN], 0, 0, -dMove),
+            Controls ([SDLK_s], 0, 0, -dMove),
 
             Controls ([SDLK_UP, SDLK_LCTRL], 0, dMove),
             Controls ([SDLK_UP, SDLK_LSHIFT], 0, 0, 0, 0, 0, dRotate),
             Controls ([SDLK_UP], 0, 0, dMove),
+            Controls ([SDLK_w], 0, 0, dMove),
         ];
 
-        move_impl(controls);
+        int mouseDx, mouseDy;
+        SDL_GetRelativeMouseState(&mouseDx, &mouseDy);
+
+        auto pressedKeys = controls.find!(c => areKeysPressed(c.keyCodes));
+
+        Controls c;
+        if (!pressedKeys.empty || mouseDx || mouseDy)
+        {
+            this.scene.beginFrame(); // ensure the camera is initialized
+
+            if (!pressedKeys.empty)
+                c = pressedKeys.front;
+
+            c.dYaw += -mouseDx * mouseSpeed;
+            c.dPitch += -mouseDy * mouseSpeed;
+
+            scene.camera.move(c.dx, c.dy, c.dz);
+            scene.camera.rotate(c.dYaw, c.dRoll, c.dPitch);
+
+            writefln("Camera movement: (x: %s y: %s z: %s) (yaw: %s roll: %s pitch: %s)",
+                     c.dx, c.dy, c.dz, c.dYaw, c.dRoll, c.dPitch);
+
+            needsRendering = true;
+        }
     }
 
     /// Encapsulates a camera control keys binding.
@@ -309,49 +340,6 @@ class RTDemo : GuiBase!Color
         int[] keyCodes;
         double dx = 0.0, dy = 0.0, dz = 0.0;
         double dYaw = 0.0, dRoll = 0.0, dPitch = 0.0;
-
-        /// Params:
-        ///     keyCodes =  array of SDL2 key codes to test
-        ///     dx =        left/right movement
-        ///     dy =        up/down movement
-        ///     dz =        forward/backword movement
-        ///     dYaw =      left/right rotation [0..360]
-        ///     dRoll =     roll rotation [-180..180]
-        ///     dPitch =    up/down rotation [-90..90]
-        this(int[] keyCodes, double dx = 0.0, double dy = 0.0, double dz = 0.0,
-            double dYaw = 0.0, double dRoll = 0.0, double dPitch = 0.0)
-        {
-            this.keyCodes = keyCodes;
-            this.dx = dx;
-            this.dy = dy;
-            this.dz = dz;
-            this.dYaw = dYaw;
-            this.dRoll = dRoll;
-            this.dPitch = dPitch;
-        }
-    }
-
-    /// Moves and/or rotates the camera according to the
-    /// first control settings that match.
-    /// Params:
-    ///     controls = array of control settings to check
-    private void move_impl(Controls[] controls)
-    {
-        foreach (c; controls)
-        {
-            if (areKeysPressed(c.keyCodes))
-            {
-                this.scene.beginFrame(); // ensure the camera is initialized
-                scene.camera.move(c.dx, c.dy, c.dz);
-                scene.camera.rotate(c.dYaw, c.dRoll, c.dPitch);
-
-                writefln("Camera movement: (x: %s y: %s z: %s) (yaw: %s roll: %s pitch: %s)",
-                         c.dx, c.dy, c.dz, c.dYaw, c.dRoll, c.dPitch);
-
-                needsRendering = true;
-                break;
-            }
-        }
     }
 
     /// Checks if all of the specified SDL2 keys are pressed.
