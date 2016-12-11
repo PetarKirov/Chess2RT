@@ -37,6 +37,11 @@ struct SDL2Gui
         init(width, height, fullscreen, true, title, log);
     }
 
+    SDL_Window* getWnd()
+    {
+        return SDL_GetWindowFromID(_window.id);
+    }
+
     void init(uint width, uint height, bool fullscreen, bool allowResize, string title, Logger log)
     {
         uint windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS;
@@ -54,6 +59,11 @@ struct SDL2Gui
 
         renderer.setColor(0, 0, 0, 255);
         renderer.clear();
+    }
+
+    void setFocus()
+    {
+        this.getWnd.SDL_RaiseWindow();
     }
 
     void setSize(uint width, uint height, Ternary fullscreen)

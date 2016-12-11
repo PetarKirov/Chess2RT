@@ -177,6 +177,8 @@ class RTDemo : GuiBase!Color
                     Ternary(scene.settings.fullscreen));
         }
 
+        this.gui.setFocus();
+
         //Set the screen size according to the settings in the scene file
         screen.alloc(scene.settings.frameWidth,
                     scene.settings.frameHeight);
