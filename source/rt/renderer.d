@@ -18,15 +18,6 @@ package struct TraceResult
     Rebindable!(const Node) closestNode;
     bool hitLight;
     Color hitLightColor;
-
-    void opAssign(ref const TraceResult rhs) pure nothrow @safe @nogc
-    {
-        this.ray = rhs.ray;
-        this.data = rhs.data;
-        this.closestNode = rhs.closestNode;
-        this.hitLight = rhs.hitLight;
-        this.hitLightColor = rhs.hitLightColor;
-    }
 }
 
 void renderSceneAsync(Scene scene, Image!Color output, shared(bool)* isRendering)
