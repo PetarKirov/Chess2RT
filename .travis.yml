@@ -9,5 +9,7 @@ addons:
 
 matrix:
   include:
-    - d: ldc-1.1.0-alpha1
-    - d: dmd-2.071.1
+    - d: ldc-beta
+    - d: dmd
+    - d: dmd-beta
+    - d: dmd-nightly
