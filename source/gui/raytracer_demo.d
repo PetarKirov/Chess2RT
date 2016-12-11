@@ -200,7 +200,18 @@ class RTDemo : GuiBase!Color
         auto kbd = gui.sdl2.keyboard();
 
         if (kbd.testAndRelease(SDLK_RETURN))
+        {
+            if (kbd.testAndRelease(SDLK_LALT) || kbd.testAndRelease(SDLK_RALT))
+            {
+                scene.settings.fullscreen = !scene.settings.fullscreen;
+                this.gui.setSize(
+                    scene.settings.frameWidth,
+                    scene.settings.frameHeight,
+                    Ternary(scene.settings.fullscreen));
+            }
+
             this.needsRendering = true;
+        }
 
         // Async w.r.t. rendering
         if (mouse.isButtonPressed(SDL_BUTTON_LMASK))

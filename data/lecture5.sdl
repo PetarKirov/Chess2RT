@@ -14,11 +14,12 @@ Scene {
         frameWidth          640
         frameHeight         480
         fullscreen          false
-        allowResize         true
+        allowResize         false
         ambientLightColor 	0.2 0.2 0.2
         AAEnabled			false
         interactive			true
         prepassOnly			false
+        prepassEnabled      false
         dynamicAspectRatio  true
     }
 
