@@ -16,7 +16,7 @@ Scene {
         fullscreen          false
         allowResize         false
         ambientLightColor 	0.2 0.2 0.2
-        AAEnabled			false
+        AAEnabled			true
         interactive			true
         prepassOnly			false
         prepassEnabled      false

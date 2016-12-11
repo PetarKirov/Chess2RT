@@ -147,32 +147,32 @@ struct Renderer
         if (!scene.settings.AAEnabled || isStopReq)
             return end();
 
-        foreach (y; 0 .. H) {
-            foreach (x; 0 .. W)
+        foreach (b; workers.parallel(buckets[]))
+        foreach (y; b.min.y .. b.max.y)
+        foreach (x; b.min.x .. b.max.x)
+        {
+            Color[5] neighs;
+            neighs[0] = outputImage[x, y];
+
+            neighs[1] = outputImage[x     > 0 ? x - 1 : x, y];
+            neighs[2] = outputImage[x + 1 < W ? x + 1 : x, y];
+
+            neighs[3] = outputImage[x, y     > 0 ? y - 1 : y];
+            neighs[4] = outputImage[x, y + 1 < H ? y + 1 : y];
+
+            auto average = NamedColors.black;
+
+            foreach (i; 0 .. 5)
+                average += neighs[i];
+
+            average /= 5.0f;
+
+            foreach (i; 0 .. 5)
             {
-                Color[5] neighs;
-                neighs[0] = outputImage[x, y];
-
-                neighs[1] = outputImage[x     > 0 ? x - 1 : x, y];
-                neighs[2] = outputImage[x + 1 < W ? x + 1 : x, y];
-
-                neighs[3] = outputImage[x, y     > 0 ? y - 1 : y];
-                neighs[4] = outputImage[x, y + 1 < H ? y + 1 : y];
-
-                auto average = NamedColors.black;
-
-                foreach (i; 0 .. 5)
-                    average += neighs[i];
-
-                average /= 5.0f;
-
-                foreach (i; 0 .. 5)
+                if (tooDifferent(neighs[i], average))
                 {
-                    if (tooDifferent(neighs[i], average))
-                    {
-                        needsAA[x, y] = true;
-                        break;
-                    }
+                    needsAA[x, y] = true;
+                    break;
                 }
             }
         }
@@ -180,10 +180,10 @@ struct Renderer
         if (isStopReq)
             return end();
 
-        foreach (b; buckets[])
-            foreach (y; b.min.y .. b.max.y)
-                foreach (x; b.min.x .. b.max.x)
-                    renderPixelAA(x, y);
+        foreach (b; workers.parallel(buckets[]))
+        foreach (y; b.min.y .. b.max.y)
+        foreach (x; b.min.x .. b.max.x)
+            renderPixelAA(x, y);
 
         return end();
     }
