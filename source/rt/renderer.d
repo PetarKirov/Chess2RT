@@ -20,19 +20,27 @@ package struct TraceResult
     Color hitLightColor;
 }
 
-void renderSceneAsync(Scene scene, Image!Color output, shared(bool)* isRendering)
+void renderSceneAsync(
+    Scene scene,
+    Image!Color output,
+    shared(bool)* isRendering,
+    const shared(bool)* needsRendering)
 {
     import std.concurrency : spawn;
-    import core.atomic : atomicStore;
 
     scene.beginFrame();
-    spawn((shared Scene s, shared Image!Color o, shared(bool)* isWorking)
-    {
-        auto renderer = Renderer(cast()s, cast()o);
-        renderer.renderRT();
-        (*isWorking).atomicStore(false);
-    },
-    cast(shared)scene, cast(shared)output, isRendering);
+    spawn((shared Scene s, shared Image!Color o,
+           shared(bool)* isWorking,
+           const shared(bool)* isStopping)
+        {
+            auto renderer = Renderer(cast()s, cast()o, isWorking, isStopping);
+            renderer.renderRT();
+        },
+        cast(shared)scene,
+        cast(shared)output,
+        isRendering,
+        needsRendering
+    );
 }
 
 auto renderPixel(Scene scene, Image!Color output, int x, int y)
@@ -55,19 +63,39 @@ struct Renderer
         const Scene scene;
         Image!Color outputImage;
         Image!bool needsAA;
+        shared(bool)* isRendering;
+        const shared(bool)* isStopRequested;
     }
 
     TraceResult lastTracingResult;
 
-    this(const Scene scene, Image!Color output)
+    this(const Scene scene, Image!Color output,
+         shared(bool)* isRendering = null,
+         const shared(bool)* isStopRequested = null)
     {
         this.scene = scene;
         this.outputImage = output;
         this.needsAA.alloc(outputImage.w, outputImage.h);
+        this.isRendering = isRendering;
+        this.isStopRequested = isStopRequested;
     }
 
     void renderRT() //@nogc
     {
+        import core.atomic : atomicLoad, atomicStore;
+
+        void end()
+        {
+            if (isRendering !is null)
+                (*isRendering).atomicStore(false);
+        }
+
+        bool isStopReq()
+        {
+            return isStopRequested !is null &&
+                (*isStopRequested).atomicLoad();
+        }
+
         MyArray!box2i buckets;
 
         uint W = scene.settings.frameWidth;
@@ -98,8 +126,8 @@ struct Renderer
                 }
             }
 
-        if (scene.settings.prepassOnly)
-                return;
+        if (scene.settings.prepassOnly || isStopReq)
+            return end();
 
         // 2) Second pass - shoot _one_ ray per pixel:
         import std.parallelism : TaskPool, taskPool;
@@ -107,17 +135,17 @@ struct Renderer
         auto workers = threadCount? new TaskPool(threadCount) : taskPool();
         foreach (b; workers.parallel(buckets[]))
         {
+            // TODO: Maybe make an early exit if isStopReq returns true.
             foreach (y; b.min.y .. b.max.y)
                 foreach (x; b.min.x .. b.max.x)
                     renderPixelNoAA(x, y);
-            // TODO(check if correct): if (!scene.settings.interactive && !displayVFBRect(r, vfb)) return;
         }
 
         // 3) Third pass - find pixels that need AA (which
         // are too different than their neighbours)
         // and shoot additional rays per pixel.
-        if (!scene.settings.AAEnabled)
-            return;
+        if (!scene.settings.AAEnabled || isStopReq)
+            return end();
 
         foreach (y; 0 .. H) {
             foreach (x; 0 .. W)
@@ -149,10 +177,15 @@ struct Renderer
             }
         }
 
+        if (isStopReq)
+            return end();
+
         foreach (b; buckets[])
             foreach (y; b.min.y .. b.max.y)
                 foreach (x; b.min.x .. b.max.x)
                     renderPixelAA(x, y);
+
+        return end();
     }
 
     private:

@@ -79,8 +79,8 @@ class RTDemo : GuiBase!Color
 
     Scene scene;
     string sceneFilePath;
-    bool needsRendering;
-    shared bool isRendering;
+    shared Atomic!bool needsRendering;
+    shared Atomic!bool isRendering;
 
     this(Logger log = sharedLog)
     {
@@ -112,7 +112,7 @@ class RTDemo : GuiBase!Color
          * in order to avoid needless polling. Otherwise, keep
          * updating the screen.
          */
-        if (!atomicLoad(this.isRendering) && !needsRendering)
+        if (!this.isRendering && !needsRendering)
         {
             gui.resizeEnabled = scene.settings.allowResize;
             import derelict.sdl2.sdl : SDL_Event;
@@ -123,12 +123,12 @@ class RTDemo : GuiBase!Color
 
     override void render()
     {
-        if (!needsRendering || atomicLoad(isRendering))
+        if (!needsRendering || isRendering)
             return;
 
         logger.log("Spawning render thread...");
 
-        isRendering.atomicStore(true);
+        isRendering = true;
 
         updateToWindowSize();
 
@@ -141,7 +141,8 @@ class RTDemo : GuiBase!Color
          */
         needsRendering = false;
 
-        renderSceneAsync(this.scene, this.screen, &this.isRendering);
+        renderSceneAsync(this.scene, this.screen,
+            this.isRendering.ptr, this.needsRendering.ptr);
     }
 
     void updateToWindowSize()
@@ -204,7 +205,7 @@ class RTDemo : GuiBase!Color
 
         logger.log("State successfully reset.");
 
-        this.isRendering.atomicStore(false);
+        this.isRendering = false;
     }
 
     override bool handleInput()
@@ -290,12 +291,6 @@ class RTDemo : GuiBase!Color
 
     private void move()
     {
-        // Ignore input events while rendering because we can't modify the scene.
-        // Perhaps we can save the last input event and handle it
-        // after we finish rendering.
-        if (atomicLoad(isRendering))
-            return;
-
         import std.algorithm : find;
         import std.range.primitives;
 
@@ -343,6 +338,16 @@ class RTDemo : GuiBase!Color
         Controls c;
         if (!pressedKeys.empty || mouseDx || mouseDy)
         {
+            // Communicate to the render threads that a new render request
+            // has a arrived and they need to drop their current tasks.
+            needsRendering = true;
+
+            // Ignore input events while rendering because we can't modify the scene.
+            // Perhaps we can save the last input event and handle it
+            // after we finish rendering.
+            if (isRendering)
+                return;
+
             this.scene.beginFrame(); // ensure the camera is initialized
 
             if (!pressedKeys.empty)
