@@ -290,21 +290,29 @@ class RTDemo : GuiBase!Color
             Controls ([SDLK_RIGHT, SDLK_LCTRL], 0, 0, 0, 0, dRotate),
             Controls ([SDLK_RIGHT, SDLK_LSHIFT], 0, 0, 0, -dRotate),
             Controls ([SDLK_RIGHT], dMove),
+            Controls ([SDLK_d, SDLK_LCTRL], 0, 0, 0, 0, dRotate),
+            Controls ([SDLK_d, SDLK_LSHIFT], 0, 0, 0, -dRotate),
             Controls ([SDLK_d], dMove),
 
             Controls ([SDLK_LEFT, SDLK_LCTRL], 0, 0, 0, 0, -dRotate),
             Controls ([SDLK_LEFT, SDLK_LSHIFT], 0, 0, 0, dRotate),
             Controls ([SDLK_LEFT], -dMove),
+            Controls ([SDLK_a, SDLK_LCTRL], 0, 0, 0, 0, -dRotate),
+            Controls ([SDLK_a, SDLK_LSHIFT], 0, 0, 0, dRotate),
             Controls ([SDLK_a], -dMove),
 
             Controls ([SDLK_DOWN, SDLK_LCTRL], 0, -dMove),
             Controls ([SDLK_DOWN, SDLK_LSHIFT], 0, 0, 0, 0, 0, -dRotate),
             Controls ([SDLK_DOWN], 0, 0, -dMove),
+            Controls ([SDLK_s, SDLK_LCTRL], 0, -dMove),
+            Controls ([SDLK_s, SDLK_LSHIFT], 0, 0, 0, 0, 0, -dRotate),
             Controls ([SDLK_s], 0, 0, -dMove),
 
             Controls ([SDLK_UP, SDLK_LCTRL], 0, dMove),
             Controls ([SDLK_UP, SDLK_LSHIFT], 0, 0, 0, 0, 0, dRotate),
             Controls ([SDLK_UP], 0, 0, dMove),
+            Controls ([SDLK_w, SDLK_LCTRL], 0, dMove),
+            Controls ([SDLK_w, SDLK_LSHIFT], 0, 0, 0, 0, 0, dRotate),
             Controls ([SDLK_w], 0, 0, dMove),
         ];
 
