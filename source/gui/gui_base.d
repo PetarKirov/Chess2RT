@@ -23,10 +23,12 @@ abstract class GuiBase(C) : AppSceleton
         this.logger = customLogger;
     }
 
-    this(uint width, uint height, string windowTitle)
+    this(uint width, uint height, bool fullscreen, string windowTitle)
     {
         this(sharedLog);
-        this.init(InitSettings(width, height, windowTitle).Variant);
+        this.init(
+            InitSettings(width, height, fullscreen, true, windowTitle)
+            .Variant);
     }
 
     ~this()
@@ -37,6 +39,7 @@ abstract class GuiBase(C) : AppSceleton
     static struct InitSettings
     {
         uint width, height;
+        bool fullscreen, allowResize;
         string windowTitle;
     }
 
@@ -47,7 +50,9 @@ abstract class GuiBase(C) : AppSceleton
 
         auto params = init_params.get!InitSettings;
 
-        gui.init(params.width, params.height, params.windowTitle, logger);
+        gui.init(params.width, params.height,
+                params.fullscreen, params.allowResize,
+                params.windowTitle, logger);
 
         screen.alloc(params.width, params.height);
     }

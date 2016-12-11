@@ -7,6 +7,22 @@ import std.datetime : benchmark, Clock;
 import std.experimental.logger : Logger, sharedLog;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
 
+// Ugly hack necessary to support unofficial / unreleased / dev compiler versions
+static if(__traits(compiles, { import std.typecons : Ternary; }))
+    import std.typecons : Ternary;
+
+else static if(__traits(compiles,
+	{ import std.experimental.allocator.common : Ternary; }))
+    import std.experimental.allocator.common : Ternary;
+
+else
+{
+    import std.conv : to;
+    static assert (0, "Unsupported compiler: " ~ __VENDOR__ ~
+        " v" ~ __VERSION__.to!string ~
+	". Reason: Ternary not found");
+}
+
 /// Returns a path to the default scene
 /// read from the file "data/default_scene.path"
 string getPathToDefaultScene()
@@ -79,7 +95,7 @@ class RTDemo : GuiBase!Color
          */
         if (!atomicLoad(this.isRendering) && !needsRendering)
         {
-            gui.resizeEnabled = true;
+            gui.resizeEnabled = scene.settings.allowResize;
             import derelict.sdl2.sdl : SDL_Event;
             SDL_Event event;
             gui.sdl2.waitEvent(&event);
@@ -111,6 +127,9 @@ class RTDemo : GuiBase!Color
 
     void updateToWindowSize()
     {
+        if (!scene.settings.allowResize || scene.settings.fullscreen)
+            return;
+
         auto s = gui.getSize();
         if (s.x == scene.settings.frameWidth && s.y == scene.settings.frameHeight)
             return;
@@ -122,7 +141,7 @@ class RTDemo : GuiBase!Color
             scene.camera.setFrameSize(s.x, s.y);
 
         screen.alloc(s.x, s.y);
-        this.gui.setSize(s.x, s.y);
+        this.gui.setSize(s.x, s.y, Ternary.unknown);
     }
 
     void resetScene(bool newWindow = false)
@@ -144,13 +163,18 @@ class RTDemo : GuiBase!Color
         {
             gui.init(scene.settings.frameWidth,
                  scene.settings.frameHeight,
+                 scene.settings.fullscreen,
+                 scene.settings.allowResize,
                  windowTitleFormat.format(sceneFilePath),
                  logger);
         }
         else
         {
             this.gui.setTitle(windowTitleFormat.format(sceneFilePath));
-            this.gui.setSize(scene.settings.frameWidth, scene.settings.frameHeight);
+            this.gui.setSize(
+                    scene.settings.frameWidth,
+                    scene.settings.frameHeight,
+                    Ternary(scene.settings.fullscreen));
         }
 
         //Set the screen size according to the settings in the scene file

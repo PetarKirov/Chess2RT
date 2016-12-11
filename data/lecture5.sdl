@@ -13,6 +13,8 @@ Scene {
     GlobalSettings {
         frameWidth          640
         frameHeight         480
+        fullscreen          false
+        allowResize         true
         ambientLightColor 	0.2 0.2 0.2
         AAEnabled			false
         interactive			true

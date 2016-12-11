@@ -4,6 +4,22 @@ import gfm.sdl2, std.experimental.logger;
 import std.conv : to;
 import util.prop;
 
+// Ugly hack necessary to support unofficial / unreleased / dev compiler versions
+static if(__traits(compiles, { import std.typecons : Ternary; }))
+    import std.typecons : Ternary;
+
+else static if(__traits(compiles,
+        { import std.experimental.allocator.common : Ternary; }))
+    import std.experimental.allocator.common : Ternary;
+
+else
+{
+    import std.conv : to;
+    static assert (0, "Unsupported compiler: " ~ __VENDOR__ ~
+        " v" ~ __VERSION__.to!string ~
+        ". Reason: Ternary not found");
+}
+
 //Default SDL2 GUI
 struct SDL2Gui
 {
@@ -16,28 +32,31 @@ struct SDL2Gui
     mixin property!(SDL2Texture, "texture", Access.ReadOnly);
     mixin property!(Logger, "log", Access.ReadOnly);
 
-    this(uint width, uint height, string title, Logger log)
+    this(uint width, uint height, bool fullscreen, string title, Logger log)
     {
-        init(width, height, title, log);
+        init(width, height, fullscreen, true, title, log);
     }
 
-    void init(uint width, uint height, string title, Logger log)
+    void init(uint width, uint height, bool fullscreen, bool allowResize, string title, Logger log)
     {
+        uint windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS;
+
+        windowFlags |= allowResize? SDL_WINDOW_RESIZABLE : 0;
+
         _log = log;
         _sdl2 = new SDL2(log, SharedLibVersion(2, 0, 0));
         _window = new SDL2Window(sdl2, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                width, height,
-                                SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS);
+                                width, height, windowFlags);
         _window.setTitle(title);
         _renderer = new SDL2Renderer(window, SDL_RENDERER_SOFTWARE);
 
-        setSize(width, height);
+        setSize(width, height, Ternary(fullscreen));
 
         renderer.setColor(0, 0, 0, 255);
         renderer.clear();
     }
 
-    void setSize(uint width, uint height)
+    void setSize(uint width, uint height, Ternary fullscreen)
     {
         if (this.width == width && this.height == height)
         {
@@ -53,6 +72,10 @@ struct SDL2Gui
         if (this._texture) this._texture.destroy();
 
         this._window.setSize(width, height);
+
+        this._window.setFullscreenSetting(
+                fullscreen == Ternary.yes?
+                SDL_WINDOW_FULLSCREEN : 0);
 
         this._surface = new SDL2Surface(sdl2, width, height, 32,
             0x00FF0000,
@@ -151,7 +174,7 @@ void testGUIMain()
 
     uint w = 640, h = 480;
 
-    auto gui = SDL2Gui(w, h, "Pulsing circle", sharedLog);
+    auto gui = SDL2Gui(w, h, false, "Pulsing circle", sharedLog);
 
     double radius = 50.0;
 
