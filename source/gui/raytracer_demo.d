@@ -1,10 +1,10 @@
 module gui.rtdemo;
 
-import core.atomic : atomicLoad, atomicStore, cas;
-import std.stdio : writefln;
-import std.format : format;
 import std.datetime : benchmark, Clock;
 import std.experimental.logger : Logger, sharedLog;
+import std.format : format;
+import std.stdio : writefln;
+import std.variant : Variant;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
 
 // Ugly hack necessary to support unofficial / unreleased / dev compiler versions
@@ -56,9 +56,16 @@ import gui.guidemo, imageio.image;
 
 struct Atomic(T)
 {
+    import core.atomic : atomicLoad, atomicStore, core_cas = cas;
+
     private shared T _val;
 
     shared(T)* ptr() shared { return &_val; }
+
+    bool cas(T oldVal, T newVal) shared
+    {
+        return core_cas(&this._val, oldVal, newVal);
+    }
 
     @property bool get() shared
     {
@@ -166,7 +173,7 @@ class RTDemo : GuiBase!Color
 
     void resetScene(bool newWindow = false)
     {
-        if (!cas(&(this.isRendering), false, true))
+        if (!this.isRendering.cas(false, true))
             return;
 
         logger.logf("Resetting state. New app instance: %s.", newWindow);

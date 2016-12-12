@@ -1,6 +1,6 @@
 module rt.sceneloader;
 
-import sdlang : SDLangParseException, parseSource, SDLValue = Value, SDLTag = Tag;
+import sdlang : SDLangEx = ParseException, parseSource, SDLValue = Value, SDLTag = Tag;
 import std.json : JSONException, parseJSON, JSONValue, JSON_TYPE;
 import std.file, std.path, std.string;
 import std.typecons : Tuple, tuple;
@@ -34,7 +34,7 @@ Scene parseSceneFromFile(string filename)
     {
         throw new InvalidSceneException("Invalid JSON in scene file!", jsonEx);
     }
-    catch (SDLangParseException sdlEx)
+    catch (SDLangEx sdlEx)
     {
         throw new InvalidSceneException("Invalid SDL in scene file!", sdlEx);
     }

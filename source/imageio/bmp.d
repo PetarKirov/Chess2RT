@@ -78,7 +78,7 @@ private BMPImage!ColorType loadBmpImpl(ColorType, Flag!"loadHeaderOnly" headerOn
 
     enforce(header.bpp.among(1, 2, 4, 8, 16, 24, 32, 64),
         new ErrorLoadingImageException(
-            format( "Only .bmp files with 1, 2, 4, 8, 16, 24, "
+            format( "Only .bmp files with 1, 2, 4, 8, 16, 24, " ~
                     "32 or 64 bpp are supported. Not: %s",
                     header.bpp)));
 

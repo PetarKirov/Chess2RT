@@ -9,7 +9,7 @@
 	"dependencies": {
 		"gfm:sdl2": ">=6.1.3",
 		"gfm:math": ">=6.1.3",
-		"sdlang-d": ">=0.9.5"
+		"sdlang-d": ">=0.10.1"
 	},
 
 	"buildTypes": {
