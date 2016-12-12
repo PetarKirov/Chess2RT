@@ -94,7 +94,8 @@ ExrFile loadExr(const ubyte[] fileBytes)
 
     foreach (offset; offsetTable)
     {
-        auto slice = fileBytes[offset .. $];
+        import std.conv : to;
+        auto slice = fileBytes[offset.to!size_t .. $];
         int y = *slice.read!int;
         int lineSize = *slice.read!int;
         auto pixelData = slice[0 .. lineSize];
@@ -301,10 +302,9 @@ class AttributeBase
 
     static AttributeBase makeAttribute(string name, string type, int size)
     {
-        alias AllTypes = AliasSeq!(
-            getSymbolsByUDA!(mixin(__MODULE__), TypeName),
-            BuiltInTypes
-        );
+        // See https://issues.dlang.org/show_bug.cgi?id=15907 for details
+        mixin getSymbolsByUDA!(mixin(__MODULE__), TypeName) TaggedTypesInThisModule;
+        alias AllTypes = AliasSeq!(TaggedTypesInThisModule.getSymbolsByUDA, BuiltInTypes);
 
         switch (type)
         {
