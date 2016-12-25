@@ -12,12 +12,6 @@
 		"sdlang-d": ">=0.10.1"
 	},
 
-	"buildTypes": {
-		"gdb_release": {
-			"buildOptions": ["releaseMode", "optimize", "inline", "debugInfo"]
-		}
-	},
-
 	"copyFiles-windows-x86": ["lib/win32/SDL2.dll"],
 	"copyFiles-windows-x86_64": ["lib/win64/SDL2.dll"],
 
