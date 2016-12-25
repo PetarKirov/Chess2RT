@@ -1,0 +1,34 @@
+name "chess2rt"
+description "A variation of chess written in D, using raytracer for rendering."
+authors "ZombineDev"
+copyright "Copyright © 2014, ZombineDev"
+targetType "executable"
+targetPath "bin/"
+
+dependency "gfm:sdl2" version=">=6.1.3"
+dependency "gfm:math" version=">=6.1.3"
+dependency "sdlang-d" version=">=0.10.1"
+
+copyFiles "lib/win32/SDL2.dll" platform="windows-x86"
+copyFiles "lib/win64/SDL2.dll" platform="windows-x86_64"
+
+configuration "win32" {
+	platforms "windows-x86"
+	targetType "executable"
+	targetPath "bin/Win32"
+}
+configuration "win64" {
+	platforms "windows-x86_64"
+	targetType "executable"
+	targetPath "bin/Win64"
+}
+configuration "linux32" {
+	platforms "linux-x86"
+	targetType "executable"
+	targetPath "bin/Linux32"
+}
+configuration "linux64" {
+	platforms "linux-x86_64"
+	targetType "executable"
+	targetPath "bin/Linux64"
+}
