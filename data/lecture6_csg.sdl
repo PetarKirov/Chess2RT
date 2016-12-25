@@ -1,0 +1,212 @@
+//
+// An example scene, which represents the same scenery as what the initializeScene()
+// function used to create around just before lecture6
+// Namely:
+//  1) A shiny floor, made of a woody Lambert shader and a mirror layer on top
+//  2) A glass ball
+//  3) A shiny ball using a glossy shader
+//  4) Three small phong-lit balls, using red, yellow and green colors
+//  5) A CSG object
+
+Scene {
+    Name "lecture6"
+
+    GlobalSettings {
+        frameWidth          640
+        frameHeight         480
+        fullscreen          false
+        dynamicAspectRatio  true
+        allowResize         true
+        ambientLight        0.2 0.2 0.2
+        interactive         true
+        AAEnabled           true
+        interactive         true
+        prepassOnly         false
+        prepassEnabled      false
+        asyncRendering      true
+        threadCount         0
+    }
+
+    Camera "camera" {
+        pos                 45 120 -300
+        aspect              1.33333
+        yaw                 5
+        pitch               -5
+        roll                0
+        fov                 60
+
+    }
+
+    CubemapEnvironment {
+        folder "env/hw_glacier"
+    }
+
+    Lights {
+        PointLight "l1" {
+            pos             -90 1200 -750
+            color           1 1 1
+            power           1200000
+        }
+
+    }
+
+    Geometries {
+        // 1)
+        Plane "floor" {
+            y               -0.01
+            limit           200
+        }
+
+        // 2)
+        Sphere "crystal_sphere" {
+            R               36
+        }
+
+        // 3) and 4)
+        Sphere "S" {
+        }
+
+        // 5)
+        Cube {
+            name "csg_cube"
+            side 100
+        }
+
+        Sphere {
+            name "csg_sphere"
+            R    70
+        }
+
+        CsgDiff {
+            name  "csg_diff"
+            left  "csg_cube"
+            right "csg_sphere"
+        }
+
+    }
+
+    Textures {
+        // 1)
+        BitmapTexture "wood_tex" {
+            file            "texture/wood.bmp"
+            scaling         0.0025
+        }
+
+        Fresnel "mirror_fresnel" {
+            ior             1.33
+        }
+
+        // 2)
+        Fresnel "glass_fresnel" {
+            ior             1.6
+        }
+    }
+
+
+    Shaders {
+        // 1)
+        Lambert "floor_diffuse" {
+            texture         "wood_tex"
+        }
+
+        Reflection          "mirror" {
+
+        }
+
+        Layered "floor_shader" {
+            layer 1 1 1 shader="floor_diffuse"
+            layer 1 1 1 shader="mirror" texture="mirror_fresnel"
+        }
+
+        // 2)
+        Reflection "glass_refl" {
+        }
+
+        Refraction "glass_refr" {
+            ior             1.6
+        }
+
+        Layered "glass" {
+            layer 1 1 1 shader="glass_refr"
+            layer 1 1 1 shader="glass_refl" texture="glass_fresnel"
+        }
+
+        // 3)
+        Reflection "glossy" {
+            color           0.9 1.0 0.9
+            //glossiness      0.97
+            numSamples      25
+        }
+
+        // 4)
+        Phong "p1" {
+            color           0.95 0.05 0.05
+            exponent        32
+        }
+
+        Phong "p2" {
+            color           0.95 0.95 0.10
+            exponent        32
+        }
+
+        Phong "p3" {
+            color           0.05 0.95 0.05
+            exponent        32
+        }
+    }
+
+    Nodes {
+        // 1)
+        Node "floor" {
+            geometry        "floor"
+            shader          "floor_shader"
+        }
+
+        // 2)
+        /*
+        Node "crystal_sphere" {
+            geometry        "crystal_sphere"
+            shader          "glass"
+            translate       -60 36 10
+        }*/
+
+        // 3)
+        Node "sphere" {
+            geometry        "S"
+            shader          "glossy"
+            translate       100 50 60
+            scale            50 50 50
+        }
+
+        // 4)
+        Node "small_sphere_red" {
+            geometry        "S"
+            shader          "p1"
+            scale           15 15 15
+            translate       10 15  0
+        }
+
+        Node "small_sphere_yellow" {
+            geometry        "S"
+            shader          "p2"
+            scale           15 15 15
+            translate       42 15  0
+        }
+
+        Node "small_sphere_green" {
+            geometry        "S"
+            shader          "p3"
+            scale           15 15 15
+            translate       74 15  0
+        }
+
+        // 5) The CSG object:
+        Node {
+            name            "csgNode"
+            geometry        "csg_diff"
+            shader          "glossy"
+            translate       -60 60 10
+        }
+
+    }
+}
