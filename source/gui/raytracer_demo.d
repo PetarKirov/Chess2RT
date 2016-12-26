@@ -6,13 +6,14 @@ import std.format : format;
 import std.stdio : writefln;
 import std.variant : Variant;
 import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
+import rt.importedtypes : Vector;
 
 // Ugly hack necessary to support unofficial / unreleased / dev compiler versions
 static if(__traits(compiles, { import std.typecons : Ternary; }))
     import std.typecons : Ternary;
 
 else static if(__traits(compiles,
-	{ import std.experimental.allocator.common : Ternary; }))
+    { import std.experimental.allocator.common : Ternary; }))
     import std.experimental.allocator.common : Ternary;
 
 else
@@ -20,7 +21,7 @@ else
     import std.conv : to;
     static assert (0, "Unsupported compiler: " ~ __VENDOR__ ~
         " v" ~ __VERSION__.to!string ~
-	". Reason: Ternary not found");
+        ". Reason: Ternary not found");
 }
 
 /// Returns a path to the default scene
@@ -342,12 +343,17 @@ class RTDemo : GuiBase!Color
 
         auto pressedKeys = controls.find!(c => areKeysPressed(c.keyCodes));
 
-        Controls c;
+        __gshared Controls c;
         if (!pressedKeys.empty || mouseDx || mouseDy)
         {
             // Communicate to the render threads that a new render request
             // has a arrived and they need to drop their current tasks.
             needsRendering = true;
+
+            if (!pressedKeys.empty)
+                c.m += pressedKeys.front.m;
+
+            c.m.r += Vector(-mouseDx * mouseSpeed, 0, -mouseDy * mouseSpeed);
 
             // Ignore input events while rendering because we can't modify the scene.
             // Perhaps we can save the last input event and handle it
@@ -356,18 +362,13 @@ class RTDemo : GuiBase!Color
                 return;
 
             this.scene.beginFrame(); // ensure the camera is initialized
-
-            if (!pressedKeys.empty)
-                c = pressedKeys.front;
-
-            c.dYaw += -mouseDx * mouseSpeed;
-            c.dPitch += -mouseDy * mouseSpeed;
-
-            scene.camera.move(c.dx, c.dy, c.dz);
-            scene.camera.rotate(c.dYaw, c.dRoll, c.dPitch);
+            scene.camera.move(c.m.v.x, c.m.v.y, c.m.v.z);
+            scene.camera.rotate(c.m.r.x, c.m.r.y, c.m.r.z);
 
             writefln("Camera movement: (x: %s y: %s z: %s) (yaw: %s roll: %s pitch: %s)",
-                     c.dx, c.dy, c.dz, c.dYaw, c.dRoll, c.dPitch);
+                     c.m.v.x, c.m.v.y, c.m.v.z, c.m.r.x, c.m.r.y, c.m.r.z);
+
+            c.m = Movement.init;
 
             needsRendering = true;
         }
@@ -377,8 +378,40 @@ class RTDemo : GuiBase!Color
     private static struct Controls
     {
         int[] keyCodes;
-        double dx = 0.0, dy = 0.0, dz = 0.0;
-        double dYaw = 0.0, dRoll = 0.0, dPitch = 0.0;
+        Movement m;
+
+        this(int[] keyCodes, double dx = 0.0, double dy = 0.0, double dz = 0.0,
+            double dYaw = 0.0, double dRoll = 0.0, double dPitch = 0.0)
+        {
+            this.keyCodes = keyCodes;
+            this.m.v.x = dx;
+            this.m.v.y = dy;
+            this.m.v.z = dz;
+            this.m.r.x = dYaw;
+            this.m.r.y = dRoll;
+            this.m.r.z = dPitch;
+        }
+    }
+
+    struct Movement
+    {
+        Vector v = Vector(0, 0, 0);
+        Vector r = Vector(0, 0, 0);
+
+        Movement opBinary(string op)(in ref Movement other)
+        {
+            Movement res;
+
+            mixin ("res.v = this.v" ~ op ~ "other.v;");
+            mixin ("res.r = this.r" ~ op ~ "other.r;");
+
+            return res;
+        }
+
+        void opOpAssign(string op)(in ref Movement other)
+        {
+            mixin ("this = this" ~ op ~ "other;");
+        }
     }
 
     /// Checks if all of the specified SDL2 keys are pressed.
