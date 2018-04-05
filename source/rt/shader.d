@@ -95,7 +95,7 @@ class Lambert : Shader
                     double cosTheta = dot(lightDir, N);
                     if (cosTheta > 0)
                     {
-                        avgColor += lightColor / (data.p - lightPos).squaredLength() * cosTheta;
+                        avgColor += lightColor / (data.p - lightPos).squaredMagnitude() * cosTheta;
                     }
                 }
             }
@@ -226,7 +226,7 @@ class Phong : Shader
                     double cosTheta = dot(lightDir, N);
 
                     // baseLight is the light that "arrives" to the intersection point
-                    Color baseLight = lightColor / (data.p - lightPos).squaredLength();
+                    Color baseLight = lightColor / (data.p - lightPos).squaredMagnitude();
                     if (cosTheta > 0)
                         avgColor += baseLight * cosTheta; // lambertian contribution
 

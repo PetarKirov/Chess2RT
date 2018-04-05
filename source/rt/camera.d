@@ -85,7 +85,7 @@ class Camera : Deserializable
         Vector corner = Vector(x, y, 1);
         Vector center = Vector(0, 0, 1);
 
-        double lenXY = (corner - center).length();
+        double lenXY = (corner - center).magnitude();
         double wantedLength = tan(radians(fov / 2));
 
         double scaling = wantedLength / lenXY;

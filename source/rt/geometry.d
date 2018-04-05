@@ -93,9 +93,9 @@ class Sphere : Geometry
     {
         // compute the sphere intersection using a quadratic equation:
         Vector H = ray.orig - center;
-        double A = ray.dir.squaredLength();
+        double A = ray.dir.squaredMagnitude();
         double B = 2 * dot(H, ray.dir);
-        double C = H.squaredLength() - R * R;
+        double C = H.squaredMagnitude() - R * R;
         double Dscr = B*B - 4 * A * C;
 
         if (Dscr < 0)
@@ -126,7 +126,7 @@ class Sphere : Geometry
 
     bool isInside(in Vector p) const @safe @nogc pure
     {
-        return (center - p).squaredLength() < R * R;
+        return (center - p).squaredMagnitude() < R * R;
     }
 
     void deserialize(const SceneDscNode val, SceneLoadContext context)

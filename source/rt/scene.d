@@ -68,7 +68,7 @@ class Scene
         ray.flags |= RayFlags.Shadow;
 
         IntersectionData temp;
-        temp.dist = (to - from).length();
+        temp.dist = (to - from).magnitude();
 
         foreach (node; nodes)
             if (node.intersect(ray, temp))

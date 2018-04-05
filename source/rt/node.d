@@ -31,7 +31,7 @@ class Node : Intersectable, Deserializable
 
         // save the old "best dist", in case we need to restore it later
         double oldDist = data.dist;                      // (1)
-        double rayDirLength = rayCanonic.dir.length();
+        double rayDirLength = rayCanonic.dir.magnitude();
         data.dist *= rayDirLength;                       // (2)
         rayCanonic.dir.normalize();                      // (3)
         if (!geom.intersect(rayCanonic, data))
