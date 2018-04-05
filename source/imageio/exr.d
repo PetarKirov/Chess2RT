@@ -243,7 +243,6 @@ struct ExrFile
     string toString() const
     {
         import std.algorithm.iteration : map, joiner;
-        import std.array : byValue;
         import std.conv : to;
 
         return header.toString() ~ "\n" ~
@@ -302,9 +301,8 @@ class AttributeBase
 
     static AttributeBase makeAttribute(string name, string type, int size)
     {
-        // See https://issues.dlang.org/show_bug.cgi?id=15907 for details
-        mixin getSymbolsByUDA!(mixin(__MODULE__), TypeName) TaggedTypesInThisModule;
-        alias AllTypes = AliasSeq!(TaggedTypesInThisModule.getSymbolsByUDA, BuiltInTypes);
+        alias TaggedTypesInThisModule = getSymbolsByUDA!(mixin(__MODULE__), TypeName);
+        alias AllTypes = AliasSeq!(TaggedTypesInThisModule, BuiltInTypes);
 
         switch (type)
         {

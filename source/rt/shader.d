@@ -318,7 +318,7 @@ class Refraction : Shader
             // leaving the geometry
             refr = refract(ray.dir, -info.normal, ior);
         }
-        if (refr.squaredLength() == 0) return Color(0, 0, 0);
+        if (refr.squaredMagnitude() == 0) return Color(0, 0, 0);
         Ray newRay = ray;
         newRay.orig = info.ip - faceforward(ray.dir, info.normal) * 0.000001;
         newRay.dir = refr;
