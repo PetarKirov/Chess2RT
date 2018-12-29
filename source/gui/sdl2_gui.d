@@ -1,24 +1,10 @@
 module gui.sdl2gui;
 
-import gfm.sdl2, std.experimental.logger;
 import std.conv : to;
+import std.experimental.logger;
+import std.typecons : Ternary;
+import gfm.sdl2;
 import util.prop;
-
-// Ugly hack necessary to support unofficial / unreleased / dev compiler versions
-static if(__traits(compiles, { import std.typecons : Ternary; }))
-    import std.typecons : Ternary;
-
-else static if(__traits(compiles,
-        { import std.experimental.allocator.common : Ternary; }))
-    import std.experimental.allocator.common : Ternary;
-
-else
-{
-    import std.conv : to;
-    static assert (0, "Unsupported compiler: " ~ __VENDOR__ ~
-        " v" ~ __VERSION__.to!string ~
-        ". Reason: Ternary not found");
-}
 
 //Default SDL2 GUI
 struct SDL2Gui
@@ -44,7 +30,7 @@ struct SDL2Gui
 
     void init(uint width, uint height, bool fullscreen, bool allowResize, string title, Logger log)
     {
-        uint windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS;
+        SDL_WindowFlags windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS;
 
         windowFlags |= allowResize? SDL_WINDOW_RESIZABLE : 0;
 
@@ -71,12 +57,12 @@ struct SDL2Gui
         if (fullscreen == Ternary.yes)
         {
             this._window.setFullscreenSetting(SDL_WINDOW_FULLSCREEN);
-            SDL_SetRelativeMouseMode(true);
+            SDL_SetRelativeMouseMode(SDL_bool.SDL_TRUE);
         }
         else
         {
             this._window.setFullscreenSetting(0);
-            SDL_SetRelativeMouseMode(false);
+            SDL_SetRelativeMouseMode(SDL_bool.SDL_FALSE);
         }
 
         if (this.width == width && this.height == height)

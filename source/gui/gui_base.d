@@ -3,7 +3,7 @@ module gui.guibase;
 import std.experimental.logger : Logger, sharedLog;
 import std.variant : Variant;
 import gui.appsceleton, gui.sdl2gui;
-import imageio.bmp : Image;
+import imageio.image : Image;
 
 /// Base class based on SDL2 for GUI.
 ///

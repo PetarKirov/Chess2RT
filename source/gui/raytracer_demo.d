@@ -4,25 +4,13 @@ import std.datetime : benchmark, Clock;
 import std.experimental.logger : Logger, sharedLog;
 import std.format : format;
 import std.stdio : writefln;
+import std.typecons : Ternary;
 import std.variant : Variant;
-import gui.guibase, rt.renderer, rt.scene, rt.sceneloader, rt.color;
-import rt.importedtypes : Vector;
 
-// Ugly hack necessary to support unofficial / unreleased / dev compiler versions
-static if(__traits(compiles, { import std.typecons : Ternary; }))
-    import std.typecons : Ternary;
+import derelict.sdl2.sdl;
 
-else static if(__traits(compiles,
-    { import std.experimental.allocator.common : Ternary; }))
-    import std.experimental.allocator.common : Ternary;
-
-else
-{
-    import std.conv : to;
-    static assert (0, "Unsupported compiler: " ~ __VENDOR__ ~
-        " v" ~ __VERSION__.to!string ~
-        ". Reason: Ternary not found");
-}
+import gui.guibase, gui.guidemo;
+import rt.bitmap, rt.color, rt.renderer, rt.scene, rt.sceneloader,  rt.importedtypes : Vector;
 
 /// Returns a path to the default scene
 /// read from the file "data/default_scene.path"
@@ -43,7 +31,6 @@ string getPathToDefaultScene()
 
 string getNewImageFileName()
 {
-    import std.format : format;
     import std.array : replace;
 
     auto time = Clock.currTime()
@@ -52,8 +39,6 @@ string getNewImageFileName()
 
     return format("output/img_%s.bmp", time);
 }
-
-import gui.guidemo, imageio.image;
 
 struct Atomic(T)
 {
@@ -123,7 +108,6 @@ class RTDemo : GuiBase!Color
         if (!this.isRendering && !needsRendering)
         {
             gui.resizeEnabled = scene.settings.allowResize;
-            import derelict.sdl2.sdl : SDL_Event;
             SDL_Event event;
             gui.sdl2.waitEvent(&event);
         }
@@ -218,8 +202,6 @@ class RTDemo : GuiBase!Color
 
     override bool handleInput()
     {
-        import derelict.sdl2.types;
-
         // Sync w.r.t. rendering (changes state)
         if (scene.settings.interactive)
             move();
@@ -258,7 +240,7 @@ class RTDemo : GuiBase!Color
 
     void takeScreenshot()
     {
-        import rt.bitmap;
+        import imageio.image : convertTo;
         import std.file : mkdir, exists;
 
         if (!exists("output"))
@@ -301,9 +283,6 @@ class RTDemo : GuiBase!Color
     {
         import std.algorithm : find;
         import std.range.primitives;
-
-        import derelict.sdl2.types;
-        import derelict.sdl2.functions : SDL_GetRelativeMouseState;
 
         enum dMove = 32, dRotate = 4, mouseSpeed = 0.2;
 
@@ -377,10 +356,10 @@ class RTDemo : GuiBase!Color
     /// Encapsulates a camera control keys binding.
     private static struct Controls
     {
-        int[] keyCodes;
+        SDL_Keycode[] keyCodes;
         Movement m;
 
-        this(int[] keyCodes, double dx = 0.0, double dy = 0.0, double dz = 0.0,
+        this(SDL_Keycode[] keyCodes, double dx = 0.0, double dy = 0.0, double dz = 0.0,
             double dYaw = 0.0, double dRoll = 0.0, double dPitch = 0.0)
         {
             this.keyCodes = keyCodes;
@@ -415,7 +394,7 @@ class RTDemo : GuiBase!Color
     }
 
     /// Checks if all of the specified SDL2 keys are pressed.
-    private bool areKeysPressed(int[] keyCodes)
+    private bool areKeysPressed(SDL_Keycode[] keyCodes)
     {
         auto kbd = gui.sdl2.keyboard();
 

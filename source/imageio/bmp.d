@@ -96,11 +96,11 @@ private BMPImage!ColorType loadBmpImpl(ColorType, Flag!"loadHeaderOnly" headerOn
 
     if (header.bpp.among(1, 2, 4, 8))
     {
-        static if (V == DIBVersion.BITMAPCOREHEADER)
+        static if (V == Ver.V0)
         {
             uint paletteSize = 2 ^^ header.bpp;
         }
-        else static if (V >= DIBVersion.BITMAPINFOHEADER)
+        else static if (V >= Ver.V1)
         {
             uint paletteSize = header.colorsUsed ?
                 header.colorsUsed : 2 ^^ header.bpp;
