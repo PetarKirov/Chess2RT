@@ -69,7 +69,7 @@ unittest
     auto arr = MyArray!int(8);
 
     assert(arr.storage);
-    assert(arr.storage.ptr);
+    assert(arr.storage.ptr !is null);
     assert(arr.storage.length == 8);
     assert(arr.length == 0);
 
