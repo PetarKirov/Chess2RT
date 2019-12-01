@@ -1,4 +1,4 @@
-Chess2RT [![Build Status](https://img.shields.io/travis/ZombineDev/Chess2RT/master.svg?label=Travis+CI)](https://travis-ci.org/ZombineDev/Chess2RT) [![Build status](https://ci.appveyor.com/api/projects/status/e7bvb8us3o01p3gc?svg=true)](https://ci.appveyor.com/project/ZombineDev/chess2rt/branch/master)
+Chess2RT [![GitHub Actions Status](https://github.com/PetarKirov/Chess2RT/workflows/GitHub%20Actions%20[Linux,%20Windows,%20macOS]%20CI/badge.svg)](https://github.com/PetarKirov/Chess2RT/actions)
 ========
 A raytracer renderer, written in D, which will eventually be used for a
 3d rendered chess game (and/or a variation of it).

@@ -1,0 +1,24 @@
+name: GitHub Actions [Linux, Windows, macOS] CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: "[${{ matrix.os }} | ${{ matrix.dc }}]: Run main CI pipeline"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        dc: [dmd-latest, ldc-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Install D compiler
+        uses: mihails-strasuns/setup-dlang@v0.4.1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: Build
+        run: dub build
+
+      - name: Run tests
+        run: dub test
