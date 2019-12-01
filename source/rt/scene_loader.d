@@ -1,7 +1,7 @@
 module rt.sceneloader;
 
 import sdlang : SDLangEx = ParseException, parseSource, SDLValue = Value, SDLTag = Tag;
-import std.json : JSONException, parseJSON, JSONValue, JSON_TYPE;
+import std.json : JSONException, parseJSON, JSONValue, JSONType;
 import std.file, std.path, std.string;
 import std.typecons : Tuple, tuple;
 import std.conv, std.traits, std.range, std.exception, std.variant;
@@ -312,9 +312,9 @@ private:
     {
         switch (json.type)
         {
-            case JSON_TYPE.FLOAT: return json.floating;
-            case JSON_TYPE.INTEGER:
-            case JSON_TYPE.UINTEGER: return json.integer;
+            case JSONType.float_: return json.floating;
+            case JSONType.integer:
+            case JSONType.uinteger: return json.integer;
             default: assert(0);
         }
     }
@@ -323,8 +323,8 @@ private:
     {
         switch (json.type)
         {
-            case JSON_TYPE.TRUE: return true;
-            case JSON_TYPE.FALSE: return false;
+            case JSONType.true_: return true;
+            case JSONType.false_: return false;
             default: assert(0);
         }
     }
