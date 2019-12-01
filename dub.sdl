@@ -33,3 +33,9 @@ configuration "linux64" {
 	targetType "executable"
 	targetPath "bin/Linux64"
 }
+
+configuration "macos" {
+	platforms "osx-x86_64"
+	targetType "executable"
+	targetPath "bin/macOS"
+}
