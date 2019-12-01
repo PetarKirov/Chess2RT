@@ -46,8 +46,6 @@ void printMembers(T, alias sink, string ws = "\n")(const T thiz)
     // class is user-defined.
     alias BaseOfT = BaseClassesTuple!(T)[0];
 
-    pragma (msg, T, " ", BaseOfT);
-
     typeof(sink) inner_sink = (msg) { sink(nest_ws); sink(msg); };
 
     static if(!is(BaseOfT == Object) && !hasMemberAttr!(thiz, BaseOfT, "toString", DontPrint))
