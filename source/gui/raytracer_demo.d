@@ -58,7 +58,7 @@ struct Atomic(T)
         return atomicLoad(this._val);
     }
 
-    @property void get(bool newVal) shared
+    void opAssign(bool newVal) shared
     {
         this._val.atomicStore(newVal);
     }
