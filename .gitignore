@@ -25,3 +25,9 @@ bin/
 # DUB
 .dub/
 dub.userprefs
+
+# Nix build output
+result
+
+# direnv temporary files
+.direnv/
