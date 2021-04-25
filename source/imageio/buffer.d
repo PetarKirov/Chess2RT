@@ -33,8 +33,9 @@ T adjustEndianness(T, Endianness endianness)(T from)
         return swapEndian(from);
 }
 
-enum isPOD(T) = !hasElaborateDestructor!T && !hasElaborateAssign!T &&
-    !hasElaborateDestructor!T && !hasIndirections!T;
+// TODO: check previous implementation of isPOD:
+// !hasElaborateDestructor!T && !hasElaborateAssign!T && !hasElaborateDestructor!T
+enum isPOD(T) = __traits(isPOD, T) && !hasIndirections!T;
 
 alias UntypedBuffer = Buffer!void;
 alias ConstBuffer = Buffer!(const void);
