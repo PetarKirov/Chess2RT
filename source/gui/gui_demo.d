@@ -1,6 +1,7 @@
 module gui.guidemo;
 
-import std.math;
+import std.math : atan2, abs, PI, sqrt;
+import std.algorithm.comparison : min;
 import gui.sdl2gui, gui.guibase;
 import imageio.image : Image;
 import util.prop;
@@ -51,7 +52,7 @@ class GuiDemo(T) : GuiBase!T
         auto kbd = gui.sdl2.keyboard();
 
         if (kbd.isPressed(SDLK_UP))
-            size = fmin(1.0, size + 0.01);
+            size = min(1.0, size + 0.01);
 
         if (kbd.isPressed(SDLK_DOWN))
             size = fmax(0.0, size - 0.01);
@@ -65,7 +66,7 @@ void drawCircle(Image!uint screen, float diameterToWidthRatio = 0.5)
 {
     auto w = screen.width, h = screen.height;
 
-    double radius = diameterToWidthRatio * fmin(w, h) / 2;
+    double radius = diameterToWidthRatio * min(w, h) / 2;
 
     double cx = w / 2;
     double cy = h / 2;

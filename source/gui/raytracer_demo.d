@@ -1,6 +1,7 @@
 module gui.rtdemo;
 
-import std.datetime : benchmark, Clock;
+import std.datetime.systime : Clock;
+import std.datetime.stopwatch : benchmark;
 import std.experimental.logger : Logger, sharedLog;
 import std.format : format;
 import std.stdio : writefln;
