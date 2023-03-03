@@ -1,178 +1,162 @@
 /*
-    lecture 5 includes:
-    - 1 plane with a texture [floor.bmp]
-    - 1 sphere with a texture [world.bmp]
-    - 3 speres with a phong shader
-    - 1 CSG object
-
+  lecture 5 includes:
+  - 1 plane with a texture [floor.bmp]
+  - 1 sphere with a texture [world.bmp]
+  - 3 speres with a phong shader
+  - 1 CSG object
 */
 
 Scene {
-    Name "lecture5"
+  Name "lecture5"
 
-    GlobalSettings {
-        frameWidth          640
-        frameHeight         480
-        fullscreen          false
-        allowResize         false
-        ambientLightColor 	0.2 0.2 0.2
-        AAEnabled			true
-        interactive			true
-        prepassOnly			false
-        prepassEnabled      false
-        dynamicAspectRatio  true
+  GlobalSettings {
+    frameWidth          640
+    frameHeight         480
+    fullscreen          false
+    allowResize         false
+    ambientLightColor   0.2 0.2 0.2
+    AAEnabled           true
+    interactive         true
+    prepassOnly         false
+    prepassEnabled      false
+    dynamicAspectRatio  true
+  }
+
+  Camera {
+    pos    0 165 0
+    yaw    0
+    pitch  -30
+    roll  0
+    fov    90
+  }
+
+  Lights {
+    PointLight {
+      name  "light1"
+      pos    -90 700 350
+      color  1 1 1
+      power  800000
+    }
+  }
+
+  Geometries {
+    // Plane:
+    Plane "floor" {
+      y  -0.01
     }
 
-    Camera {
-        pos			0 165 0
-        yaw			0
-        pitch		-30
-        roll		0
-        fov			90
+    // Globe:
+    Sphere {
+      name    "globe_ball"
+      center  100 50 320
+      R        50
     }
 
-    Lights {
-        PointLight {
-            name		"light1"
-            pos     	-90 700 350
-            color   	1 1 1
-            power   	800000
-        }
+    // CSG object:
+    Cube {
+      name    "cube"
+      center  -100 60 200
+      side    100
     }
 
-    Geometries {
-
-        // Plane:
-
-        Plane "floor" {
-            y			-0.01
-        }
-
-        // Globe:
-
-        Sphere {
-            name		"globe_ball"
-            center		100 50 320
-            R			50
-        }
-
-        // CSG object:
-
-        Cube {
-            name		"cube"
-            center		-100 60 200
-            side		100
-        }
-
-        Sphere {
-            name		"sphere"
-            center		-100 60 200
-            R			70
-        }
-
-        CsgDiff {
-            name		"diff"
-            left		"cube"
-            right		"sphere"
-        }
-
-        // Balls geometry:
-
-        Sphere {
-            name		"S"
-            R			15
-        }
+    Sphere {
+      name    "sphere"
+      center  -100 60 200
+      R        70
     }
 
-    Textures {
-        // Texture for the floor:
-
-        BitmapTexture {
-            name		"bmp"
-            file		"floor.bmp"
-            scaling		0.005
-        }
-
-        // Texutre for the globe:
-
-        BitmapTexture {
-            name		"world"
-            file		"world.bmp"
-        }
+    CsgDiff {
+      name  "diff"
+      left  "cube"
+      right  "sphere"
     }
 
-    Shaders {
+    // Balls geometry:
+    Sphere {
+      name  "S"
+      R      15
+    }
+  }
 
-
-        Lambert {
-            name		"floor_shader"
-            texture 	"bmp"
-        }
-
-        Lambert {
-            name		"globe_shader"
-            texture		"world"
-        }
-
-        Phong {
-            name		"csg_shader"
-            color		0.5 0.5 0
-            exponent	60
-        }
-
-        Phong {
-            name		"ball_shader"
-            color		0.0 0.0 0.6
-            exponent	80
-        }
-
+  Textures {
+    // Texture for the floor:
+    BitmapTexture {
+      name    "bmp"
+      file    "floor.bmp"
+      scaling  0.005
     }
 
-    Nodes {
-        // Floor:
-
-        Node {
-            name 		"floor"
-            geometry	"floor"
-            shader		"floor_shader"
-        }
-
-        // Globe:
-
-        Node {
-            name		"globe"
-            geometry	"globe_ball"
-            shader		"globe_shader"
-        }
-
-        // CSG object:
-
-        Node {
-            name		"csgNode"
-            geometry	"diff"
-            shader		"csg_shader"
-        }
-
-        // three balls:
-
-        Node {
-            name		"S1"
-            geometry	"S"
-            shader		"ball_shader"
-            translate	100 15 256
-        }
-        Node {
-            name		"S2"
-            geometry	"S"
-            shader		"ball_shader"
-            translate	100 15 206
-        }
-        Node {
-            name		"S3"
-            geometry	"S"
-            shader		"ball_shader"
-            translate	100 15 156
-        }
-
+    // Texutre for the globe:
+    BitmapTexture {
+      name  "world"
+      file  "world.bmp"
     }
+  }
+
+  Shaders {
+    Lambert {
+      name    "floor_shader"
+      texture "bmp"
+    }
+
+    Lambert {
+      name    "globe_shader"
+      texture "world"
+    }
+
+    Phong {
+      name      "csg_shader"
+      color     0.5 0.5 0
+      exponent  60
+    }
+
+    Phong {
+      name      "ball_shader"
+      color     0.0 0.0 0.6
+      exponent  80
+    }
+  }
+
+  Nodes {
+    // Floor:
+    Node {
+      name      "floor"
+      geometry  "floor"
+      Shader    "floor_shader"
+    }
+
+    // Globe:
+    Node {
+      name      "globe"
+      geometry  "globe_ball"
+      shader    "globe_shader"
+    }
+
+    // CSG object:
+    Node {
+      name      "csgNode"
+      geometry  "diff"
+      shader    "csg_shader"
+    }
+
+    // three balls:
+    Node {
+      name      "S1"
+      geometry  "S"
+      shader    "ball_shader"
+      translate  100 15 256
+    }
+    Node {
+      name      "S2"
+      geometry  "S"
+      shader    "ball_shader"
+      translate  100 15 206
+    }
+    Node {
+      name      "S3"
+      geometry  "S"
+      shader    "ball_shader"
+      translate  100 15 156
+    }
+  }
 }
