@@ -38,3 +38,11 @@ result-*
 # Pre Commit / Prek
 .pre-commit-config.yaml
 .lycheecache
+
+# LLM Agents
+.antigravitycli/
+.aider*
+.cursor/
+.cline/
+.copilot/
+
