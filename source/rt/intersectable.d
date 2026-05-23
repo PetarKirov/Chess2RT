@@ -22,17 +22,7 @@ struct IntersectionData
 
     Vector dNdx, dNdy;
 
-    void opAssign(ref const IntersectionData rhs) pure nothrow @nogc @safe
-    {
-        this.p = rhs.p;
-        this.normal = rhs.normal;
-        this.dist = rhs.dist;
-        this.u = rhs.u;
-        this.v = rhs.v;
-        this.g = rhs.g;
-        this.dNdx = rhs.dNdx;
-        this.dNdy = rhs.dNdy;
-    }
+
 
     int opCmp(ref const IntersectionData rhs) const pure nothrow @nogc @safe
     {
