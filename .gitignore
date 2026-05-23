@@ -6,7 +6,7 @@ bin/
 *.a
 *.lib
 *.exe
-*.o 
+*.o
 *.obj
 *.dll
 
@@ -26,8 +26,15 @@ bin/
 .dub/
 dub.userprefs
 
-# Nix build output
+# Nix
+.result/
 result
+result-*
 
-# direnv temporary files
+# Direnv
 .direnv/
+.env
+
+# Pre Commit / Prek
+.pre-commit-config.yaml
+.lycheecache
