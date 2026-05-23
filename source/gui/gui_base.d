@@ -25,7 +25,7 @@ abstract class GuiBase(C) : AppSceleton
 
     this(uint width, uint height, bool fullscreen, string windowTitle)
     {
-        this(sharedLog);
+        this(cast(Logger)sharedLog);
         this.init(
             InitSettings(width, height, fullscreen, true, windowTitle)
             .Variant);

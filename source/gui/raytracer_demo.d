@@ -51,7 +51,7 @@ class RTDemo : GuiBase!Color
     shared Atomic!bool needsRendering;
     shared Atomic!bool isRendering;
 
-    this(Logger log = sharedLog)
+    this(Logger log = cast(Logger)sharedLog)
     {
         super(log);
 
