@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "derelict-sdl2": {
+      "version": "3.1.0-alpha.6",
+      "sha256": "0y7n45hr0xcz5931gs7y4kpnk5msp8h4f6zsfdw1cllv0jnc82ys"
+    },
+    "derelict-util": {
+      "version": "3.0.0-beta.2",
+      "sha256": "0xj4gbmdpmkmkhpq64s17gbmbkifaivkfks6sirk5j82vgl7rvh4"
+    },
+    "gfm": {
+      "version": "7.0.8",
+      "sha256": "0dywkzrrql8ghm80x2rmm2y8y4svh1375llgg4b4rai4nphzzrch"
+    },
+    "sdlang-d": {
+      "version": "0.10.6",
+      "sha256": "1qm3ba7xgml570ajbdz72bvrgmq9yhw2ird5pr54c4zz0cywl2r4"
+    },
+    "taggedalgebraic": {
+      "version": "0.11.24",
+      "sha256": "03gxqa8faj4nb87pf5irqrzfmc1q5ag73gqapcqr4g9j0b7drigj"
+    },
+    "unit-threaded": {
+      "version": "0.7.55",
+      "sha256": "07wk8jj4dlhddc8k42mn8s5wdkgvqrl9kqdbh8yblyx52igmq5hy"
+    }
+  }
+}
