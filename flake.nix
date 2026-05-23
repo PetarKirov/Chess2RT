@@ -11,7 +11,7 @@
       (system:
         let pkgs = nixpkgs.legacyPackages.${system}; in
         {
-          devShell = import ./shell.nix { inherit pkgs; };
+          devShells.default = import ./shell.nix { inherit pkgs; };
 
           # Packages can be ignored for now as currently we use this nix flake
           # mainly for `nix develop`:
