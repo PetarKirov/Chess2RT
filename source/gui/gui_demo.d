@@ -150,10 +150,15 @@ void drawCircle(Image!uint screen, float diameterToWidthRatio = 0.5)
     }
 }
 
-Image!ARGB getImage(string imgPath = "data/texture/zaphod.bmp")
+Image!ARGB getImage(string imgPath = "")
 {
     import imageio.bmp;
     import std.file : read;
+    import std.process : environment;
+    import std.path : buildPath;
+
+    if (imgPath == "" || imgPath == "data/texture/zaphod.bmp")
+        imgPath = buildPath(environment.get("CHESS2RT_DATA_DIR", "data"), "texture", "zaphod.bmp");
 
     return imgPath.read().loadBmpImage!ARGB;
 }

@@ -1,4 +1,3 @@
-# Nix derivation for Chess2RT.
 { lib, ... }:
 {
   perSystem =
@@ -15,46 +14,53 @@
           "dub.selections.json"
         ];
 
-      src = fs.toSource {
-        inherit root;
-        fileset = fs.unions [
-          (fs.fileFilter isDubManifest root)
-          (fs.fileFilter (file: file.hasExt "d") (fromRoot "source"))
-        ];
+      chess2rt-data = builtins.path {
+        name = "chess2rt-data";
+        path = fromRoot "data";
       };
     in
     {
-      packages.chess2rt = pkgs.buildDubPackage (finalAttrs: {
-        pname = "chess2rt";
-        version = "0.1.0";
+      packages = {
+        inherit chess2rt-data;
 
-        inherit src;
+        chess2rt = pkgs.buildDubPackage (finalAttrs: {
+          pname = "chess2rt";
+          version = "0.1.0";
 
-        dubLock = ./dub.lock.json;
+          src = fs.toSource {
+            inherit root;
+            fileset = fs.unions [
+              (fs.fileFilter isDubManifest root)
+              (fs.fileFilter (file: file.hasExt "d") (fromRoot "source"))
+            ];
+          };
 
-        buildInputs = [
-          pkgs.SDL2
-        ];
+          dubLock = ./dub.lock.json;
 
-        nativeBuildInputs = [
-          pkgs.pkg-config
-          pkgs.makeWrapper
-        ];
+          installPhase = ''
+            runHook preInstall
+            install -Dm755 bin/Linux64/${finalAttrs.pname} -t $out/bin
+            runHook postInstall
+          '';
 
-        installPhase = ''
-          runHook preInstall
-          install -Dm755 bin/Linux64/${finalAttrs.pname} -t $out/bin
-          runHook postInstall
-        '';
+          meta.mainProgram = finalAttrs.pname;
+        });
 
-        postInstall = ''
-          wrapProgram $out/bin/${finalAttrs.pname} \
-            --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ pkgs.SDL2 ]}
-        '';
-
-        meta.mainProgram = finalAttrs.pname;
-      });
-
-      packages.default = config.packages.chess2rt;
+        default =
+          pkgs.runCommand "chess2rt"
+            {
+              nativeBuildInputs = [ pkgs.makeWrapper ];
+              meta.mainProgram = "chess2rt";
+            }
+            ''
+              mkdir -p $out/bin
+              makeWrapper \
+                ${lib.getExe config.packages.chess2rt} \
+                $out/bin/chess2rt \
+                --set CHESS2RT_DATA_DIR ${chess2rt-data} \
+                --prefix LD_LIBRARY_PATH : \
+                ${lib.makeLibraryPath [ pkgs.SDL2 ]}
+            '';
+      };
     };
 }

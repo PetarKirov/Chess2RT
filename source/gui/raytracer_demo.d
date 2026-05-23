@@ -20,13 +20,23 @@ string getPathToDefaultScene()
 {
     import std.file : exists, readText;
     import std.string : strip;
+    import std.process : environment;
+    import std.path : buildPath;
+    import std.algorithm : startsWith;
+
+    string dataDir = environment.get("CHESS2RT_DATA_DIR", "data");
 
     // The path to the file containting the path to the default scene file
-    enum link = "data/default_scene.path";
-    assert(link.exists, "Missing link to default scene file!");
+    string link = buildPath(dataDir, "default_scene.path");
+    assert(link.exists, "Missing link to default scene file! Expected at: " ~ link);
 
     auto finalPath = link.readText().strip();
-    assert(finalPath.exists, "Missing default scene file!");
+    if (finalPath.startsWith("data/"))
+    {
+        finalPath = buildPath(dataDir, finalPath[5 .. $]);
+    }
+
+    assert(finalPath.exists, "Missing default scene file! Expected at: " ~ finalPath);
 
     return finalPath;
 }
