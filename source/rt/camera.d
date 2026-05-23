@@ -21,7 +21,9 @@ class Camera : Deserializable
         this.pitch = pitch;
         this.roll = roll;
         this.fov = fov;
-        this.aspect = aspect;
+        this.frameWidth = frameWidth;
+        this.frameHeight = frameHeight;
+        this.aspect = cast(double)frameWidth / frameHeight;
     }
 
     size_t frameWidth;
