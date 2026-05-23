@@ -82,7 +82,7 @@ pure nothrow @safe @nogc:
         b = b * amount + mid * (1 - amount);
     }
 
-    ref inout(float) opIndex(int index) inout
+    ref inout(float) opIndex(int index) return inout
     {
         return components[index];
     }
